@@ -1,0 +1,18 @@
+[package]
+name = "module"
+version = "0.1.0"
+description = "Default dependencies for test harness"
+repository = "https://github.com/polywrap/monorepo"
+license = "MIT"
+edition = "2021"
+
+[dependencies]
+polywrap-wasm-rs = { version = "0.5.0" }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 's'
+lto = true
+panic = 'abort'
