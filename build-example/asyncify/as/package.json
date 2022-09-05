@@ -1,0 +1,9 @@
+{
+  "name": "test-cases-default",
+  "private": true,
+  "dependencies": {
+    "@polywrap/wasm-as": "0.6.0",
+    "assemblyscript": "0.19.5",
+    "polywrap": "^0.6.0"
+  }
+}
