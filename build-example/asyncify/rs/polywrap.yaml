@@ -7,4 +7,4 @@ source:
   module: ./Cargo.toml
   import_abis:
     - uri: "ens/memory-storage.polywrap.eth"
-      abi: ../plugin.wrap.info
+      abi: ../plugin.abi.json

@@ -6,5 +6,5 @@ source:
   schema: ../schema.graphql
   module: ./src/index.ts
   import_abis:
-    - uri: "ens/memory-storage.polywrap.eth"
-      abi: ../plugin.wrap.info
+    - uri: "wrap://ens/memory-storage.polywrap.eth"
+      abi: ../plugin.abi.json
