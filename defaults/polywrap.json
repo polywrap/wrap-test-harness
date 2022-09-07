@@ -1,4 +1,6 @@
 {
   "format": "0.2.0",
-  "source": "../schema.graphql"
+  "source": {
+    "schema": "../schema.graphql"
+  }
 }
