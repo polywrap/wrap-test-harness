@@ -1,4 +1,4 @@
-import {mkdir, readdir, rm, stat} from "fs/promises"
+import {access, mkdir, readdir, rm, stat} from "fs/promises"
 import {join} from "path";
 import {BUILD_FOLDER, generate, TESTS_FOLDER} from "./generator";
 
@@ -24,10 +24,9 @@ import {BUILD_FOLDER, generate, TESTS_FOLDER} from "./generator";
 
 const main = async () => {
   try {
-    const folderExists = await stat(BUILD_FOLDER)
-    if (folderExists) {
-      await rm(BUILD_FOLDER, {recursive: true})
-    }
+    await rm(BUILD_FOLDER, {recursive: true})
+  } catch (e) {
+    // If this comes here means that there's no build folder and that's ok
   } finally {
     await mkdir(BUILD_FOLDER)
   }
