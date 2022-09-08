@@ -19,7 +19,6 @@ export const getClientConfig = async (): Promise<Partial<ClientConfig>> => {
   }
 }
 
-
 class MemoryStoragePlugin extends PluginModule<Record<string, never>> {
   private _value: number;
 

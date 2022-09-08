@@ -1,6 +1,6 @@
 import {
   Args_method
-} from "../../src/wrap";
+} from "./wrap";
 import { BigInt } from "@polywrap/wasm-as";
 
 export function method(args: Args_method): BigInt {

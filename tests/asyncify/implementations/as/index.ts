@@ -7,7 +7,7 @@ import {
   Args_setDataWithManyArgs,
   Args_setDataWithManyStructuredArgs,
   Storage_Module,
-} from "../../src/wrap";
+} from "./wrap";
 
 export function getData(args: Args_getData): u32 {
   const res = Storage_Module.getData({}).unwrap();
