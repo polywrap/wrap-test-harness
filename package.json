@@ -2,19 +2,20 @@
   "name": "@polywrap/wasm-test-harness",
   "description": "Test harness for WASM implementations of WRAP protocol",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.7.0",
   "license": "MIT",
   "main": "index.ts",
   "scripts": {
-    "run": "npx ts-node src/engine.ts"
+    "build": "npx ts-node src/engine.ts"
   },
   "dependencies": {
-    "@polywrap/client-config-builder-js": "0.6.0",
-    "@polywrap/client-js": "0.6.0",
-    "@polywrap/core-js": "0.6.0",
-    "@polywrap/polywrap-manifest-types-js": "0.6.0",
-    "@polywrap/wrap-manifest-types-js": "0.6.0",
-    "js-yaml": "4.1.0"
+    "@polywrap/client-config-builder-js": "0.7.0",
+    "@polywrap/client-js": "0.7.0",
+    "@polywrap/core-js": "0.7.0",
+    "@polywrap/polywrap-manifest-types-js": "0.7.0",
+    "@polywrap/wrap-manifest-types-js": "0.7.0",
+    "js-yaml": "4.1.0",
+    "polywrap": "0.7.0"
   },
   "devDependencies": {
     "@types/js-yaml": "4.0.5",

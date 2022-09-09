@@ -2,7 +2,7 @@
   "source": {
     "import_abis": [{
       "uri": "ens/memory-storage.polywrap.eth",
-      "abi": "./abis/plugin.abi.json"
+      "abi": "../../plugin.abi.json"
     }]
   }
 }

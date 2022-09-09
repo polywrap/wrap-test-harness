@@ -1,3 +1,17 @@
+/*
+ * This entire file will be split.
+ * Creating a `Generate` class that has all the methods
+ * to manipulate the output from different test-case/implementation.
+ *
+ * We only need three arguments:
+ * - Destination path (destPath)
+ * - Source path (sourcePath)
+ * - Project name (projectName)
+ *
+ * Also, objects that map the folder name (rs|as) to different strings,
+ * should probably be moved to one variable.
+ */
+
 import {join} from "path";
 import {
   latestPolywrapManifestFormat,
@@ -15,8 +29,10 @@ export const BUILD_FOLDER = "build"
 enum ExpectedInfo {
   Workflow = "workflow.json",
   Schema = "schema.graphql",
-  Implementations = "implementations"
+  Implementations = "implementations",
 }
+
+const CustomManifest = "polywrap.json";
 
 const DependencyMap = {
   "rs": "Cargo.toml",
@@ -42,19 +58,14 @@ export const generate = async (destPath: string, sourcePath: string, projectName
   const testFolder = join(sourcePath, projectName)
   const files = await readdir(testFolder)
 
-  const [missingFile] = expectedFiles.filter(file => !files.includes(file))
+  const [ missingFile ] = expectedFiles.filter(file => !files.includes(file))
+
   if (missingFile) {
     throw new Error(`File ${missingFile} missing from tests: ${projectName}`)
   }
 
   await mkdir(buildFolder)
   await generateImplementationFiles(destPath, sourcePath, projectName)
-}
-
-const getTestFiles = async (sourcePath: string, projectName: string, expectedFiles: string[]) => {
-  const testPath = join(sourcePath, projectName)
-  const files = await readdir(testPath)
-  return files.filter(file => !expectedFiles.includes(file))
 }
 
 const generateImplementationFiles = async (
@@ -73,10 +84,10 @@ const generateImplementationFiles = async (
   }
 
   validatePolywrapWorkflow(info)
-  const manifest = dump(info)
+  const testManifest = dump(info)
 
   const testManifestPath = join(destPath, projectName, "polywrap.test.yaml")
-  await writeFile(testManifestPath, manifest)
+  await writeFile(testManifestPath, testManifest)
 
   // Copy schema to implementation folder
   const schemaPath = join(sourcePath, projectName, ExpectedInfo.Schema)
@@ -84,25 +95,14 @@ const generateImplementationFiles = async (
   await copyFile(schemaPath, schemaSource)
 
   // Get implementation related files
-  const sourceImplementationFolder = join(destPath, projectName, ExpectedInfo.Implementations)
-  await mkdir(sourceImplementationFolder)
-
+  const destImplementationFolder = join(destPath, projectName, ExpectedInfo.Implementations)
+  await mkdir(destImplementationFolder)
   const templateImplementationFolder = join(sourcePath, projectName, ExpectedInfo.Implementations)
-  const implementations = await readdir(templateImplementationFolder)
-
-  // Copy common files
-  const files = await getTestFiles(sourcePath, projectName, expectedFiles)
-
-  for (const file of files) {
-    const destFile = join(destPath, projectName, file)
-    const sourceFile = join(sourcePath, projectName, file)
-    await copyFile(sourceFile, destFile)
-  }
 
   const generateImplementations = async (implementation: ImplementationName) => {
     // Generate implementation files (i.e: index.ts/lib.rs)
     const sourcePath = join(templateImplementationFolder, implementation)
-    const destPath = join(sourceImplementationFolder, implementation, "src")
+    const destPath = join(destImplementationFolder, implementation, "src")
 
     const files = await readdir(sourcePath)
     for (const file of files) {
@@ -114,11 +114,15 @@ const generateImplementationFiles = async (
     const file = DependencyMap[implementation]
     const defaultsFolder = join(__dirname, "..", "defaults")
     const dependenciesSourcePath = join(defaultsFolder, file)
-    const dependenciesDestPath = join(sourceImplementationFolder, implementation, file)
+    const dependenciesDestPath = join(destImplementationFolder, implementation, file)
     await copyFile(dependenciesSourcePath, dependenciesDestPath)
 
+    // Get files from tests folder
+    const testRootPath = join(templateImplementationFolder, "..")
+    let rootFiles = (await readdir(testRootPath)).filter(f => !expectedFiles.includes(f))
+
     // Generate polywrap manifest (i.e: polywrap.yaml)
-    const manifest = {
+    let manifest = {
       format: latestPolywrapManifestFormat,
       project: {
         name: projectName,
@@ -130,13 +134,38 @@ const generateImplementationFiles = async (
       },
     }
 
+    if (rootFiles.includes(CustomManifest)) {
+      const { default: customManifest } = await import(join(testRootPath, CustomManifest))
+      rootFiles = rootFiles.filter(file => file !== CustomManifest)
+      manifest = {
+        ...manifest,
+        ...customManifest,
+        project: {
+          ...manifest.project,
+          ...customManifest.project
+        },
+        source: {
+          ...manifest.source,
+          ...customManifest.source
+        }
+      }
+    }
+
     validatePolywrapManifest(manifest as PolywrapManifest)
 
     const yamlManifest = dump(manifest)
 
-    const manifestPath = join(sourceImplementationFolder, implementation, "polywrap.yaml")
+    const manifestPath = join(destImplementationFolder, implementation, "polywrap.yaml")
     await writeFile(manifestPath, yamlManifest)
+
+    // Copy common files
+    for (const file of rootFiles) {
+      const destFile = join(destImplementationFolder, "..", file)
+      const sourceFile = join(templateImplementationFolder, "..", file)
+      await copyFile(sourceFile, destFile)
+    }
   }
 
-  return implementations.map(generateImplementations)
+  const implementations = await readdir(templateImplementationFolder)
+  implementations.map(generateImplementations)
 }

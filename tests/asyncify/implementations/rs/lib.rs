@@ -62,7 +62,7 @@ pub fn set_data_with_many_args(args: module::ArgsSetDataWithManyArgs) -> String 
             args_a, args_b, args_c, args_d, args_e, args_f, args_g, args_h, args_i, args_j, args_k,
             args_l,
         ]
-        .concat(),
+            .concat(),
         Err(e) => panic!("{}", e),
     }
 }
@@ -70,9 +70,9 @@ pub fn set_data_with_many_args(args: module::ArgsSetDataWithManyArgs) -> String 
 pub fn set_data_with_many_structured_args(
     args: module::ArgsSetDataWithManyStructuredArgs,
 ) -> bool {
-  match StorageModule::set_data(&storage_module::ArgsSetData {
-      value: 44
-  }) {
+    match StorageModule::set_data(&storage_module::ArgsSetData {
+        value: 44
+    }) {
         Ok(_v) => return_true(),
         Err(_e) => false,
     }
@@ -104,9 +104,9 @@ pub fn subsequent_invokes(args: module::ArgsSubsequentInvokes) -> Vec<String> {
             value: i
         }) {
             Ok(_v) => {
-              match StorageModule::get_data(
-                  &storage_module::ArgsGetData {},
-              ) {
+                match StorageModule::get_data(
+                    &storage_module::ArgsGetData {},
+                ) {
                     Ok(v) => result.push(v.to_string()),
                     Err(e) => panic!("{}", e),
                 }
