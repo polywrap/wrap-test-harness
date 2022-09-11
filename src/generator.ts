@@ -21,7 +21,8 @@ import {
   validatePolywrapWorkflow
 } from "@polywrap/polywrap-manifest-types-js";
 import {dump} from "js-yaml";
-import {copyFile, mkdir, readdir, writeFile} from "fs/promises";
+import {copyFile, mkdir, readdir, rm, writeFile} from "fs/promises";
+import {buildWrapper} from "@polywrap/test-env-js";
 
 export const TESTS_FOLDER = "tests"
 export const BUILD_FOLDER = "build"
@@ -169,3 +170,22 @@ const generateImplementationFiles = async (
   const implementations = await readdir(templateImplementationFolder)
   implementations.map(generateImplementations)
 }
+
+const main = async () => {
+  try {
+    await rm(BUILD_FOLDER, {recursive: true})
+  } catch (e) {
+    // If this comes here means that there's no build folder and that's ok
+  } finally {
+    await mkdir(BUILD_FOLDER)
+  }
+
+  const cases = await readdir(TESTS_FOLDER)
+  const destPath = join(__dirname, "..", BUILD_FOLDER)
+  const sourcePath = join(__dirname, "..", TESTS_FOLDER)
+  for (const name of cases) {
+    await generate(destPath, sourcePath, name)
+  }
+}
+
+main().then()

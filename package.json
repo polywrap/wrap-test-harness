@@ -6,13 +6,15 @@
   "license": "MIT",
   "main": "index.ts",
   "scripts": {
-    "build": "npx ts-node src/engine.ts"
+    "generate": "npx ts-node src/generator.ts",
+    "engine": "npx ts-node src/engine.ts"
   },
   "dependencies": {
     "@polywrap/client-config-builder-js": "0.7.0",
     "@polywrap/client-js": "0.7.0",
     "@polywrap/core-js": "0.7.0",
     "@polywrap/polywrap-manifest-types-js": "0.7.0",
+    "@polywrap/test-env-js": "^0.7.0",
     "@polywrap/wrap-manifest-types-js": "0.7.0",
     "js-yaml": "4.1.0",
     "polywrap": "0.7.0"
