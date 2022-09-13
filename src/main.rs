@@ -1,11 +1,12 @@
 mod lib;
 
-use crate::lib::IMPLEMENTATIONS;
+use crate::lib::{IMPLEMENTATIONS,Implementation};
 
 use std::{fs, io};
+use std::fmt::Error;
 use std::fs::File;
 use std::io::BufReader;
-use std::ops::Index;
+use std::ops::{Deref, Index};
 use std::path::Path;
 use serde_json;
 use serde_yaml;
@@ -28,43 +29,81 @@ struct Workflow {
 }
 
 type ImportAbis = Vec<ImportAbi>;
-#[derive(Debug, Default, Serialize, Deserialize)]
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct ImportAbi {
     uri: String,
-    abi: String
+    abi: String,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct Project {
     name: Option<String>,
-    _type: Option<String>
+    #[serde(rename = "type")]
+    _type: Option<String>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct Source {
     schema: Option<String>,
     module: Option<String>,
-    import_abis: Option<ImportAbis>
+    import_abis: Option<ImportAbis>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct Manifest {
-    format: Option<String>,
-    project: Option<Project>,
-    source: Option<Source>
+    pub format: Option<String>,
+    pub project: Option<Project>,
+    pub source: Option<Source>,
 }
 
-// impl Manifest {
-//     fn merge(self, other: Manifest) -> Self {
-//         Self {
-//             format: self.format,
-//             project: Project {
-//                 ..self.project
-//             },
-//             source: self.source | other.source
-//         }
-//     }
-// }
+impl Manifest {
+    fn merge(self, custom: Manifest) -> Result<Manifest, Error> {
+        let default_project = self.project.unwrap();
+
+        let project  = match custom.project {
+            Some(p) => Some(Project {
+                name: p.name.or(default_project.name),
+                _type: p._type.or(default_project._type),
+            }),
+            _ => Some(default_project)
+        };
+
+        let default_source = self.source.unwrap();
+        let source = match custom.source {
+            Some(s) => Some(Source {
+                schema: s.schema.or(default_source.schema),
+                module: s.module.or(default_source.module),
+                import_abis: s.import_abis.or(default_source.import_abis)
+            }),
+            _ => Some(default_source)
+        };
+
+        Ok(Self {
+            format: Some("0.2.0".to_string()),
+            project,
+            source
+        })
+    }
+
+    pub fn default(
+        project_name: &str,
+        implementation: &Implementation<'_>,
+    ) -> Manifest {
+        Manifest {
+            format: Some("0.2.0".to_string()),
+            project: Some(Project {
+                name: Some(project_name.to_string()),
+                _type: Some(format!("wasm/{}", &implementation.name.to_string())),
+            }),
+            source: Some(Source {
+                schema: Some("../../schema.graphql".to_string()),
+                module: Some(implementation.module.to_string()),
+                import_abis: None,
+            })
+        }
+    }
+}
 
 impl Generator<'_> {
     pub fn new<'a>(
@@ -73,7 +112,7 @@ impl Generator<'_> {
     ) -> Generator<'a> {
         Generator {
             dest_path,
-            source_path
+            source_path,
         }
     }
 
@@ -83,7 +122,7 @@ impl Generator<'_> {
 
         let files = fs::read_dir(&test_folder).unwrap().map(|directory| {
             let name = directory.unwrap().file_name();
-            return name.into_string().unwrap()
+            return name.into_string().unwrap();
         }).collect::<Vec<_>>();
 
         let missing_files = EXPECTED_FILES
@@ -124,7 +163,7 @@ impl Generator<'_> {
             .open(&test_manifest_path)
             .unwrap();
 
-        serde_yaml::to_writer(f, &workflow).expect("TODO: panic message");
+        serde_yaml::to_writer(f, &workflow).unwrap();
         Ok(())
     }
 
@@ -165,49 +204,47 @@ impl Generator<'_> {
             fs::copy(dependencies_source, dependencies_dest).unwrap();
 
             let root = template_implementation_folder.join("..");
-            let root_files = fs::read_dir(root).unwrap().into_iter().filter(
-                |file| {
-                    return !EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
-                }
+            let mut root_files = fs::read_dir(root).unwrap().into_iter().filter(
+                |file| !EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
             ).map(|entry| entry.unwrap()).collect::<Vec<_>>();
 
             // Generate polywrap manifest (i.e: polywrap.yaml)
-            let project = Project {
-                name: Some(project_name.to_string()),
-                _type: Some(String::new()),
-            };
-
-            let source = Source {
-                schema: Some(String::new()),
-                module: Some(String::new()),
-                import_abis: None
-            };
-
-            let manifest = Manifest {
-                format: Some(String::new()),
-                project: Some(project),
-                source: Some(source)
-            };
-
             let index = root_files.iter().position(|file| {
-                return file.file_name().eq(CUSTOM_MANIFEST);
+                file.file_name().eq(CUSTOM_MANIFEST)
             });
 
+            let  mut manifest = Manifest::default(project_name, implementation_info);
             match index {
                 Some(i) => {
                     // Open the file in read-only mode with buffer.
                     let file = File::open(root_files[i].path()).unwrap();
                     let reader = BufReader::new(file);
+                    let custom_manifest: Manifest = serde_json::from_reader(reader).unwrap();
 
-                    let custom_manifest: Result<serde_json::Value, serde_json::Error> = serde_json::from_reader(reader);
-                    let manifest = serde_json::to_string(&manifest);
+                    manifest = manifest.merge(custom_manifest).unwrap();
+                    // TODO: Validate manifest
 
-                    println!("{:?}", custom_manifest.unwrap());
-                    println!("{:?}", &manifest.unwrap())
-
-                },
+                    root_files = root_files.into_iter().filter(|file| {
+                        return !file.file_name().eq(CUSTOM_MANIFEST);
+                    }).collect::<Vec<_>>();
+                }
                 _ => {}
             }
+
+            let manifest_path = dest_implementation_folder.join(impl_name).join("polywrap.yaml");
+            let f = fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .open(&manifest_path)
+                .unwrap();
+            serde_yaml::to_writer(f, &manifest).unwrap();
+
+            for file in root_files {
+                let dest_file = dest_implementation_folder.join("..").join(file.file_name());
+                let source_file = template_implementation_folder.join("..").join(file.file_name());
+                fs::copy(source_file, dest_file).unwrap();
+            }
+
         }
 
         Ok(())
@@ -229,18 +266,16 @@ fn main() -> io::Result<()> {
         Err(_) => {
             fs::remove_dir_all(BUILD_FOLDER)?;
             fs::create_dir(BUILD_FOLDER)?;
-        },
-        _  => {}
+        }
+        _ => {}
     }
 
     let generator = Generator::new(dest_path, source_path);
 
     for entry in fs::read_dir(&source_path)? {
-          generator.generate_project(entry?.file_name().to_str().unwrap()).unwrap();
+        generator.generate_project(entry?.file_name().to_str().unwrap()).unwrap();
     }
 
 
     Ok(())
-
-
 }

@@ -14,12 +14,12 @@ lazy_static! {
         map.insert("as", Implementation {
             dependency: "package.json",
             name: "assemblyscript",
-            module: "src/index.ts"
+            module: "./src/index.ts"
         });
         map.insert("rs", Implementation {
             dependency: "Cargo.toml",
             name: "rust",
-            module: "Cargo.toml"
+            module: "./Cargo.toml"
         });
         return map
     };
