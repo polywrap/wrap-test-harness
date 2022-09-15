@@ -8,6 +8,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::ops::{Deref, Index};
 use std::path::Path;
+use std::process::Command;
 use serde_json;
 use serde_yaml;
 use serde::{Deserialize, Serialize};
@@ -15,11 +16,8 @@ use serde::{Deserialize, Serialize};
 
 const BUILD_FOLDER: &str = "build";
 const TEST_FOLDER: &str = "tests";
-
 const CUSTOM_MANIFEST: &str = "polywrap.json";
-
 const EXPECTED_FILES: [&str; 3] = ["workflow.json", "schema.graphql", "implementations"];
-
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct Workflow {
@@ -36,21 +34,22 @@ struct ImportAbi {
     abi: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct Project {
     name: Option<String>,
     #[serde(rename = "type")]
     _type: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct Source {
     schema: Option<String>,
     module: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     import_abis: Option<ImportAbis>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct Manifest {
     pub format: Option<String>,
     pub project: Option<Project>,
@@ -80,7 +79,7 @@ impl Manifest {
         };
 
         Ok(Self {
-            format: Some("0.2.0".to_string()),
+            format: self.format,
             project,
             source
         })
@@ -273,8 +272,86 @@ fn main() -> io::Result<()> {
     let generator = Generator::new(dest_path, source_path);
 
     for entry in fs::read_dir(&source_path)? {
-        generator.generate_project(entry?.file_name().to_str().unwrap()).unwrap();
+        let file_name = &entry?.file_name();
+        println!("Generating test case: {}", &file_name.to_str().unwrap());
+        generator.generate_project(&file_name.to_str().unwrap()).unwrap();
     }
+
+    for entry in fs::read_dir(&source_path)? {
+        let file_name = &entry?.file_name();
+        let wrapper_path = dest_path.join(&file_name).join("implementations");
+        for implementation in fs::read_dir(&wrapper_path)? {
+            let dir = &wrapper_path.join(implementation.as_ref().unwrap().file_name());
+            println!(
+                "Building implementation: {} in test case {}",
+                implementation.as_ref().unwrap().file_name().to_str().unwrap(),
+                file_name.to_str().unwrap()
+            );
+            let mut build = Command::new("npx");
+            build.current_dir(dir.to_str().unwrap().to_string());
+            build.arg("polywrap").arg("build");
+
+            let status = match build.output() {
+                Ok(t) => {
+                    let error = String::from_utf8(t.stderr).unwrap();
+                    let message = String::from_utf8(t.stdout).unwrap();
+                    dbg!(error);
+                    dbg!(message);
+                    t.status.success()
+                }
+                Err(e) => {
+                    dbg!(e);
+                    false
+                }
+            };
+            dbg!(status);
+        }
+    }
+
+    for entry in fs::read_dir(&source_path)? {
+        let file_name = &entry?.file_name();
+        let wrapper_path = dest_path.join(&file_name).join("implementations");
+        for implementation in fs::read_dir(&wrapper_path)? {
+            let dir = &wrapper_path.join(implementation.as_ref().unwrap().file_name());
+            println!(
+                "Testing implementation: {} in case {}",
+                implementation.as_ref().unwrap().file_name().to_str().unwrap(),
+                file_name.to_str().unwrap()
+            );
+            let mut build = Command::new("npx");
+            build.current_dir(dir.to_str().unwrap().to_string());
+            build
+                .arg("polywrap").arg("run")
+                .arg("-m").arg("../../polywrap.test.yaml")
+                .arg("-o").arg("./output.json");
+
+            let custom_config = wrapper_path.join("../client-config.ts").exists();
+            if custom_config {
+                build.arg("-c").arg("../../client-config.ts");
+            }
+
+            let status = match build.output() {
+                Ok(t) => {
+                    let error = String::from_utf8(t.stderr).unwrap();
+                    let message = String::from_utf8(t.stdout).unwrap();
+                    dbg!(error);
+                    dbg!(message);
+                    t.status.success()
+                }
+                Err(e) => {
+                    dbg!(e);
+                    false
+                }
+            };
+            dbg!(status);
+        }
+    }
+
+
+
+
+
+
 
 
     Ok(())
