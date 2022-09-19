@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
@@ -6,6 +7,7 @@ use serde_json;
 use serde_yaml;
 use serde::{Deserialize, Serialize};
 use crate::constants::{Implementation, IMPLEMENTATIONS};
+use crate::result::Summary;
 
 
 const CUSTOM_MANIFEST: &str = "polywrap.json";
@@ -95,6 +97,11 @@ impl Manifest {
         }
     }
 }
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
+pub struct Results<'a> {
+    pub version: &'a str,
+    pub info: HashMap<&'a str, HashMap<String, Summary>>
+}
 
 pub struct Generator<'a> {
     pub dest_path: &'a Path,
@@ -108,7 +115,7 @@ impl Generator<'_> {
     ) -> Generator<'a> {
         Generator {
             dest_path,
-            source_path,
+            source_path
         }
     }
 

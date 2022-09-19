@@ -1,0 +1,26 @@
+{
+  "version": "",
+  "summary": {
+    "asyncify": {
+      "rust": {
+        "total": 10,
+        "succeeded": 10,
+        "failed": 0
+      },
+      "assemblyscript": {
+
+      }
+    },
+
+    "assemblyscript": {
+      "asyncify": {
+        "total": 10,
+        "succeeded": 10,
+        "failed": 0
+      },
+      "big-int": {
+
+      }
+    }
+  }
+}
