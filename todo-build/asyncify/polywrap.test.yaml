@@ -1,0 +1,205 @@
+format: 0.1.0
+name: asyncify
+jobs:
+  getData:
+    steps:
+    - method: getData
+      uri: wrap://fs/./build
+  globalVarMethod:
+    steps:
+    - method: globalVarMethod
+      uri: wrap://fs/./build
+  localVarMethod:
+    steps:
+    - method: localVarMethod
+      uri: wrap://fs/./build
+  setDataWithLargeArgs:
+    steps:
+    - args:
+        value: foo
+      method: setDataWithLargeArgs
+      uri: wrap://fs/./build
+  setDataWithMany:
+    steps:
+    - args:
+        valueA: A
+        valueB: B
+        valueC: C
+        valueD: D
+        valueE: E
+        valueF: F
+        valueG: G
+        valueH: H
+        valueI: I
+        valueJ: J
+        valueK: K
+        valueL: L
+      method: setDataWithManyArgs
+      uri: wrap://fs/./build
+  setDataWithManyStructuredArgs:
+    steps:
+    - args:
+        valueA:
+          propA: A
+          propB: B
+          propC: C
+          propD: D
+          propE: E
+          propF: F
+          propG: G
+          propH: H
+          propI: I
+          propJ: J
+          propK: K
+          propL: L
+        valueB:
+          propA: A
+          propB: B
+          propC: C
+          propD: D
+          propE: E
+          propF: F
+          propG: G
+          propH: H
+          propI: I
+          propJ: J
+          propK: K
+          propL: L
+        valueC:
+          propA: A
+          propB: B
+          propC: C
+          propD: D
+          propE: E
+          propF: F
+          propG: G
+          propH: H
+          propI: I
+          propJ: J
+          propK: K
+          propL: L
+        valueD:
+          propA: A
+          propB: B
+          propC: C
+          propD: D
+          propE: E
+          propF: F
+          propG: G
+          propH: H
+          propI: I
+          propJ: J
+          propK: K
+          propL: L
+        valueE:
+          propA: A
+          propB: B
+          propC: C
+          propD: D
+          propE: E
+          propF: F
+          propG: G
+          propH: H
+          propI: I
+          propJ: J
+          propK: K
+          propL: L
+        valueF:
+          propA: A
+          propB: B
+          propC: C
+          propD: D
+          propE: E
+          propF: F
+          propG: G
+          propH: H
+          propI: I
+          propJ: J
+          propK: K
+          propL: L
+        valueG:
+          propA: A
+          propB: B
+          propC: C
+          propD: D
+          propE: E
+          propF: F
+          propG: G
+          propH: H
+          propI: I
+          propJ: J
+          propK: K
+          propL: L
+        valueH:
+          propA: A
+          propB: B
+          propC: C
+          propD: D
+          propE: E
+          propF: F
+          propG: G
+          propH: H
+          propI: I
+          propJ: J
+          propK: K
+          propL: L
+        valueI:
+          propA: A
+          propB: B
+          propC: C
+          propD: D
+          propE: E
+          propF: F
+          propG: G
+          propH: H
+          propI: I
+          propJ: J
+          propK: K
+          propL: L
+        valueJ:
+          propA: A
+          propB: B
+          propC: C
+          propD: D
+          propE: E
+          propF: F
+          propG: G
+          propH: H
+          propI: I
+          propJ: J
+          propK: K
+          propL: L
+        valueK:
+          propA: A
+          propB: B
+          propC: C
+          propD: D
+          propE: E
+          propF: F
+          propG: G
+          propH: H
+          propI: I
+          propJ: J
+          propK: K
+          propL: L
+        valueL:
+          propA: A
+          propB: B
+          propC: C
+          propD: D
+          propE: E
+          propF: F
+          propG: G
+          propH: H
+          propI: I
+          propJ: J
+          propK: K
+          propL: L
+      method: setDataWithManyStructuredArgs
+      uri: wrap://fs/./build
+  subsequentInvokes:
+    steps:
+    - args:
+        numberOfTimes: 1
+      method: subsequentInvokes
+      uri: wrap://fs/./build

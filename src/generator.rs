@@ -97,6 +97,7 @@ impl Manifest {
         }
     }
 }
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Results<'a> {
     pub version: &'a str,
@@ -145,7 +146,7 @@ impl Generator<'_> {
         self.generate_test_manifest(project_name).unwrap();
         // Copy schema to implementation folder
         self.generate_schema(project_name).unwrap();
-        self.generate_dependency_file(project_name).unwrap();
+        self.generate_implementation_files(project_name).unwrap();
 
         Ok(())
     }
@@ -177,7 +178,7 @@ impl Generator<'_> {
         Ok(())
     }
 
-    pub fn generate_dependency_file(&self, project_name: &str) -> Result<(), ()> {
+    pub fn generate_implementation_files(&self, project_name: &str) -> Result<(), ()> {
         let dest_implementation_folder = &self.dest_path.join(project_name).join("implementations");
         fs::create_dir(dest_implementation_folder).unwrap();
         let template_implementation_folder = &self.source_path.join(project_name).join("implementations");

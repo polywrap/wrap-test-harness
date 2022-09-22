@@ -1,0 +1,39 @@
+[
+  {
+    "id": "setDataWithLargeArgs.0",
+    "status": "SUCCEED",
+    "data": "foo"
+  },
+  {
+    "id": "globalVarMethod.0",
+    "status": "SUCCEED",
+    "data": true
+  },
+  {
+    "id": "localVarMethod.0",
+    "status": "SUCCEED",
+    "data": true
+  },
+  {
+    "id": "setDataWithManyStructuredArgs.0",
+    "status": "SUCCEED",
+    "data": true
+  },
+  {
+    "id": "setDataWithMany.0",
+    "status": "SUCCEED",
+    "data": "ABCDEFGHIJKL"
+  },
+  {
+    "id": "getData.0",
+    "status": "SUCCEED",
+    "data": 55
+  },
+  {
+    "id": "subsequentInvokes.0",
+    "status": "SUCCEED",
+    "data": [
+      "0"
+    ]
+  }
+]

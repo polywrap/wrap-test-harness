@@ -49,7 +49,7 @@ fn main() -> io::Result<()> {
                 file_name.to_str().unwrap()
             );
             let mut build = Command::new("npx");
-            build.current_dir(dir.to_str().unwrap().to_string());
+            build.current_dir(dir.canonicalize().unwrap());
             build.arg("polywrap").arg("build");
 
             let status = match build.output() {
@@ -82,7 +82,7 @@ fn main() -> io::Result<()> {
                 case
             );
             let mut build = Command::new("npx");
-            build.current_dir(dir.to_str().unwrap().to_string());
+            build.current_dir(dir.canonicalize().unwrap());
             build
                 .arg("polywrap").arg("run")
                 .arg("-m").arg("../../polywrap.test.yaml")

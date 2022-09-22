@@ -1,0 +1,28 @@
+{
+  "name": "enum-type",
+  "jobs": {
+    "methodOne": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "method1",
+          "args": {
+            "en": 2,
+            "optEnum": 1
+          }
+        }
+      ]
+    },
+    "methodTwo": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "method2",
+          "args": {
+            "enumArray": ["OPTION1", 0, "OPTION3"]
+          }
+        }
+      ]
+    }
+  }
+}

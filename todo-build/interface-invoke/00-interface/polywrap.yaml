@@ -1,0 +1,6 @@
+format: 0.2.0
+project:
+  name: interface-invoke-implementation-as
+  type: interface
+source:
+  schema: ./schema.graphql

@@ -1,6 +1,11 @@
 {
   "version": "",
   "summary": {
+
+
+
+  "features": {
+
     "asyncify": {
       "rust": {
         "total": 10,
@@ -11,7 +16,18 @@
 
       }
     },
+    "interface-invoke": {
+      "rust": {
 
+      },
+      "assemblyscript": {
+
+      },
+      "go": {
+
+      }
+    }
+  },
     "assemblyscript": {
       "asyncify": {
         "total": 10,
@@ -21,6 +37,9 @@
       "big-int": {
 
       }
+    },
+    "rust":  {
+
     }
   }
 }
