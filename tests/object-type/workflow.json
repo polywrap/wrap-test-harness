@@ -5,11 +5,13 @@
       "steps": [
         {
           "uri": "wrap://fs/./build",
-          "method": "returnMap",
+          "method": "method1",
           "args": {
-            "map": {
-              "Hello": 1,
-              "Heyo": 50
+            "arg1": {
+              "prop": "arg1 prop",
+              "nested": {
+                "prop": "arg1 nested prop"
+              }
             }
           }
         }

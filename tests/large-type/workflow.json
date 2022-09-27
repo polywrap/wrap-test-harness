@@ -1,0 +1,21 @@
+{
+  "name": "large-type",
+  "jobs": {
+    "parse": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "method",
+          "args": {
+            "largeCollection": {
+              "largeStr": "",
+              "largeBytes": "",
+              "largeStrArray": "",
+              "largeBytesArray": ""
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,3 +1,5 @@
+extern crate core;
+
 mod generator;
 mod constants;
 mod result;
@@ -48,24 +50,50 @@ fn main() -> io::Result<()> {
                 implementation.as_ref().unwrap().file_name().to_str().unwrap(),
                 file_name.to_str().unwrap()
             );
-            let mut build = Command::new("npx");
-            build.current_dir(dir.canonicalize().unwrap());
-            build.arg("polywrap").arg("build");
-
-            let status = match build.output() {
+            let mut install = Command::new("yarn");
+            install.current_dir(dir.canonicalize().unwrap());
+            match install.output() {
                 Ok(t) => {
                     let error = String::from_utf8(t.stderr).unwrap();
+                    if error.len() == 0 {
+                        // TODO: Return error instead of panicking
+                        dbg!(error);
+                        // panic!("Error installing packages")
+                    }
+
                     let message = String::from_utf8(t.stdout).unwrap();
-                    dbg!(error);
+                    println!("Message from installation");
                     dbg!(message);
-                    t.status.success()
+
+                    let mut build = Command::new("npx");
+                    build.current_dir(dir.canonicalize().unwrap());
+                    build.arg("../../../../../monorepo/packages/cli/bin/polywrap build --strategy=vm");
+
+                    match build.output() {
+                        Ok(t) => {
+                            let error = String::from_utf8(t.stderr).unwrap();
+                            if error.len() == 0 {
+                                // TODO: Return error instead of panicking
+                                dbg!(error);
+                                // panic!("Error installing packages")
+                            }
+                            let message = String::from_utf8(t.stdout).unwrap();
+                            println!("Message from build");
+                            dbg!(message);
+                            t.status.success()
+                        }
+                        Err(e) => {
+                            dbg!(e);
+                            false
+                        }
+                    };
+
                 }
-                Err(e) => {
-                    dbg!(e);
-                    false
+                Err(r) => {
+                    // TODO: Return error instead of panicking
+                    panic!("Error on installation of packages");
                 }
             };
-            dbg!(status);
         }
     }
 

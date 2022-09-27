@@ -1,14 +1,22 @@
 {
   "name": "json-type",
   "jobs": {
-    "invalidBoolIntSent": {
+    "parse": {
       "steps": [
         {
           "uri": "wrap://fs/./build",
-          "method": "boolMethod",
+          "method": "parse",
           "args": {
-            "arg": 10
+            "arg": {
+              "foo": "foo",
+              "bar": "bar"
+            }
           }
+        },
+        {
+          "uri": "wrap://fs/./build",
+          "method": "stringify",
+          "args": "{'arg': { 'foo': 'foo', 'bar': 'bar' } }"
         }
       ]
     }
