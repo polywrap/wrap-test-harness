@@ -6,7 +6,6 @@ use serde_json;
 use serde_yaml;
 use serde::{Deserialize, Serialize};
 use crate::constants::{Implementation, IMPLEMENTATIONS};
-use crate::result::{Summary};
 
 
 const CUSTOM_MANIFEST: &str = "polywrap.json";
@@ -210,10 +209,9 @@ impl Generator<'_> {
                 file.file_name().eq(CUSTOM_MANIFEST)
             });
 
-            let  mut manifest = Manifest::default(project_name, implementation_info);
+            let mut manifest = Manifest::default(project_name, implementation_info);
             match index {
                 Some(i) => {
-                    // Open the file in read-only mode with buffer.
                     let file = File::open(root_files[i].path()).unwrap();
                     let reader = BufReader::new(file);
                     let custom_manifest: Manifest = serde_json::from_reader(reader).unwrap();

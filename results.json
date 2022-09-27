@@ -1,33 +1,29 @@
 {
   "version": "",
   "summary": {
+    "features": {
+      "asyncify": {
+        "rust": {
+          "total": 10,
+          "succeeded": 10,
+          "failed": 0
+        },
+        "assemblyscript": {
 
-
-
-  "features": {
-
-    "asyncify": {
-      "rust": {
-        "total": 10,
-        "succeeded": 10,
-        "failed": 0
+        }
       },
-      "assemblyscript": {
+      "interface-invoke": {
+        "rust": {
 
+        },
+        "assemblyscript": {
+
+        },
+        "go": {
+
+        }
       }
     },
-    "interface-invoke": {
-      "rust": {
-
-      },
-      "assemblyscript": {
-
-      },
-      "go": {
-
-      }
-    }
-  },
     "assemblyscript": {
       "asyncify": {
         "total": 10,

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -19,36 +19,39 @@ pub struct Job<'a> {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
-pub struct Results<'a> {
-    pub version: &'a str,
-    pub info: HashMap<&'a str, HashMap<String, Summary>>
-}
-
-impl Results<'_> {
-    pub fn new() -> Results<'static> {
-        Results {
-            version: "1",
-            info: HashMap::new()
-        }
-    }
+pub struct Results {
+    pub version: String,
+    pub info: HashMap<String, HashMap<String, Summary>>
 }
 
 type RawResult<'a> = Vec<Job<'a>>;
 
-pub fn get_summary(path: PathBuf) -> Summary {
-    let info = fs::read(path).unwrap();
-    let result_str: String = String::from_utf8_lossy(&info).parse().unwrap();
-    let result: RawResult = serde_json::from_str(result_str.as_str()).unwrap();
-
-
-    result.iter().fold(Summary::default(),|mut acc, r| {
-        acc.total += 1;
-        match r.status {
-            "SUCCEED" => acc.succeeded += 1,
-            _ => acc.failed += 1
+impl Results {
+    pub fn new() -> Results {
+        Results {
+            version: "1".to_string(),
+            info: HashMap::new()
         }
+    }
 
-        acc
-    })
+    pub fn process(path: PathBuf) -> Summary {
+        // let file = File::open(path).unwrap();
+        // let reader = BufReader::new(file);
+        // let result: RawResult = serde_json::from_reader(reader).unwrap();
 
+        let info = fs::read(path).unwrap();
+        let result_str: String = String::from_utf8_lossy(&info).parse().unwrap();
+        let result: RawResult = serde_json::from_str(result_str.as_str()).unwrap();
+
+
+        result.iter().fold(Summary::default(),|mut acc, r| {
+            acc.total += 1;
+            match r.status {
+                "SUCCEED" => acc.succeeded += 1,
+                _ => acc.failed += 1
+            }
+
+            acc
+        })
+    }
 }
