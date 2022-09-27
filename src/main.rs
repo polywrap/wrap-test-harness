@@ -3,22 +3,30 @@ extern crate core;
 mod generator;
 mod constants;
 mod result;
+mod engine;
 
-use std::{fs, io};
+use std::{env, fs, io};
 use std::collections::HashMap;
 use std::path::Path;
 use std::process::Command;
-use crate::constants::IMPLEMENTATIONS;
+use crate::engine::{Engine, Executor};
 
-use crate::generator::{Generator, Results};
-use crate::result::{get_summary};
+use crate::generator::{Generator};
+use crate::result::{get_summary,Results};
 
-const BUILD_FOLDER: &str = "build";
-const TEST_FOLDER: &str = "tests";
+static BUILD_FOLDER: &str = "build";
+static TEST_FOLDER: &str = "tests";
 
 fn main() -> io::Result<()> {
     let dest_path = Path::new(BUILD_FOLDER);
     let source_path = Path::new(TEST_FOLDER);
+
+    let mut args = env::args();
+    args.next();
+    let case_name = match args.next() {
+        Some(arg) => arg,
+        None => String::new()
+    };
 
     match fs::create_dir(BUILD_FOLDER) {
         Err(_) => {
@@ -29,121 +37,31 @@ fn main() -> io::Result<()> {
     }
 
     let generator = Generator::new(dest_path, source_path);
-    let mut results = Results {
-        version: "1",
-        info: HashMap::new()
-    };
+    let mut engine = Engine::new();
 
-    for entry in fs::read_dir(&source_path)? {
-        let file_name = &entry?.file_name();
-        println!("Generating test case: {}", &file_name.to_str().unwrap());
-        generator.generate_project(&file_name.to_str().unwrap()).unwrap();
-    }
-
-    for entry in fs::read_dir(&source_path)? {
-        let file_name = &entry?.file_name();
-        let wrapper_path = dest_path.join(&file_name).join("implementations");
-        for implementation in fs::read_dir(&wrapper_path)? {
-            let dir = &wrapper_path.join(implementation.as_ref().unwrap().file_name());
-            println!(
-                "Building implementation: {} in test case {}",
-                implementation.as_ref().unwrap().file_name().to_str().unwrap(),
-                file_name.to_str().unwrap()
-            );
-            let mut install = Command::new("yarn");
-            install.current_dir(dir.canonicalize().unwrap());
-            match install.output() {
-                Ok(t) => {
-                    let error = String::from_utf8(t.stderr).unwrap();
-                    if error.len() == 0 {
-                        // TODO: Return error instead of panicking
-                        dbg!(error);
-                        // panic!("Error installing packages")
-                    }
-
-                    let message = String::from_utf8(t.stdout).unwrap();
-                    println!("Message from installation");
-                    dbg!(message);
-
-                    let mut build = Command::new("npx");
-                    build.current_dir(dir.canonicalize().unwrap());
-                    build.arg("../../../../../monorepo/packages/cli/bin/polywrap build --strategy=vm");
-
-                    match build.output() {
-                        Ok(t) => {
-                            let error = String::from_utf8(t.stderr).unwrap();
-                            if error.len() == 0 {
-                                // TODO: Return error instead of panicking
-                                dbg!(error);
-                                // panic!("Error installing packages")
-                            }
-                            let message = String::from_utf8(t.stdout).unwrap();
-                            println!("Message from build");
-                            dbg!(message);
-                            t.status.success()
-                        }
-                        Err(e) => {
-                            dbg!(e);
-                            false
-                        }
-                    };
-
-                }
-                Err(r) => {
-                    // TODO: Return error instead of panicking
-                    panic!("Error on installation of packages");
-                }
-            };
+    if case_name.is_empty() {
+        for entry in fs::read_dir(&source_path)? {
+            let file_name = &entry?.file_name();
+            println!("Generating test case: {}", &file_name.to_str().unwrap());
+            generator.generate_project(&file_name.to_str().unwrap()).unwrap();
         }
-    }
 
-    for entry in fs::read_dir(&source_path)? {
-        let file_name = entry?.file_name();
-        let wrapper_path = dest_path.join(&file_name).join("implementations");
-        for implementation in fs::read_dir(&wrapper_path)? {
-            let impl_path = implementation.as_ref().unwrap();
-            let dir = &wrapper_path.join(&impl_path.file_name());
-            let case = String::from(file_name.to_str().unwrap());
-            println!(
-                "Testing implementation: {} in case {}",
-                impl_path.file_name().to_str().unwrap(),
-                case
-            );
-            let mut build = Command::new("npx");
-            build.current_dir(dir.canonicalize().unwrap());
-            build
-                .arg("polywrap").arg("run")
-                .arg("-m").arg("../../polywrap.test.yaml")
-                .arg("-o").arg("./output.json");
-
-            let custom_config = wrapper_path.join("../client-config.ts").exists();
-            if custom_config {
-                build.arg("-c").arg("../../client-config.ts");
-            }
-
-            let status = match build.output() {
-                Ok(t) => {
-                    let results_dir = dir.join("output.json");
-                    let summary = get_summary(results_dir);
-
-                    let impl_path = implementation.as_ref().unwrap();
-                    let impl_name = IMPLEMENTATIONS.get(impl_path.file_name().to_str().unwrap()).unwrap().name;
-
-                    let case_summary = results.info.entry(impl_name).or_default();
-                    case_summary.insert(case, summary);
-
-                    dbg!(&results);
-
-                    t.status.success()
-                }
-                Err(e) => {
-                    dbg!(e);
-                    false
-                }
-            };
-            dbg!(status);
+        for entry in fs::read_dir(&source_path)? {
+            let file_name = &entry?.file_name();
+            &engine.set_case(dest_path, file_name.to_str().unwrap());
+            engine.execute(Executor::Build);
         }
+
+        for _ in fs::read_dir(&source_path)? {
+            engine.execute(Executor::Run);
+        }
+        Ok(())
     }
+
+    generator.generate_project(case_name.as_str()).unwrap();
+    &engine.set_case(dest_path, case_name.as_str());
+    engine.execute(Executor::Build);
+    engine.execute(Executor::Run);
 
     Ok(())
 }

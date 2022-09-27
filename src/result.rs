@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
@@ -17,10 +18,24 @@ pub struct Job<'a> {
     error: Option<Value>
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
+pub struct Results<'a> {
+    pub version: &'a str,
+    pub info: HashMap<&'a str, HashMap<String, Summary>>
+}
+
+impl Results<'_> {
+    pub fn new() -> Results<'static> {
+        Results {
+            version: "1",
+            info: HashMap::new()
+        }
+    }
+}
+
 type RawResult<'a> = Vec<Job<'a>>;
 
 pub fn get_summary(path: PathBuf) -> Summary {
-    // TODO: Use from reader
     let info = fs::read(path).unwrap();
     let result_str: String = String::from_utf8_lossy(&info).parse().unwrap();
     let result: RawResult = serde_json::from_str(result_str.as_str()).unwrap();
