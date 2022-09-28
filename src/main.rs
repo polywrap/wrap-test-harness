@@ -26,30 +26,28 @@ fn main() -> io::Result<()> {
         None => String::new()
     };
 
-    // match fs::create_dir(BUILD_FOLDER) {
-    //     Err(_) => {
-    //         fs::remove_dir_all(BUILD_FOLDER)?;
-    //         fs::create_dir(BUILD_FOLDER)?;
-    //     }
-    //     _ => {}
-    // }
+    match fs::create_dir(BUILD_FOLDER) {
+        Err(_) => {
+            fs::remove_dir_all(BUILD_FOLDER)?;
+            fs::create_dir(BUILD_FOLDER)?;
+        }
+        _ => {}
+    }
 
     let generator = Generator::new(dest_path, source_path);
     let mut engine = Engine::new();
-
-    let mut result = Results::new();
 
     if case_name.is_empty() {
         for entry in fs::read_dir(&source_path)? {
             let file_name = &entry?.file_name();
             println!("Generating test case: {}", &file_name.to_str().unwrap());
-            // generator.generate_project(&file_name.to_str().unwrap()).unwrap();
+            generator.generate_project(&file_name.to_str().unwrap()).unwrap();
         }
 
         for entry in fs::read_dir(&source_path)? {
             let file_name = &entry?.file_name();
             engine.set_case(dest_path, file_name.to_str().unwrap());
-            // engine.execute(Executor::Build);
+            engine.execute(Executor::Build);
         }
 
         for _ in fs::read_dir(&source_path)? {
@@ -58,9 +56,9 @@ fn main() -> io::Result<()> {
         return Ok(());
     }
 
-    // generator.generate_project(case_name.as_str()).unwrap();
+    generator.generate_project(case_name.as_str()).unwrap();
     engine.set_case(dest_path, case_name.as_str());
-    // engine.execute(Executor::Build);
+    engine.execute(Executor::Build);
     engine.execute(Executor::Run);
 
     Ok(())
