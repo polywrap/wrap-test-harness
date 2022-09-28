@@ -1,0 +1,17 @@
+{
+  "name": "invalid-type",
+  "validation": "./validator.cue",
+  "jobs": {
+    "invalidBoolIntSent": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "boolMethod",
+          "args": {
+            "arg": 10
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "map-type",
+  "jobs": {
+    "parse": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "returnMap",
+          "args": {
+            "map": {
+              "Hello": 1,
+              "Heyo": 50
+            }
+          }
+        }
+      ]
+    }
+  }
+}

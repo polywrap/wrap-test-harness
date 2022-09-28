@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "feature-summary": {
+    "asyncify": {
+      "rust": {
+        "passed": true,
+        "stats": {
+          "total": 10,
+          "succeeded": 10,
+          "failed": 0
+        }
+      },
+      "assemblyscript": {
+        "passed": true,
+        "stats": {}
+      },
+      "go": {
+        "passed": false,
+        "stats": {}
+      }
+    },
+    "interface-invoke": {
+      "assemblyscript": {
+        "passed": true,
+        "stats": {}
+      },
+      "rust": {
+        "passed": true,
+        "stats": {}
+      }
+    }
+  },
+  "implementation-summary": {
+    "assemblyscript": {
+      "asyncify": {
+        "passed": true,
+        "stats": {}
+      },
+      "bigint-type": {
+        "passed": true,
+        "stats": {}
+      },
+      "object-type": {
+        "passed": true,
+        "stats": {}
+      }
+    },
+    "rust": {
+      "asyncify": {},
+      "bigint-type": {},
+      "object-type": {}
+    },
+    "go": {
+      "asyncify": {},
+      "bigint-type": {},
+      "object-type": {}
+    }
+  }
+}

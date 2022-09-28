@@ -1,0 +1,17 @@
+{
+  "name": "numbers-type",
+  "jobs": {
+    "parse": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "i8Method",
+          "args": {
+            "first": -129,
+            "second": 10
+          }
+        }
+      ]
+    }
+  }
+}

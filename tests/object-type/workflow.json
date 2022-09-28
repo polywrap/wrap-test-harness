@@ -1,0 +1,21 @@
+{
+  "name": "map-type",
+  "jobs": {
+    "parse": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "method1",
+          "args": {
+            "arg1": {
+              "prop": "arg1 prop",
+              "nested": {
+                "prop": "arg1 nested prop"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

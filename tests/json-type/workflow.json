@@ -1,0 +1,24 @@
+{
+  "name": "json-type",
+  "jobs": {
+    "parse": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "parse",
+          "args": {
+            "arg": {
+              "foo": "foo",
+              "bar": "bar"
+            }
+          }
+        },
+        {
+          "uri": "wrap://fs/./build",
+          "method": "stringify",
+          "args": "{'arg': { 'foo': 'foo', 'bar': 'bar' } }"
+        }
+      ]
+    }
+  }
+}

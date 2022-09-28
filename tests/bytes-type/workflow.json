@@ -1,0 +1,18 @@
+{
+  "name": "bytes-type",
+  "jobs": {
+    "method": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "bytesMethod",
+          "args": {
+            "arg": {
+              "prop": "abcd"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
@@ -7,7 +6,6 @@ use serde_json;
 use serde_yaml;
 use serde::{Deserialize, Serialize};
 use crate::constants::{Implementation, IMPLEMENTATIONS};
-use crate::result::Summary;
 
 
 const CUSTOM_MANIFEST: &str = "polywrap.json";
@@ -97,11 +95,6 @@ impl Manifest {
         }
     }
 }
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
-pub struct Results<'a> {
-    pub version: &'a str,
-    pub info: HashMap<&'a str, HashMap<String, Summary>>
-}
 
 pub struct Generator<'a> {
     pub dest_path: &'a Path,
@@ -145,7 +138,7 @@ impl Generator<'_> {
         self.generate_test_manifest(project_name).unwrap();
         // Copy schema to implementation folder
         self.generate_schema(project_name).unwrap();
-        self.generate_dependency_file(project_name).unwrap();
+        self.generate_implementation_files(project_name).unwrap();
 
         Ok(())
     }
@@ -177,7 +170,7 @@ impl Generator<'_> {
         Ok(())
     }
 
-    pub fn generate_dependency_file(&self, project_name: &str) -> Result<(), ()> {
+    pub fn generate_implementation_files(&self, project_name: &str) -> Result<(), ()> {
         let dest_implementation_folder = &self.dest_path.join(project_name).join("implementations");
         fs::create_dir(dest_implementation_folder).unwrap();
         let template_implementation_folder = &self.source_path.join(project_name).join("implementations");
@@ -216,10 +209,9 @@ impl Generator<'_> {
                 file.file_name().eq(CUSTOM_MANIFEST)
             });
 
-            let  mut manifest = Manifest::default(project_name, implementation_info);
+            let mut manifest = Manifest::default(project_name, implementation_info);
             match index {
                 Some(i) => {
-                    // Open the file in read-only mode with buffer.
                     let file = File::open(root_files[i].path()).unwrap();
                     let reader = BufReader::new(file);
                     let custom_manifest: Manifest = serde_json::from_reader(reader).unwrap();
