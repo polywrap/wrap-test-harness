@@ -50,7 +50,9 @@ fn main() -> io::Result<()> {
             engine.execute(Executor::Build);
         }
 
-        for _ in fs::read_dir(&source_path)? {
+        for entry in fs::read_dir(&source_path)? {
+            let file_name = &entry?.file_name();
+            engine.set_case(dest_path, file_name.to_str().unwrap());
             engine.execute(Executor::Run);
         }
         return Ok(());

@@ -28,6 +28,11 @@
         "passed": true,
         "stats": {}
       }
+    },
+    "bigint-type": {
+      "assemblycript": {},
+      "rust": {},
+      "go": {}
     }
   },
   "implementation-summary": {
