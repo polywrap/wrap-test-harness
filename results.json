@@ -1,115 +1,7 @@
 {
   "version": 1,
   "info": {
-    "object-type": {
-      "assemblyscript": {
-        "stats": {
-          "total": 1,
-          "succeeded": 1,
-          "failed": 0
-        },
-        "passed": true
-      },
-      "rust": {
-        "stats": {
-          "total": 1,
-          "succeeded": 1,
-          "failed": 0
-        },
-        "passed": true
-      }
-    },
-    "bigint-type": {
-      "assemblyscript": {
-        "stats": {
-          "total": 1,
-          "succeeded": 1,
-          "failed": 0
-        },
-        "passed": true
-      },
-      "rust": {
-        "stats": {
-          "total": 1,
-          "succeeded": 1,
-          "failed": 0
-        },
-        "passed": true
-      }
-    },
-    "bignumber-type": {
-      "assemblyscript": {
-        "stats": {
-          "total": 1,
-          "succeeded": 1,
-          "failed": 0
-        },
-        "passed": true
-      },
-      "rust": {
-        "stats": {
-          "total": 1,
-          "succeeded": 1,
-          "failed": 0
-        },
-        "passed": true
-      }
-    },
-    "bytes-type": {
-      "assemblyscript": {
-        "stats": {
-          "total": 1,
-          "succeeded": 0,
-          "failed": 1
-        },
-        "passed": false
-      },
-      "rust": {
-        "stats": {
-          "total": 1,
-          "succeeded": 0,
-          "failed": 1
-        },
-        "passed": false
-      }
-    },
-    "map-type": {
-      "rust": {
-        "stats": {
-          "total": 1,
-          "succeeded": 0,
-          "failed": 1
-        },
-        "passed": false
-      },
-      "assemblyscript": {
-        "stats": {
-          "total": 1,
-          "succeeded": 0,
-          "failed": 1
-        },
-        "passed": false
-      }
-    },
-    "enum-type": {
-      "rust": {
-        "stats": {
-          "total": 2,
-          "succeeded": 2,
-          "failed": 0
-        },
-        "passed": true
-      },
-      "assemblyscript": {
-        "stats": {
-          "total": 2,
-          "succeeded": 2,
-          "failed": 0
-        },
-        "passed": true
-      }
-    },
-    "large-type": {
+    "invalid-type": {
       "assemblyscript": {
         "stats": {
           "total": 1,
@@ -145,22 +37,58 @@
         "passed": false
       }
     },
-    "asyncify": {
+    "large-type": {
+      "rust": {
+        "stats": {
+          "total": 1,
+          "succeeded": 0,
+          "failed": 1
+        },
+        "passed": false
+      },
       "assemblyscript": {
         "stats": {
-          "total": 7,
-          "succeeded": 7,
+          "total": 1,
+          "succeeded": 0,
+          "failed": 1
+        },
+        "passed": false
+      }
+    },
+    "bigint-type": {
+      "rust": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
           "failed": 0
         },
         "passed": true
       },
-      "rust": {
+      "assemblyscript": {
         "stats": {
-          "total": 7,
-          "succeeded": 7,
+          "total": 1,
+          "succeeded": 1,
           "failed": 0
         },
         "passed": true
+      }
+    },
+    "bytes-type": {
+      "assemblyscript": {
+        "stats": {
+          "total": 1,
+          "succeeded": 0,
+          "failed": 1
+        },
+        "passed": false
+      },
+      "rust": {
+        "stats": {
+          "total": 1,
+          "succeeded": 0,
+          "failed": 1
+        },
+        "passed": false
       }
     },
     "json-type": {
@@ -181,7 +109,61 @@
         "passed": false
       }
     },
-    "invalid-type": {
+    "object-type": {
+      "assemblyscript": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "rust": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
+          "failed": 0
+        },
+        "passed": true
+      }
+    },
+    "enum-type": {
+      "assemblyscript": {
+        "stats": {
+          "total": 2,
+          "succeeded": 2,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "rust": {
+        "stats": {
+          "total": 2,
+          "succeeded": 2,
+          "failed": 0
+        },
+        "passed": true
+      }
+    },
+    "bignumber-type": {
+      "rust": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "assemblyscript": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
+          "failed": 0
+        },
+        "passed": true
+      }
+    },
+    "map-type": {
       "assemblyscript": {
         "stats": {
           "total": 1,
@@ -197,6 +179,24 @@
           "failed": 1
         },
         "passed": false
+      }
+    },
+    "asyncify": {
+      "rust": {
+        "stats": {
+          "total": 7,
+          "succeeded": 7,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "assemblyscript": {
+        "stats": {
+          "total": 7,
+          "succeeded": 7,
+          "failed": 0
+        },
+        "passed": true
       }
     }
   }

@@ -4,117 +4,29 @@ use std::io::BufReader;
 use std::path::Path;
 use serde_json;
 use serde_yaml;
-use serde::{Deserialize, Serialize};
-use crate::constants::{Implementation, IMPLEMENTATIONS};
+use crate::constants::{IMPLEMENTATIONS};
+use crate::manifest::{Manifest,Workflow};
 
 
 const CUSTOM_MANIFEST: &str = "polywrap.json";
 const EXPECTED_FILES: [&str; 3] = ["workflow.json", "schema.graphql", "implementations"];
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-struct Workflow {
-    format: Option<String>,
-    name: Option<String>,
-    jobs: serde_json::Value,
-}
-
-type ImportAbis = Vec<ImportAbi>;
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-struct ImportAbi {
-    uri: String,
-    abi: String,
-}
-
-#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
-struct Project {
-    name: Option<String>,
-    #[serde(rename = "type")]
-    _type: Option<String>,
-}
-
-#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
-struct Source {
-    schema: Option<String>,
-    module: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    import_abis: Option<ImportAbis>,
-}
-
-#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
-struct Manifest {
-    pub format: Option<String>,
-    pub project: Option<Project>,
-    pub source: Option<Source>,
-}
-
-impl Manifest {
-    fn merge(self, custom: Manifest) -> Result<Manifest, ()> {
-        let default_project = self.project.unwrap();
-
-        let project  = match custom.project {
-            Some(p) => Some(Project {
-                name: p.name.or(default_project.name),
-                _type: p._type.or(default_project._type),
-            }),
-            _ => Some(default_project)
-        };
-
-        let default_source = self.source.unwrap();
-        let source = match custom.source {
-            Some(s) => Some(Source {
-                schema: s.schema.or(default_source.schema),
-                module: s.module.or(default_source.module),
-                import_abis: s.import_abis.or(default_source.import_abis)
-            }),
-            _ => Some(default_source)
-        };
-
-        Ok(Self {
-            format: self.format,
-            project,
-            source
-        })
-    }
-
-    pub fn default(
-        project_name: &str,
-        implementation: &Implementation<'_>,
-    ) -> Manifest {
-        Manifest {
-            format: Some("0.2.0".to_string()),
-            project: Some(Project {
-                name: Some(project_name.to_string()),
-                _type: Some(format!("wasm/{}", &implementation.name.to_string())),
-            }),
-            source: Some(Source {
-                schema: Some("../../schema.graphql".to_string()),
-                module: Some(implementation.module.to_string()),
-                import_abis: None,
-            })
-        }
-    }
-}
-
-pub struct Generator<'a> {
+pub struct Generate<'a> {
     pub dest_path: &'a Path,
     pub source_path: &'a Path,
 }
 
-impl Generator<'_> {
-    pub fn new<'a>(
+impl Generate<'_> {
+    pub fn project<'a>(
         dest_path: &'a Path,
         source_path: &'a Path,
-    ) -> Generator<'a> {
-        Generator {
+        feature: &'a str,
+    ) {
+        let generator = Generate {
             dest_path,
             source_path
-        }
-    }
-
-    pub fn generate_project(&self, project_name: &str) -> Result<(), &str> {
-        let project_folder = self.dest_path.join(project_name);
-        let test_folder = self.source_path.join(project_name);
+        };
+        let test_folder = source_path.join(feature);
 
         let files = fs::read_dir(&test_folder).unwrap().map(|directory| {
             let name = directory.unwrap().file_name();
@@ -127,32 +39,28 @@ impl Generator<'_> {
             .collect::<Vec<_>>();
 
         if missing_files.len() > 0 {
-            let error_message = format!("File {} missing from tests: {}", missing_files[0], project_name);
+            let error_message = format!("File {} missing from tests: {}", missing_files[0], feature);
             // TODO: Return Err instead of panicking
             panic!("{}", error_message);
         }
 
-        fs::create_dir(project_folder).unwrap();
-
         // Generate test manifest from workflow
-        self.generate_test_manifest(project_name).unwrap();
+        generator.test_manifest(feature);
         // Copy schema to implementation folder
-        self.generate_schema(project_name).unwrap();
-        self.generate_implementation_files(project_name).unwrap();
-
-        Ok(())
+        generator.schema(feature);
+        generator.implementation_files(feature);
     }
 
-    pub fn generate_test_manifest(&self, project_name: &str) -> Result<(), ()> {
-        let workflow_path = self.source_path.join(project_name).join(EXPECTED_FILES[0]);
+    pub fn test_manifest(&self, feature: &str) {
+        let workflow_path = self.source_path.join(feature).join(EXPECTED_FILES[0]);
         let workflow_str = fs::read_to_string(&workflow_path).unwrap();
         let mut workflow: Workflow = serde_json::from_str(&workflow_str.as_str()).unwrap();
 
         workflow.format = Some(String::from("0.1.0"));
-        workflow.name = Some(String::from(project_name));
+        workflow.name = Some(String::from(feature));
 
         // TODO: Add validation to test manifest from JS
-        let test_manifest_path = self.dest_path.join(project_name).join("polywrap.test.yaml");
+        let test_manifest_path = self.dest_path.join(feature).join("polywrap.test.yaml");
         let f = fs::OpenOptions::new()
             .write(true)
             .create(true)
@@ -160,20 +68,18 @@ impl Generator<'_> {
             .unwrap();
 
         serde_yaml::to_writer(f, &workflow).unwrap();
-        Ok(())
     }
 
-    pub fn generate_schema(&self, project_name: &str) -> Result<(), ()> {
-        let source_path = self.source_path.join(project_name).join("schema.graphql");
-        let dest_path = self.dest_path.join(project_name).join("schema.graphql");
+    pub fn schema(&self, feature: &str) {
+        let source_path = self.source_path.join(feature).join("schema.graphql");
+        let dest_path = self.dest_path.join(feature).join("schema.graphql");
         fs::copy(source_path, dest_path).unwrap();
-        Ok(())
     }
 
-    pub fn generate_implementation_files(&self, project_name: &str) -> Result<(), ()> {
-        let dest_implementation_folder = &self.dest_path.join(project_name).join("implementations");
+    pub fn implementation_files(&self, feature: &str) {
+        let dest_implementation_folder = &self.dest_path.join(feature).join("implementations");
         fs::create_dir(dest_implementation_folder).unwrap();
-        let template_implementation_folder = &self.source_path.join(project_name).join("implementations");
+        let template_implementation_folder = &self.source_path.join(feature).join("implementations");
 
         let implementations = fs::read_dir(template_implementation_folder).unwrap();
         for implementation in implementations {
@@ -209,7 +115,7 @@ impl Generator<'_> {
                 file.file_name().eq(CUSTOM_MANIFEST)
             });
 
-            let mut manifest = Manifest::default(project_name, implementation_info);
+            let mut manifest = Manifest::default(feature, implementation_info);
             match index {
                 Some(i) => {
                     let file = File::open(root_files[i].path()).unwrap();
@@ -241,7 +147,5 @@ impl Generator<'_> {
             }
 
         }
-
-        Ok(())
     }
 }
