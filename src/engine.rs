@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fs;
+use std::fs::read_dir;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use crate::{Results};
@@ -47,7 +48,7 @@ impl Engine {
 
     pub fn execute(&mut self, action: Executor) {
         let wrapper_path = Path::new(
-            &self.source_path.as_str()
+            &self.destination_path.as_str()
         ).join(&self.feature).join("implementations");
         let dir = &wrapper_path.join(&self.implementation);
         match action {
@@ -67,40 +68,50 @@ impl Engine {
                 );
             }
             Executor::Build => {
-                println!(
-                    "Building implementation: {} in test case {}",
-                    &self.implementation,
-                    self.feature
-                );
-                self.build(dir);
+                if !self.implementation.is_empty() {
+                    self.build(dir);
+                } else {
+                    for implementation in read_dir(&wrapper_path).unwrap() {
+                        let dir = &wrapper_path.join(implementation.unwrap().file_name());
+                        self.build(dir);
+                    }
+                }
             }
             Executor::Run => {
-                println!(
-                    "Testing implementation: {} in case {}",
-                    &self.implementation,
-                    self.feature
-                );
-                self.run(dir, &wrapper_path);
+                if !self.implementation.is_empty() {
+                    self.run(dir, &wrapper_path);
+                } else {
+                    for implementation in read_dir(&wrapper_path).unwrap() {
+                        let dir = &wrapper_path.join(implementation.unwrap().file_name());
+                        self.run(dir, &wrapper_path);
+                    }
+                }
             }
         };
     }
 
     pub fn build(&self, dir: &PathBuf) {
+        println!(
+            "Building implementation: {} in test case {}",
+            &self.implementation,
+            self.feature
+        );
         let mut build = Command::new("npx");
         build.current_dir(dir.canonicalize().unwrap());
-        build.arg("../../../../../monorepo/packages/cli/bin/polywrap").arg("build");
+        dbg!(build.get_current_dir().unwrap());
+        build.arg("../../../../../monorepo/packages/cli").arg("build").arg("-v");
 
         match build.output() {
             Ok(t) => {
                 let error = String::from_utf8(t.stderr).unwrap();
                 if !error.is_empty() {
+                    // dbg!(error);
                     // TODO: Return error instead of panicking
-                    dbg!(error);
-                    panic!("Error installing packages")
+                //     panic!("Error installing packages")
                 }
                 let message = String::from_utf8(t.stdout).unwrap();
-                println!("Message from build");
-                dbg!(message);
+                // println!("Message from build");
+                // dbg!(message);
                 t.status.success()
             }
             Err(e) => {
@@ -111,9 +122,11 @@ impl Engine {
     }
 
     pub fn run(&self, dir: &PathBuf, wrapper_path: &PathBuf) {
+        println!("run with wrapper_path: {}", wrapper_path.to_str().unwrap());
         let mut run = Command::new("npx");
+        println!("run with dir: {}", &dir.to_str().unwrap());
         run.current_dir(dir.canonicalize().unwrap());
-        run.arg("../../../../../monorepo/packages/cli/bin/polywrap").arg("run")
+        run.arg("../../../../../monorepo/packages/cli").arg("run")
             .arg("-m").arg("../../polywrap.test.yaml")
             .arg("-o").arg("./output.json");
 
@@ -123,7 +136,11 @@ impl Engine {
         }
 
         match run.output() {
-            Ok(_) => {
+            Ok(t) => {
+                let error = String::from_utf8(t.stderr).unwrap();
+                let message = String::from_utf8(t.stdout).unwrap();
+                dbg!(message);
+                dbg!(error);
                 let impl_path = dir.file_name().unwrap().to_str().unwrap();
                 let feature_name = String::from(wrapper_path.parent().unwrap().file_name().unwrap().to_str().unwrap());
 

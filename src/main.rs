@@ -59,8 +59,8 @@ fn main() -> io::Result<()> {
     engine.set_case(
         destination_path,
         source_path,
+        String::from(feature),
         implementation.to_string(),
-        String::from(feature)
     );
     engine.execute(Executor::Generate);
     engine.execute(Executor::Build);

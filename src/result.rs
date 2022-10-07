@@ -42,7 +42,8 @@ impl Results {
     }
 
     pub fn process(path: PathBuf) -> Summary {
-        let info = fs::read(path).unwrap();
+        dbg!(path.canonicalize().unwrap());
+        let info = fs::read(path.canonicalize().unwrap()).unwrap();
         let result_str: String = String::from_utf8_lossy(&info).parse().unwrap();
         let result: RawResult = serde_json::from_str(result_str.as_str()).unwrap();
 
