@@ -88,7 +88,7 @@ impl Generate<'_> {
                 let imp = implementation.unwrap();
                 let impl_name = &imp.file_name();
                 let source_path = &template_implementation_folder.join(impl_name);
-                let dest_path = &dest_implementation_folder.join(impl_name).join("src");
+                let dest_path = &dest_implementation_folder.join(impl_name);
                 self.create_implementation(
                     source_path,
                     dest_path,
@@ -98,7 +98,7 @@ impl Generate<'_> {
             }
         } else {
             let source_path = &template_implementation_folder.join(implementation);
-            let dest_path = &dest_implementation_folder.join(implementation).join("src");
+            let dest_path = &dest_implementation_folder.join(implementation);
             self.create_implementation(
                 source_path,
                 dest_path,
@@ -118,10 +118,11 @@ impl Generate<'_> {
         // Generate implementation files (i.e: index.ts/lib.rs)
         let files = fs::read_dir(source_path).unwrap();
         for file in files {
-            fs::create_dir_all(destination_path).unwrap();
+            let destination_folder = &destination_path.join("src");
+            fs::create_dir_all(destination_folder).unwrap();
             let name = &file.as_ref().unwrap().file_name();
             let impl_source = source_path.join(name);
-            let impl_dest = destination_path.join(name);
+            let impl_dest = destination_folder.join(name);
             fs::copy(impl_source, impl_dest).unwrap();
         }
 
@@ -168,7 +169,7 @@ impl Generate<'_> {
         serde_yaml::to_writer(f, &manifest).unwrap();
 
         for file in root_files {
-            let dest_file = destination_path.join("../../..").join(file.file_name());
+            let dest_file = destination_path.join("../..").join(file.file_name());
             let source_file = source_path.join("../..").join(file.file_name());
             fs::copy(source_file, dest_file).unwrap();
         }

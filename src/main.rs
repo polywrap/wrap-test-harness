@@ -66,7 +66,7 @@ fn main() -> io::Result<()> {
     );
     engine.execute(Executor::Generate);
     engine.execute(Executor::Build);
-    // engine.execute(Executor::Run);
+    engine.execute(Executor::Run);
 
     Ok(())
 }

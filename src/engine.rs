@@ -85,6 +85,7 @@ impl Engine {
                         self.run(&implementation.unwrap().path());
                     }
                 }
+                Results::show();
             }
         };
     }
@@ -97,20 +98,19 @@ impl Engine {
         );
         let mut build = Command::new("npx");
         build.current_dir(dir.canonicalize().unwrap());
-        dbg!(build.get_current_dir().unwrap());
-        build.arg("../../../../../monorepo/packages/cli").arg("build").arg("-v");
+        build.arg("polywrap").arg("build").arg("-v");
 
         match build.output() {
             Ok(t) => {
                 let error = String::from_utf8(t.stderr).unwrap();
                 if !error.is_empty() {
-                    // dbg!(error);
+                    dbg!(error);
                     // TODO: Return error instead of panicking
                 //     panic!("Error installing packages")
                 }
                 let message = String::from_utf8(t.stdout).unwrap();
                 // println!("Message from build");
-                // dbg!(message);
+                dbg!(message);
                 t.status.success()
             }
             Err(e) => {
@@ -124,7 +124,7 @@ impl Engine {
         let mut run = Command::new("npx");
         println!("run with dir: {}", &dir.to_str().unwrap());
         run.current_dir(dir.canonicalize().unwrap());
-        run.arg("../../../../../monorepo/packages/cli").arg("run")
+        run.arg("polywrap").arg("run")
             .arg("-m").arg("../../polywrap.test.yaml")
             .arg("-o").arg("./output.json");
 
@@ -139,8 +139,9 @@ impl Engine {
                 let message = String::from_utf8(t.stdout).unwrap();
                 dbg!(message);
                 dbg!(error);
+                dbg!(&dir);
                 let impl_path = dir.file_name().unwrap().to_str().unwrap();
-                let feature_name = String::from(dir.join("../..").file_name().unwrap().to_str().unwrap());
+
 
                 let results_dir = dir.join("output.json");
                 let summary = Results::process(results_dir);
@@ -149,13 +150,14 @@ impl Engine {
                 let info_path = Path::new(self.destination_path.as_str())
                     .join("..")
                     .join("results.json");
+                let feature_name = &self.feature;
 
                 // TODO: Remove results.json before this block
                 match fs::read(&info_path) {
                     Ok(f) => {
                         let result_str: String = String::from_utf8_lossy(&f).parse().unwrap();
                         let mut results: Results = serde_json::from_str(result_str.as_str()).unwrap();
-                        results.info.entry(feature_name).or_default().insert(impl_name, summary);
+                        results.info.entry(feature_name.to_string()).or_default().insert(impl_name, summary);
                         let results_file = fs::OpenOptions::new()
                             .write(true)
                             .open(&info_path)
@@ -167,7 +169,7 @@ impl Engine {
                         let summaries = HashMap::from([
                             (impl_name, summary)
                         ]);
-                        results.info.insert(feature_name, summaries);
+                        results.info.insert(feature_name.to_string(), summaries);
                         let results_file = fs::OpenOptions::new()
                             .write(true)
                             .create(true)
@@ -178,6 +180,7 @@ impl Engine {
                 };
             }
             Err(e) => {
+                println!("??");
                 dbg!(e);
             }
         };

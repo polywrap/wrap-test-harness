@@ -30,21 +30,15 @@ pub struct SanitizedArgs {
 pub fn handle_args() -> SanitizedArgs {
     let args = Args::parse();
 
-    let mut implementation = String::new();
-    if let Some(i) = args.implementation.as_deref() {
-        implementation = i.to_string();
-    }
-
-    let mut feature = String::new();
-    if let Some(f) = args.feature.as_deref() {
-        feature = f.to_string();
-    }
+    let implementation = args.implementation.unwrap_or_else(|| String::new());
+    let feature = args.feature.unwrap_or_else(|| String::new());
 
     match fs::create_dir(BUILD_FOLDER) {
         Err(_) => {
             if args.reset {
                 fs::remove_dir_all(BUILD_FOLDER).unwrap();
                 fs::create_dir(BUILD_FOLDER).unwrap();
+                fs::remove_file("results.json").unwrap_or_default()
             }
         }
         _ => {}

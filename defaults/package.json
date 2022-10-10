@@ -2,7 +2,7 @@
   "name": "test-cases-default",
   "private": true,
   "dependencies": {
-    "@polywrap/wasm-as": "0.8.0",
+    "@polywrap/wasm-as": "0.9.0",
     "assemblyscript": "0.19.5"
   }
 }
