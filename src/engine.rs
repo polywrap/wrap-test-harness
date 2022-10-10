@@ -65,6 +65,7 @@ impl Engine {
                     destination_path,
                     Path::new(self.source_path.as_str()),
                     self.feature.as_str(),
+                    self.implementation.as_str()
                 );
             }
             Executor::Build => {
@@ -72,18 +73,16 @@ impl Engine {
                     self.build(dir);
                 } else {
                     for implementation in read_dir(&wrapper_path).unwrap() {
-                        let dir = &wrapper_path.join(implementation.unwrap().file_name());
-                        self.build(dir);
+                        self.build(&implementation.unwrap().path());
                     }
                 }
             }
             Executor::Run => {
                 if !self.implementation.is_empty() {
-                    self.run(dir, &wrapper_path);
+                    self.run(dir);
                 } else {
                     for implementation in read_dir(&wrapper_path).unwrap() {
-                        let dir = &wrapper_path.join(implementation.unwrap().file_name());
-                        self.run(dir, &wrapper_path);
+                        self.run(&implementation.unwrap().path());
                     }
                 }
             }
@@ -121,8 +120,7 @@ impl Engine {
         };
     }
 
-    pub fn run(&self, dir: &PathBuf, wrapper_path: &PathBuf) {
-        println!("run with wrapper_path: {}", wrapper_path.to_str().unwrap());
+    pub fn run(&self, dir: &PathBuf) {
         let mut run = Command::new("npx");
         println!("run with dir: {}", &dir.to_str().unwrap());
         run.current_dir(dir.canonicalize().unwrap());
@@ -130,7 +128,7 @@ impl Engine {
             .arg("-m").arg("../../polywrap.test.yaml")
             .arg("-o").arg("./output.json");
 
-        let custom_config = wrapper_path.join("../client-config.ts").exists();
+        let custom_config = dir.join("../../client-config.ts").exists();
         if custom_config {
             run.arg("-c").arg("../../client-config.ts");
         }
@@ -142,7 +140,7 @@ impl Engine {
                 dbg!(message);
                 dbg!(error);
                 let impl_path = dir.file_name().unwrap().to_str().unwrap();
-                let feature_name = String::from(wrapper_path.parent().unwrap().file_name().unwrap().to_str().unwrap());
+                let feature_name = String::from(dir.join("../..").file_name().unwrap().to_str().unwrap());
 
                 let results_dir = dir.join("output.json");
                 let summary = Results::process(results_dir);

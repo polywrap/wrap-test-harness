@@ -23,6 +23,7 @@ fn main() -> io::Result<()> {
     let implementation = &sanitized_args.implementation;
     let mut engine = Engine::new();
 
+    // Engine::execute
     if feature.is_empty() {
         for entry in fs::read_dir(&source_path)? {
             engine.set_case(
@@ -35,6 +36,7 @@ fn main() -> io::Result<()> {
         }
 
         for entry in fs::read_dir(&source_path)? {
+            dbg!(entry.as_ref().unwrap());
             engine.set_case(
                 destination_path,
                 source_path,
@@ -53,7 +55,7 @@ fn main() -> io::Result<()> {
             );
             engine.execute(Executor::Run);
         }
-        return Ok(());
+        return Ok(())
     }
 
     engine.set_case(
@@ -64,7 +66,7 @@ fn main() -> io::Result<()> {
     );
     engine.execute(Executor::Generate);
     engine.execute(Executor::Build);
-    engine.execute(Executor::Run);
+    // engine.execute(Executor::Run);
 
     Ok(())
 }

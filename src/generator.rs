@@ -1,7 +1,7 @@
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use serde_json;
 use serde_yaml;
 use crate::constants::{IMPLEMENTATIONS};
@@ -21,6 +21,7 @@ impl Generate<'_> {
         dest_path: &'a Path,
         source_path: &'a Path,
         feature: &'a str,
+        implementation: &'a str
     ) {
         let generator = Generate {
             dest_path,
@@ -48,7 +49,7 @@ impl Generate<'_> {
         generator.test_manifest(feature);
         // Copy schema to implementation folder
         generator.schema(feature);
-        generator.implementation_files(feature);
+        generator.implementation_files(feature, implementation);
     }
 
     pub fn test_manifest(&self, feature: &str) {
@@ -76,76 +77,100 @@ impl Generate<'_> {
         fs::copy(source_path, dest_path).unwrap();
     }
 
-    pub fn implementation_files(&self, feature: &str) {
+    pub fn implementation_files(&self, feature: &str, implementation: &str) {
         let dest_implementation_folder = &self.dest_path.join(feature).join("implementations");
-        fs::create_dir(dest_implementation_folder).unwrap();
         let template_implementation_folder = &self.source_path.join(feature).join("implementations");
+        fs::create_dir(dest_implementation_folder).unwrap();
 
-        let implementations = fs::read_dir(template_implementation_folder).unwrap();
-        for implementation in implementations {
-            let imp = implementation.unwrap();
-            let impl_name = &imp.file_name();
-            let source_path = &template_implementation_folder.join(impl_name);
-            let dest_path = &dest_implementation_folder.join(impl_name).join("src");
-
-            // Generate implementation files (i.e: index.ts/lib.rs)
-            let files = fs::read_dir(source_path).unwrap();
-            for file in files {
-                fs::create_dir_all(dest_path).unwrap();
-                let name = &file.as_ref().unwrap().file_name();
-                let impl_source = source_path.join(name);
-                let impl_dest = dest_path.join(name);
-                fs::copy(impl_source, impl_dest).unwrap();
+        if implementation.is_empty() {
+            let implementations = fs::read_dir(template_implementation_folder).unwrap();
+            for implementation in implementations {
+                let imp = implementation.unwrap();
+                let impl_name = &imp.file_name();
+                let source_path = &template_implementation_folder.join(impl_name);
+                let dest_path = &dest_implementation_folder.join(impl_name).join("src");
+                self.create_implementation(
+                    source_path,
+                    dest_path,
+                    feature,
+                    impl_name.to_str().unwrap()
+                )
             }
+        } else {
+            let source_path = &template_implementation_folder.join(implementation);
+            let dest_path = &dest_implementation_folder.join(implementation).join("src");
+            self.create_implementation(
+                source_path,
+                dest_path,
+                feature,
+                implementation
+            )
+        }
+    }
 
-            // Generate dependency files (i.e: package.json/Cargo.toml)
-            let defaults_folder = self.source_path.join("..").join("defaults");
-            let implementation_info = IMPLEMENTATIONS.get(impl_name.to_str().unwrap()).unwrap();
-            let dependencies_source = defaults_folder.join(&implementation_info.dependency);
-            let dependencies_dest = dest_implementation_folder.join(impl_name).join(&implementation_info.dependency);
-            fs::copy(dependencies_source, dependencies_dest).unwrap();
+    fn create_implementation(
+        &self,
+        source_path: &PathBuf,
+        destination_path: &PathBuf,
+        feature: &str,
+        implementation: &str,
+    ) {
+        // Generate implementation files (i.e: index.ts/lib.rs)
+        let files = fs::read_dir(source_path).unwrap();
+        for file in files {
+            fs::create_dir_all(destination_path).unwrap();
+            let name = &file.as_ref().unwrap().file_name();
+            let impl_source = source_path.join(name);
+            let impl_dest = destination_path.join(name);
+            fs::copy(impl_source, impl_dest).unwrap();
+        }
 
-            let root = template_implementation_folder.join("..");
-            let mut root_files = fs::read_dir(root).unwrap().into_iter().filter(
-                |file| !EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
-            ).map(|entry| entry.unwrap()).collect::<Vec<_>>();
+        // Generate dependency files (i.e: package.json/Cargo.toml)
+        let defaults_folder = self.source_path.join("..").join("defaults");
+        let implementation_info = IMPLEMENTATIONS.get(implementation).unwrap();
+        let dependencies_source = defaults_folder.join(&implementation_info.dependency);
+        let dependencies_dest = destination_path.join(&implementation_info.dependency);
+        fs::copy(dependencies_source, dependencies_dest).unwrap();
 
-            // Generate polywrap manifest (i.e: polywrap.yaml)
-            let index = root_files.iter().position(|file| {
-                file.file_name().eq(CUSTOM_MANIFEST)
-            });
+        let root = source_path.join("..").join("..");
+        let mut root_files = fs::read_dir(root).unwrap().into_iter().filter(
+            |file| !EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
+        ).map(|entry| entry.unwrap()).collect::<Vec<_>>();
 
-            let mut manifest = Manifest::default(feature, implementation_info);
-            match index {
-                Some(i) => {
-                    let file = File::open(root_files[i].path()).unwrap();
-                    let reader = BufReader::new(file);
-                    let custom_manifest: Manifest = serde_json::from_reader(reader).unwrap();
+        // Generate polywrap manifest (i.e: polywrap.yaml)
+        let index = root_files.iter().position(|file| {
+            file.file_name().eq(CUSTOM_MANIFEST)
+        });
 
-                    manifest = manifest.merge(custom_manifest).unwrap();
-                    // TODO: Validate manifest
+        let mut manifest = Manifest::default(feature, implementation_info);
+        match index {
+            Some(i) => {
+                let file = File::open(root_files[i].path()).unwrap();
+                let reader = BufReader::new(file);
+                let custom_manifest: Manifest = serde_json::from_reader(reader).unwrap();
 
-                    root_files = root_files.into_iter().filter(|file| {
-                        return !file.file_name().eq(CUSTOM_MANIFEST);
-                    }).collect::<Vec<_>>();
-                }
-                _ => {}
+                manifest = manifest.merge(custom_manifest).unwrap();
+                // TODO: Validate manifest
+
+                root_files = root_files.into_iter().filter(|file| {
+                    return !file.file_name().eq(CUSTOM_MANIFEST);
+                }).collect::<Vec<_>>();
             }
+            _ => {}
+        }
 
-            let manifest_path = dest_implementation_folder.join(impl_name).join("polywrap.yaml");
-            let f = fs::OpenOptions::new()
-                .write(true)
-                .create(true)
-                .open(&manifest_path)
-                .unwrap();
-            serde_yaml::to_writer(f, &manifest).unwrap();
+        let manifest_path = destination_path.join("polywrap.yaml");
+        let f = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&manifest_path)
+            .unwrap();
+        serde_yaml::to_writer(f, &manifest).unwrap();
 
-            for file in root_files {
-                let dest_file = dest_implementation_folder.join("..").join(file.file_name());
-                let source_file = template_implementation_folder.join("..").join(file.file_name());
-                fs::copy(source_file, dest_file).unwrap();
-            }
-
+        for file in root_files {
+            let dest_file = destination_path.join("../../..").join(file.file_name());
+            let source_file = source_path.join("../..").join(file.file_name());
+            fs::copy(source_file, dest_file).unwrap();
         }
     }
 }

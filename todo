@@ -2,3 +2,6 @@
 - support docker vm build strategy
 - arguments with named instead of order
 - all workflow must be green
+- show results in cli
+- verbosity should be modifiable
+- order results per implementation OR feature
