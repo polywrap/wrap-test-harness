@@ -4,7 +4,6 @@ use std::fs::read_dir;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use crate::{Results};
-use crate::constants::IMPLEMENTATIONS;
 use crate::generator::Generate;
 use serde::{Deserialize, Serialize};
 
@@ -98,7 +97,7 @@ impl Engine {
         );
         let mut build = Command::new("npx");
         build.current_dir(dir.canonicalize().unwrap());
-        build.arg("polywrap").arg("build").arg("-v");
+        build.arg("../../../../../monorepo/packages/cli").arg("build").arg("-v");
 
         match build.output() {
             Ok(t) => {
@@ -122,9 +121,8 @@ impl Engine {
 
     pub fn run(&self, dir: &PathBuf) {
         let mut run = Command::new("npx");
-        println!("run with dir: {}", &dir.to_str().unwrap());
         run.current_dir(dir.canonicalize().unwrap());
-        run.arg("polywrap").arg("run")
+        run.arg("../../../../../monorepo/packages/cli").arg("run")
             .arg("-m").arg("../../polywrap.test.yaml")
             .arg("-o").arg("./output.json");
 
@@ -140,24 +138,22 @@ impl Engine {
                 dbg!(message);
                 dbg!(error);
                 dbg!(&dir);
-                let impl_path = dir.file_name().unwrap().to_str().unwrap();
+                let impl_name = dir.file_name().unwrap().to_str().unwrap();
 
 
                 let results_dir = dir.join("output.json");
                 let summary = Results::process(results_dir);
 
-                let impl_name = IMPLEMENTATIONS.get(impl_path).unwrap().name.to_string();
                 let info_path = Path::new(self.destination_path.as_str())
                     .join("..")
                     .join("results.json");
                 let feature_name = &self.feature;
 
-                // TODO: Remove results.json before this block
                 match fs::read(&info_path) {
                     Ok(f) => {
                         let result_str: String = String::from_utf8_lossy(&f).parse().unwrap();
                         let mut results: Results = serde_json::from_str(result_str.as_str()).unwrap();
-                        results.info.entry(feature_name.to_string()).or_default().insert(impl_name, summary);
+                        results.info.entry(impl_name.to_string()).or_default().insert(feature_name.to_string(), summary);
                         let results_file = fs::OpenOptions::new()
                             .write(true)
                             .open(&info_path)
@@ -167,9 +163,9 @@ impl Engine {
                     Err(_) => {
                         let mut results = Results::new();
                         let summaries = HashMap::from([
-                            (impl_name, summary)
+                            (feature_name.to_string(), summary)
                         ]);
-                        results.info.insert(feature_name.to_string(), summaries);
+                        results.info.insert(impl_name.to_string(), summaries);
                         let results_file = fs::OpenOptions::new()
                             .write(true)
                             .create(true)
@@ -180,7 +176,6 @@ impl Engine {
                 };
             }
             Err(e) => {
-                println!("??");
                 dbg!(e);
             }
         };

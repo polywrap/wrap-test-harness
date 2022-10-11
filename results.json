@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "info": {
+    "rs": {
+      "bigint-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "bignumber-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "asyncify": {
+        "stats": {
+          "total": 7,
+          "succeeded": 7,
+          "failed": 0
+        },
+        "passed": true
+      }
+    },
+    "as": {
+      "bignumber-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "asyncify": {
+        "stats": {
+          "total": 7,
+          "succeeded": 7,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "bigint-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
+          "failed": 0
+        },
+        "passed": true
+      }
+    }
+  }
+}

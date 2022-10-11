@@ -5,8 +5,7 @@ use std::io::BufReader;
 use std::path::{PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value};
-use cli_table::{format::Justify, print_stdout, Cell, Style, Table};
-use serde_json::Value::Object;
+use cli_table::{format::Justify, print_stdout, Cell, Style, Table, CellStruct};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, Copy)]
 pub struct Summary {
@@ -40,16 +39,15 @@ pub struct Results {
 
 type RawResult<'a> = Vec<Job<'a>>;
 
-#[derive(Debug)]
 pub struct TableResults {
-    titles: Vec<String>,
-    descriptions: Vec<Vec<String>>,
+    pub titles: Vec<CellStruct>,
+    pub descriptions: Vec<Vec<CellStruct>>,
 }
 
 impl TableResults {
     pub fn new() -> Self {
         Self {
-            titles: vec![String::from("features")],
+            titles: vec!["features".cell()],
             descriptions: vec![]
         }
     }
@@ -91,26 +89,24 @@ impl Results {
         let reader = BufReader::new(file);
         let results: Results = serde_json::from_reader(reader).unwrap();
 
-        let mut new_info: HashMap<String, HashMap<String, bool>> = HashMap::new();
+        let mut table_results = TableResults::new();
 
-        for (feature, summary) in results.info.iter() {
-           for implementation in summary.keys() {
-                new_info.entry(implementation.to_string()).or_default().insert(feature.to_string(), summary[implementation].passed);
+        for (implementation, summary) in results.info.iter() {
+            table_results.titles.push(implementation.cell());
+            let mut features: Vec<String> = summary.keys().map(|s| s.to_string()).collect::<Vec<String>>();
+            features.sort();
+            for (index, feature) in features.iter().enumerate() {
+                match table_results.descriptions.get_mut(index) {
+                    None => {
+                        table_results.descriptions.push(vec![(&feature).cell()]);
+                        table_results.descriptions.get_mut(index).unwrap().push(summary[feature].passed.cell());
+                    },
+                    Some(d) => d.push(summary[feature].passed.cell())
+                }
             };
         }
 
-        dbg!(&new_info);
-        let implementations = new_info.into_keys().collect::<Vec<String>>();
-        let mut table_results = TableResults::new();
-
-
-        implementations.iter().enumerate().map(|(index, implementation)| {
-            // let implementation_index =
-            // new_info.get(implementation);
-        });
-
-        table_results.titles = implementations;
-
-
+        let table = table_results.descriptions.table().title(table_results.titles);
+        println!("{}", table.display().unwrap());
     }
 }
