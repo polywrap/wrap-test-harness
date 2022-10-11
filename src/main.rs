@@ -25,25 +25,25 @@ fn main() -> io::Result<()> {
 
     // Engine::execute
     if feature.is_empty() {
-        // for entry in fs::read_dir(&source_path)? {
-        //     engine.set_case(
-        //         destination_path,
-        //         source_path,
-        //         String::from(entry?.file_name().to_str().unwrap()),
-        //         implementation.to_string(),
-        //     );
-        //     engine.execute(Executor::Generate);
-        // }
-        //
-        // for entry in fs::read_dir(&source_path)? {
-        //     engine.set_case(
-        //         destination_path,
-        //         source_path,
-        //         String::from(entry?.file_name().to_str().unwrap()),
-        //         implementation.to_string(),
-        //     );
-        //     engine.execute(Executor::Build);
-        // }
+        for entry in fs::read_dir(&source_path)? {
+            engine.set_case(
+                destination_path,
+                source_path,
+                String::from(entry?.file_name().to_str().unwrap()),
+                implementation.to_string(),
+            );
+            engine.execute(Executor::Generate);
+        }
+
+        for entry in fs::read_dir(&source_path)? {
+            engine.set_case(
+                destination_path,
+                source_path,
+                String::from(entry?.file_name().to_str().unwrap()),
+                implementation.to_string(),
+            );
+            engine.execute(Executor::Build);
+        }
 
         for entry in fs::read_dir(&source_path)? {
             engine.set_case(
