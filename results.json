@@ -1,0 +1,185 @@
+{
+  "version": 1,
+  "info": {
+    "rs": {
+      "map-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 0,
+          "failed": 1
+        },
+        "passed": false
+      },
+      "bigint-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "object-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "bignumber-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "json-type": {
+        "stats": {
+          "total": 2,
+          "succeeded": 0,
+          "failed": 2
+        },
+        "passed": false
+      },
+      "large-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 0,
+          "failed": 1
+        },
+        "passed": false
+      },
+      "enum-type": {
+        "stats": {
+          "total": 2,
+          "succeeded": 2,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "invalid-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 0,
+          "failed": 1
+        },
+        "passed": false
+      },
+      "numbers-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 0,
+          "failed": 1
+        },
+        "passed": false
+      },
+      "bytes-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 0,
+          "failed": 1
+        },
+        "passed": false
+      },
+      "asyncify": {
+        "stats": {
+          "total": 7,
+          "succeeded": 7,
+          "failed": 0
+        },
+        "passed": true
+      }
+    },
+    "as": {
+      "invalid-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 0,
+          "failed": 1
+        },
+        "passed": false
+      },
+      "object-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "bignumber-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "bytes-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 0,
+          "failed": 1
+        },
+        "passed": false
+      },
+      "large-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 0,
+          "failed": 1
+        },
+        "passed": false
+      },
+      "enum-type": {
+        "stats": {
+          "total": 2,
+          "succeeded": 2,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "bigint-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 1,
+          "failed": 0
+        },
+        "passed": true
+      },
+      "numbers-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 0,
+          "failed": 1
+        },
+        "passed": false
+      },
+      "json-type": {
+        "stats": {
+          "total": 2,
+          "succeeded": 0,
+          "failed": 2
+        },
+        "passed": false
+      },
+      "map-type": {
+        "stats": {
+          "total": 1,
+          "succeeded": 0,
+          "failed": 1
+        },
+        "passed": false
+      },
+      "asyncify": {
+        "stats": {
+          "total": 7,
+          "succeeded": 7,
+          "failed": 0
+        },
+        "passed": true
+      }
+    }
+  }
+}

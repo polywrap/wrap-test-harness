@@ -5,7 +5,8 @@ use std::collections::HashMap;
 pub struct Implementation<'a> {
     pub dependency: &'a str,
     pub name: &'a str,
-    pub module: &'a str
+    pub module: &'a str,
+    pub index: u8
 }
 
 lazy_static! {
@@ -14,12 +15,14 @@ lazy_static! {
         map.insert("as", Implementation {
             dependency: "package.json",
             name: "assemblyscript",
-            module: "./src/index.ts"
+            module: "./src/index.ts",
+            index: 1,
         });
         map.insert("rs", Implementation {
             dependency: "Cargo.toml",
             name: "rust",
-            module: "./Cargo.toml"
+            module: "./Cargo.toml",
+            index: 2
         });
         return map
     };

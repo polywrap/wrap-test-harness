@@ -1,0 +1,9 @@
+- [x] add readme
+- [x] support docker vm build strategy
+- [x] arguments with named instead of order
+- [] show results in cli (https://docs.rs/cli-table/latest/cli_table/)
+- [] order results per implementation OR feature
+- [] verbosity should be modifiable + improve logs
+
+- [] all workflows must be green
+- [] add go cases

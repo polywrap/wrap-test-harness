@@ -4,60 +4,66 @@ mod generator;
 mod constants;
 mod result;
 mod engine;
+mod input;
+mod manifest;
 
-use std::{env, fs, io};
+use std::{fs, io};
 use std::path::Path;
+
 use crate::engine::{Engine, Executor};
-
-use crate::generator::{Generator};
 use crate::result::{Results};
-
-static BUILD_FOLDER: &str = "build";
-static TEST_FOLDER: &str = "tests";
+use crate::input::{BUILD_FOLDER,TEST_FOLDER};
 
 fn main() -> io::Result<()> {
-    let dest_path = Path::new(BUILD_FOLDER);
+    let destination_path = Path::new(BUILD_FOLDER);
     let source_path = Path::new(TEST_FOLDER);
 
-    let mut args = env::args();
-    args.next();
-    let case_name = match args.next() {
-        Some(arg) => arg,
-        None => String::new()
-    };
-
-    match fs::create_dir(BUILD_FOLDER) {
-        Err(_) => {
-            fs::remove_dir_all(BUILD_FOLDER)?;
-            fs::create_dir(BUILD_FOLDER)?;
-        }
-        _ => {}
-    }
-
-    let generator = Generator::new(dest_path, source_path);
+    let sanitized_args = &input::handle_args();
+    let feature = &sanitized_args.feature;
+    let implementation = &sanitized_args.implementation;
     let mut engine = Engine::new();
 
-    if case_name.is_empty() {
+    // Engine::execute
+    if feature.is_empty() {
         for entry in fs::read_dir(&source_path)? {
-            let file_name = &entry?.file_name();
-            println!("Generating test case: {}", &file_name.to_str().unwrap());
-            generator.generate_project(&file_name.to_str().unwrap()).unwrap();
+            engine.set_case(
+                destination_path,
+                source_path,
+                String::from(entry?.file_name().to_str().unwrap()),
+                implementation.to_string(),
+            );
+            engine.execute(Executor::Generate);
         }
 
         for entry in fs::read_dir(&source_path)? {
-            let file_name = &entry?.file_name();
-            engine.set_case(dest_path, file_name.to_str().unwrap());
+            engine.set_case(
+                destination_path,
+                source_path,
+                String::from(entry?.file_name().to_str().unwrap()),
+                implementation.to_string(),
+            );
             engine.execute(Executor::Build);
         }
 
-        for _ in fs::read_dir(&source_path)? {
+        for entry in fs::read_dir(&source_path)? {
+            engine.set_case(
+                destination_path,
+                source_path,
+                String::from(entry?.file_name().to_str().unwrap()),
+                implementation.to_string(),
+            );
             engine.execute(Executor::Run);
         }
-        return Ok(());
+        return Ok(())
     }
 
-    generator.generate_project(case_name.as_str()).unwrap();
-    engine.set_case(dest_path, case_name.as_str());
+    engine.set_case(
+        destination_path,
+        source_path,
+        String::from(feature),
+        implementation.to_string(),
+    );
+    engine.execute(Executor::Generate);
     engine.execute(Executor::Build);
     engine.execute(Executor::Run);
 

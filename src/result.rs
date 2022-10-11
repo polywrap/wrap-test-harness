@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 use std::fs;
+use std::fs::File;
+use std::io::BufReader;
 use std::path::{PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value};
+use cli_table::{format::Justify, print_stdout, Cell, Style, Table, CellStruct};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, Copy)]
 pub struct Summary {
@@ -25,13 +28,30 @@ pub struct Job<'a> {
     error: Option<Value>
 }
 
+type Info = HashMap<String, HashMap<String, Summary>>;
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Results {
     pub version: i8,
-    pub info: HashMap<String, HashMap<String, Summary>>
+    pub info: Info
 }
 
+
 type RawResult<'a> = Vec<Job<'a>>;
+
+pub struct TableResults {
+    pub titles: Vec<CellStruct>,
+    pub descriptions: Vec<Vec<CellStruct>>,
+}
+
+impl TableResults {
+    pub fn new() -> Self {
+        Self {
+            titles: vec!["features".cell()],
+            descriptions: vec![]
+        }
+    }
+}
 
 impl Results {
     pub fn new() -> Results {
@@ -42,7 +62,7 @@ impl Results {
     }
 
     pub fn process(path: PathBuf) -> Summary {
-        let info = fs::read(path).unwrap();
+        let info = fs::read(path.canonicalize().unwrap()).unwrap();
         let result_str: String = String::from_utf8_lossy(&info).parse().unwrap();
         let result: RawResult = serde_json::from_str(result_str.as_str()).unwrap();
 
@@ -62,5 +82,31 @@ impl Results {
             }
             acc
         })
+    }
+
+    pub fn show() {
+        let file = File::open("results.json").unwrap();
+        let reader = BufReader::new(file);
+        let results: Results = serde_json::from_reader(reader).unwrap();
+
+        let mut table_results = TableResults::new();
+
+        for (implementation, summary) in results.info.iter() {
+            table_results.titles.push(implementation.cell());
+            let mut features: Vec<String> = summary.keys().map(|s| s.to_string()).collect::<Vec<String>>();
+            features.sort();
+            for (index, feature) in features.iter().enumerate() {
+                match table_results.descriptions.get_mut(index) {
+                    None => {
+                        table_results.descriptions.push(vec![(&feature).cell()]);
+                        table_results.descriptions.get_mut(index).unwrap().push(summary[feature].passed.cell());
+                    },
+                    Some(d) => d.push(summary[feature].passed.cell())
+                }
+            };
+        }
+
+        let table = table_results.descriptions.table().title(table_results.titles);
+        println!("{}", table.display().unwrap());
     }
 }
