@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::fs;
-use std::fs::read_dir;
+use std::fs::{DirEntry, read_dir};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use crate::{Results};
@@ -52,12 +52,6 @@ impl Engine {
         let dir = &wrapper_path.join(&self.implementation);
         match action {
             Executor::Generate => {
-                println!(
-                    "Generating implementation: {} in test case {}",
-                    &self.implementation,
-                    self.feature
-                );
-
                 let destination_path = Path::new(self.destination_path.as_str());
                 fs::create_dir(&destination_path.join(&self.feature)).unwrap();
                 Generate::project(
@@ -90,11 +84,6 @@ impl Engine {
     }
 
     pub fn build(&self, dir: &PathBuf) {
-        println!(
-            "Building implementation: {} in test case {}",
-            &self.implementation,
-            self.feature
-        );
         let mut build = Command::new("npx");
         build.current_dir(dir.canonicalize().unwrap());
         build.arg("../../../../../monorepo/packages/cli").arg("build").arg("-v");

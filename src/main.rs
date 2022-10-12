@@ -6,6 +6,7 @@ mod result;
 mod engine;
 mod input;
 mod manifest;
+mod new_engine;
 
 use std::{fs, io};
 use std::path::Path;

@@ -115,6 +115,11 @@ impl Generate<'_> {
         feature: &str,
         implementation: &str,
     ) {
+        println!(
+            "Generating implementation: {} in test case {}",
+            implementation,
+            feature
+        );
         // Generate implementation files (i.e: index.ts/lib.rs)
         let files = fs::read_dir(source_path).unwrap();
         for file in files {
