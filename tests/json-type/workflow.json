@@ -7,16 +7,37 @@
           "uri": "wrap://fs/./build",
           "method": "parse",
           "args": {
-            "arg": {
-              "foo": "foo",
-              "bar": "bar"
-            }
+            "value": "{\"arg\": { \"foo\": \"foo\", \"bar\": \"bar\" } }"
           }
         },
         {
           "uri": "wrap://fs/./build",
           "method": "stringify",
-          "args": "{'arg': { 'foo': 'foo', 'bar': 'bar' } }"
+          "args": {
+            "values": [
+              "{\"foo\": \"foo\"}",
+              "{\"bar\": \"bar\"}"
+            ]
+          }
+        },
+        {
+          "uri": "wrap://fs/./build",
+          "method": "stringifyObject",
+          "args": {
+            "object": {
+              "jsonA": "{\"foo\": \"foo\"}",
+              "jsonB": "{\"bar\": \"bar\"}"
+            }
+          }
+        },
+        {
+          "uri": "wrap://fs/./build",
+          "method": "methodJSON",
+          "args": {
+            "valueA": 5,
+            "valueB": "foo",
+            "valueC": true
+          }
         }
       ]
     }

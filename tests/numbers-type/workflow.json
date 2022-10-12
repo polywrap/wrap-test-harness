@@ -1,7 +1,7 @@
 {
   "name": "numbers-type",
   "jobs": {
-    "parse": {
+    "numbers-method": {
       "steps": [
         {
           "uri": "wrap://fs/./build",

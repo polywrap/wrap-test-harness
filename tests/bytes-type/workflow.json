@@ -8,7 +8,7 @@
           "method": "bytesMethod",
           "args": {
             "arg": {
-              "prop": "abcd"
+              "prop": [104, 101, 121, 33]
             }
           }
         }
