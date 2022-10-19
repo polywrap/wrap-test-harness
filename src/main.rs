@@ -10,11 +10,21 @@ mod manifest;
 use std::{fs, io};
 use std::path::Path;
 
-use crate::engine::{Engine, Executor};
+use crate::engine::{Engine, EngineError, Executor};
 use crate::result::{Results};
 use crate::input::{BUILD_FOLDER,TEST_FOLDER};
+use anyhow;
+use thiserror::Error;
 
-fn main() -> io::Result<()> {
+#[derive(Error, Debug)]
+pub enum HarnessError {
+    #[error("Engine failed")]
+    EngineError(#[from] EngineError),
+    #[error("File not found")]
+    FileNotFound(#[from] io::Error)
+}
+
+fn main() -> Result<(), HarnessError> {
     let destination_path = Path::new(BUILD_FOLDER);
     let source_path = Path::new(TEST_FOLDER);
 
@@ -32,7 +42,7 @@ fn main() -> io::Result<()> {
                 String::from(entry?.file_name().to_str().unwrap()),
                 implementation.to_string(),
             );
-            engine.execute(Executor::Generate);
+            engine.execute(Executor::Generate)?;
         }
 
         for entry in fs::read_dir(&source_path)? {
@@ -42,7 +52,7 @@ fn main() -> io::Result<()> {
                 String::from(entry?.file_name().to_str().unwrap()),
                 implementation.to_string(),
             );
-            engine.execute(Executor::Build);
+            engine.execute(Executor::Build)?;
         }
 
         for entry in fs::read_dir(&source_path)? {
@@ -52,7 +62,7 @@ fn main() -> io::Result<()> {
                 String::from(entry?.file_name().to_str().unwrap()),
                 implementation.to_string(),
             );
-            engine.execute(Executor::Run);
+            engine.execute(Executor::Run)?;
         }
         return Ok(())
     }
@@ -63,9 +73,9 @@ fn main() -> io::Result<()> {
         String::from(feature),
         implementation.to_string(),
     );
-    engine.execute(Executor::Generate);
-    engine.execute(Executor::Build);
-    engine.execute(Executor::Run);
+    engine.execute(Executor::Generate)?;
+    engine.execute(Executor::Build)?;
+    engine.execute(Executor::Run)?;
 
     Ok(())
 }

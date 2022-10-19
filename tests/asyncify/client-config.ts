@@ -4,12 +4,7 @@ import { WrapManifest } from "@polywrap/wrap-manifest-types-js";
 export const getClientConfig = async (): Promise<Partial<ClientConfig>> => {
   const memoryStoragePackage = {
     factory: () => new MemoryStoragePlugin({}),
-    manifest: {
-      name: "memory-storage",
-      version: "0.1.0",
-      type: "plugin",
-      abi: await import("./plugin.abi.json")
-    } as WrapManifest
+    manifest: {} as WrapManifest
   }
   return {
     plugins: [{
@@ -35,6 +30,5 @@ class MemoryStoragePlugin extends PluginModule<Record<string, never>> {
 
   private sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
-
   }
 }

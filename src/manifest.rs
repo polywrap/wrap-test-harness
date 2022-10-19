@@ -5,6 +5,8 @@ use crate::constants::Implementation;
 pub struct Workflow {
     pub format: Option<String>,
     pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    validation: Option<String>,
     jobs: serde_json::Value,
 }
 

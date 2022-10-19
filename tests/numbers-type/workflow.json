@@ -1,7 +1,8 @@
 {
   "name": "numbers-type",
+  "validation": "./validator.cue",
   "jobs": {
-    "numbers-method": {
+    "numbersMethod": {
       "steps": [
         {
           "uri": "wrap://fs/./build",

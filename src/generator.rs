@@ -1,15 +1,32 @@
-use std::fs;
+use std::{fs, io};
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader};
+use std::ops::Add;
 use std::path::{Path, PathBuf};
 use serde_json;
 use serde_yaml;
+use thiserror::Error;
 use crate::constants::{IMPLEMENTATIONS};
-use crate::manifest::{Manifest,Workflow};
-
+use crate::generator::GenerateError::ReadError;
+use crate::manifest::{Manifest, Workflow};
 
 const CUSTOM_MANIFEST: &str = "polywrap.json";
 const EXPECTED_FILES: [&str; 3] = ["workflow.json", "schema.graphql", "implementations"];
+
+#[derive(Error, Debug)]
+pub enum GenerateError {
+    #[error("Read error")]
+    ReadError(io::Error),
+    #[error("Feature folder could not be created")]
+    CreateFeatureDirErr,
+}
+
+impl From<io::Error> for GenerateError {
+    fn from(error: io::Error) -> Self {
+        dbg!(&error);
+        ReadError(error)
+    }
+}
 
 pub struct Generate<'a> {
     pub dest_path: &'a Path,
@@ -21,15 +38,16 @@ impl Generate<'_> {
         dest_path: &'a Path,
         source_path: &'a Path,
         feature: &'a str,
-        implementation: &'a str
-    ) {
+        implementation: &'a str,
+    ) -> Result<(), GenerateError> {
         let generator = Generate {
             dest_path,
-            source_path
+            source_path,
         };
+        fs::create_dir(&dest_path.join(feature))?;
         let test_folder = source_path.join(feature);
-
-        let files = fs::read_dir(&test_folder).unwrap().map(|directory| {
+        let files = fs::read_dir(&test_folder).map_err(|source| ReadError(source))?;
+        let files = files.map(|directory| {
             let name = directory.unwrap().file_name();
             return name.into_string().unwrap();
         }).collect::<Vec<_>>();
@@ -50,6 +68,7 @@ impl Generate<'_> {
         // Copy schema to implementation folder
         generator.schema(feature);
         generator.implementation_files(feature, implementation);
+        Ok(())
     }
 
     pub fn test_manifest(&self, feature: &str) {
@@ -93,7 +112,7 @@ impl Generate<'_> {
                     source_path,
                     dest_path,
                     feature,
-                    impl_name.to_str().unwrap()
+                    impl_name.to_str().unwrap(),
                 )
             }
         } else {
@@ -103,7 +122,7 @@ impl Generate<'_> {
                 source_path,
                 dest_path,
                 feature,
-                implementation
+                implementation,
             )
         }
     }

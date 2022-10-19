@@ -1,5 +1,5 @@
 {
-  "name": "map-type",
+  "name": "objectType",
   "jobs": {
     "parse": {
       "steps": [
