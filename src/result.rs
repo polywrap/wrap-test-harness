@@ -1,17 +1,24 @@
 use std::collections::HashMap;
-use std::{fs, io, convert};
+use std::{fs, io};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value};
-use cli_table::{format::Justify, print_stdout, Cell, Style, Table, CellStruct};
+use cli_table::{Cell, Table, CellStruct};
 use thiserror::Error;
+use crate::result::ResultError::FileNotFound;
 
 #[derive(Error, Debug)]
 pub enum ResultError {
     #[error("Result file not found")]
-    FileNotFound(#[from] io::Error)
+    FileNotFound(String)
+}
+
+impl From<io::Error> for ResultError {
+    fn from(_: io::Error) -> Self {
+        FileNotFound("Results file has not been found".to_string())
+    }
 }
 
 #[derive(Error, Debug)]
@@ -83,9 +90,7 @@ impl Results {
     }
 
     pub fn process(path: PathBuf) -> Result<Summary, ResultError> {
-        println!("a");
         let info = fs::read(path.canonicalize()?)?;
-        println!("b");
         let result_str: String = String::from_utf8_lossy(&info).parse().unwrap();
         let result: RawResult = serde_json::from_str(result_str.as_str()).unwrap();
 

@@ -7,8 +7,9 @@ use std::string::FromUtf8Error;
 use crate::{Results};
 use crate::generator::{Generate,GenerateError};
 use serde::{Deserialize, Serialize};
-use anyhow;
 use thiserror::Error;
+use crate::engine::BuildError::BuildExecutionError;
+use crate::engine::TestError::TestExecutionError;
 use crate::result::{ResultError, ShowResultsError};
 
 #[derive(Error, Debug)]
@@ -31,6 +32,8 @@ pub enum BuildError {
     BuildFolderNotFound,
     #[error("Expected file not found")]
     FileNotFound(#[from] io::Error),
+    #[error("Build execution error")]
+    BuildExecutionError(String),
 }
 
 #[derive(Error, Debug)]
@@ -41,8 +44,10 @@ pub enum TestError {
     TestFolderNotFound,
     #[error("Fetch of results failed")]
     ResultError(#[from] ResultError),
-    #[error("Expected file not found")]
+    #[error("File not found")]
     FileNotFound(#[from] io::Error),
+    #[error("Test execution error")]
+    TestExecutionError(String),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -90,12 +95,6 @@ impl Engine {
         let dir = &wrapper_path.join(&self.implementation);
         match action {
             Executor::Generate => {
-                println!(
-                    "Generating implementation: {} in test case {}",
-                    &self.implementation,
-                    self.feature
-                );
-
                 let destination_path = Path::new(self.destination_path.as_str());
                 Generate::project(
                     destination_path.canonicalize().unwrap().as_path(),
@@ -141,13 +140,9 @@ impl Engine {
             Ok(t) => {
                 let error = String::from_utf8(t.stderr)?;
                 if !error.is_empty() {
-                    dbg!(error);
-                    // TODO: Return error instead of panicking
-                //     panic!("Error installing packages")
+                    return Err(BuildExecutionError("Build command has failed".to_string()))
                 }
-                let message = String::from_utf8(t.stdout)?;
-                // println!("Message from build");
-                dbg!(message);
+                // let message = String::from_utf8(t.stdout)?;
                 t.status.success()
             }
             Err(e) => {
@@ -173,22 +168,19 @@ impl Engine {
         match run.output() {
             Ok(t) => {
                 let error = String::from_utf8(t.stderr)?;
-                let message = String::from_utf8(t.stdout)?;
-                dbg!(message);
-                dbg!(error);
-                dbg!(&dir);
+                if !error.is_empty() {
+                    return Err(TestExecutionError("Run command has failed".to_string()))
+                }
+                // let message = String::from_utf8(t.stdout)?;
+
                 let impl_name = dir.file_name().unwrap().to_str().unwrap();
-
-
                 let results_dir = dir.join("output.json");
-
                 let summary = Results::process(results_dir)?;
 
                 let info_path = Path::new(self.destination_path.as_str())
                     .join("..")
                     .join("results.json");
                 let feature_name = &self.feature;
-
                 match fs::read(&info_path) {
                     Ok(f) => {
                         let result_str = String::from_utf8_lossy(&f).parse::<String>().unwrap();

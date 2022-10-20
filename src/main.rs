@@ -13,7 +13,6 @@ use std::path::Path;
 use crate::engine::{Engine, EngineError, Executor};
 use crate::result::{Results};
 use crate::input::{BUILD_FOLDER,TEST_FOLDER};
-use anyhow;
 use thiserror::Error;
 
 #[derive(Error, Debug)]

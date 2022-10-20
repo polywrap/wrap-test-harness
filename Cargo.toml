@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.65"
 clap = { version = "4.0", features = ["derive", "cargo"] }
 cli-table = "0.4"
 colored = "2.0.0"
