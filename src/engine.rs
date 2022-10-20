@@ -5,50 +5,11 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::string::FromUtf8Error;
 use crate::{Results};
-use crate::generator::{Generate,GenerateError};
+use crate::generator::{Generate};
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
-use crate::engine::BuildError::BuildExecutionError;
-use crate::engine::TestError::TestExecutionError;
-use crate::result::{ResultError, ShowResultsError};
-
-#[derive(Error, Debug)]
-pub enum EngineError {
-    #[error("Generate error")]
-    GenerateError(#[from] GenerateError),
-    #[error("Build error")]
-    BuildError(#[from] BuildError),
-    #[error("Test error")]
-    TestError(#[from] TestError),
-    #[error("Show result error")]
-    ShowResultsError(#[from] ShowResultsError)
-}
-
-#[derive(Error, Debug)]
-pub enum BuildError {
-    #[error("Output from build process can not be parsed")]
-    ConsoleOutputError(#[from] FromUtf8Error),
-    #[error("Build folder not found")]
-    BuildFolderNotFound,
-    #[error("Expected file not found")]
-    FileNotFound(#[from] io::Error),
-    #[error("Build execution error")]
-    BuildExecutionError(String),
-}
-
-#[derive(Error, Debug)]
-pub enum TestError {
-    #[error("Output from run process can not be parsed")]
-    ConsoleOutputError(#[from] FromUtf8Error),
-    #[error("Test folder not found")]
-    TestFolderNotFound,
-    #[error("Fetch of results failed")]
-    ResultError(#[from] ResultError),
-    #[error("File not found")]
-    FileNotFound(#[from] io::Error),
-    #[error("Test execution error")]
-    TestExecutionError(String),
-}
+use crate::error::{BuildError, EngineError, TestError, GenerateError};
+use crate::error::BuildError::BuildExecutionError;
+use crate::error::TestError::TestExecutionError;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Engine {

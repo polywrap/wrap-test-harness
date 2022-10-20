@@ -6,27 +6,7 @@ use std::path::{PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value};
 use cli_table::{Cell, Table, CellStruct};
-use thiserror::Error;
-use crate::result::ResultError::FileNotFound;
-
-#[derive(Error, Debug)]
-pub enum ResultError {
-    #[error("Result file not found")]
-    FileNotFound(String)
-}
-
-impl From<io::Error> for ResultError {
-    fn from(_: io::Error) -> Self {
-        FileNotFound("Results file has not been found".to_string())
-    }
-}
-
-#[derive(Error, Debug)]
-pub enum ShowResultsError {
-    #[error("Show of results failed")]
-    FileNotFound(#[from] io::Error),
-}
-
+use crate::error::{ResultError, ShowResultsError};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, Copy)]
 pub struct Summary {

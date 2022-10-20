@@ -7,22 +7,15 @@ mod engine;
 mod input;
 mod manifest;
 mod new_engine;
+mod error;
 
 use std::{fs, io};
 use std::path::Path;
 
-use crate::engine::{Engine, EngineError, Executor};
+use crate::engine::{Engine, Executor};
 use crate::result::{Results};
 use crate::input::{BUILD_FOLDER,TEST_FOLDER};
-use thiserror::Error;
-
-#[derive(Error, Debug)]
-pub enum HarnessError {
-    #[error("Engine failed")]
-    EngineError(#[from] EngineError),
-    #[error("File not found")]
-    FileNotFound(#[from] io::Error)
-}
+use crate::error::HarnessError;
 
 fn main() -> Result<(), HarnessError> {
     let destination_path = Path::new(BUILD_FOLDER);

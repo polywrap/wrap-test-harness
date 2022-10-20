@@ -6,66 +6,12 @@ use serde_json;
 use serde_yaml;
 use thiserror::Error;
 use crate::constants::{IMPLEMENTATIONS};
+use crate::error::{CreateImplementationError, GenerateError, GenerateImplementationError, MergeManifestError, GenerateTestManifestError};
 use crate::generator::GenerateError::{MissingExpectedFile, ReadError};
-use crate::manifest::{Manifest, MergeManifestError, Workflow};
+use crate::manifest::{Manifest, Workflow};
 
 const CUSTOM_MANIFEST: &str = "polywrap.json";
 const EXPECTED_FILES: [&str; 3] = ["workflow.json", "schema.graphql", "implementations"];
-
-#[derive(Error, Debug)]
-pub enum GenerateError {
-    #[error("Read error")]
-    ReadError(String),
-    #[error("Feature folder could not be created")]
-    CreateFeatureDirErr,
-    #[error("Missing expected file")]
-    MissingExpectedFile(String, String),
-    #[error("Generate test manifest from workflow failed")]
-    GenerateTestManifestError(#[from] GenerateTestManifestError),
-    #[error("Generate implementation files failed")]
-    GenerateImplementationError(#[from] GenerateImplementationError)
-}
-
-#[derive(Error, Debug)]
-pub enum GenerateTestManifestError {
-    #[error("File manipulation error")]
-    FileError(#[from] io::Error),
-    #[error("JSON parse error")]
-    JsonParseError(#[from] serde_json::Error),
-    #[error("YAML Parse error")]
-    YamlParseError(#[from] serde_yaml::Error)
-}
-
-#[derive(Error, Debug)]
-pub enum GenerateImplementationError {
-    #[error("File manipulation error")]
-    FileError(#[from] io::Error),
-    #[error("Directory entry not found")]
-    DirEntryError(String),
-    #[error("Create implementation failed")]
-    CreateImplementationError(#[from] CreateImplementationError)
-}
-
-#[derive(Error, Debug)]
-pub enum CreateImplementationError {
-    #[error("File manipulation error")]
-    FileError(#[from] io::Error),
-    #[error("File manipulation error")]
-    OpenFileError(File),
-    #[error("JSON parse error")]
-    JsonParseError(#[from] serde_json::Error),
-    #[error("Manifest merge error")]
-    MergeManifestError(#[from] MergeManifestError),
-    #[error("YAML Parse error")]
-    YamlParseError(#[from] serde_yaml::Error)
-}
-
-
-impl From<io::Error> for GenerateError {
-    fn from(e: io::Error) -> Self {
-        ReadError(e.to_string())
-    }
-}
 
 pub struct Generate<'a> {
     pub dest_path: &'a Path,
