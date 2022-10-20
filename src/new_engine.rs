@@ -28,17 +28,21 @@ pub struct NewEnginePath {
 const CLI_PATH: &'static str = "../../../../../monorepo/packages/cli/bin/polywrap";
 
 impl NewEngine {
-    pub fn new(destination: &Path, source: &Path) -> Self {
+    pub fn start(
+        destination: &Path,
+        source: &Path,
+        feature: Option<String>,
+        implementation: Option<String>
+    ) -> Self {
         Self {
             path: NewEnginePath {
                 destination: destination.to_path_buf(),
                 source: source.to_path_buf(),
             },
-            feature: None,
-            implementation: None,
+            feature,
+            implementation
         }
     }
-
     pub fn execute(self, action: NewExecutor) -> Result<(), EngineError> {
         match action {
             NewExecutor::Generate => {}

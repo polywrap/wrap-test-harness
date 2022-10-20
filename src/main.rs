@@ -14,7 +14,7 @@ use std::path::Path;
 
 use crate::engine::{Engine, Executor};
 use crate::result::{Results};
-use crate::input::{BUILD_FOLDER,TEST_FOLDER};
+use crate::input::{BUILD_FOLDER, TEST_FOLDER};
 use crate::error::HarnessError;
 
 fn main() -> Result<(), HarnessError> {
@@ -24,10 +24,22 @@ fn main() -> Result<(), HarnessError> {
     let sanitized_args = &input::handle_args();
     let feature = &sanitized_args.feature;
     let implementation = &sanitized_args.implementation;
+
+    // @TODO: Remove this match, it's unnecessary
+    let feature = match feature.as_str() {
+        "" => None,
+        f => Some(f)
+    };
     let mut engine = Engine::new();
 
-    // Engine::execute
-    if feature.is_empty() {
+    // let engine = Engine::start(
+    //     destination_path,
+    //     source_path,
+    //     feature,
+    //     implementation,
+    // );
+
+    if feature.is_none() {
         for entry in fs::read_dir(&source_path)? {
             engine.set_case(
                 destination_path,
@@ -57,13 +69,13 @@ fn main() -> Result<(), HarnessError> {
             );
             engine.execute(Executor::Run)?;
         }
-        return Ok(())
+        return Ok(());
     }
 
     engine.set_case(
         destination_path,
         source_path,
-        String::from(feature),
+        feature.unwrap().to_string(),
         implementation.to_string(),
     );
     engine.execute(Executor::Generate)?;
