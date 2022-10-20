@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "info": {
+    "as": {
+      "json-type": {
+        "stats": {
+          "total": 4,
+          "succeeded": 4,
+          "failed": 0
+        },
+        "passed": true
+      }
+    },
+    "rs": {
+      "json-type": {
+        "stats": {
+          "total": 4,
+          "succeeded": 4,
+          "failed": 0
+        },
+        "passed": true
+      }
+    }
+  }
+}

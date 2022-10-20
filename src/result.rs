@@ -1,11 +1,32 @@
 use std::collections::HashMap;
-use std::fs;
+use std::{fs, io};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value};
-use cli_table::{format::Justify, print_stdout, Cell, Style, Table, CellStruct};
+use cli_table::{Cell, Table, CellStruct};
+use thiserror::Error;
+use crate::result::ResultError::FileNotFound;
+
+#[derive(Error, Debug)]
+pub enum ResultError {
+    #[error("Result file not found")]
+    FileNotFound(String)
+}
+
+impl From<io::Error> for ResultError {
+    fn from(_: io::Error) -> Self {
+        FileNotFound("Results file has not been found".to_string())
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum ShowResultsError {
+    #[error("Show of results failed")]
+    FileNotFound(#[from] io::Error),
+}
+
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, Copy)]
 pub struct Summary {
@@ -25,7 +46,14 @@ pub struct Job<'a> {
     id: &'a str,
     status: &'a str,
     data: Option<Value>,
-    error: Option<Value>
+    error: Option<Value>,
+    validation: Validation<'a>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct Validation<'a> {
+    status: &'a str,
+    error: Option<&'a str>,
 }
 
 type Info = HashMap<String, HashMap<String, Summary>>;
@@ -33,7 +61,7 @@ type Info = HashMap<String, HashMap<String, Summary>>;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Results {
     pub version: i8,
-    pub info: Info
+    pub info: Info,
 }
 
 
@@ -48,7 +76,7 @@ impl TableResults {
     pub fn new() -> Self {
         Self {
             titles: vec!["features".cell()],
-            descriptions: vec![]
+            descriptions: vec![],
         }
     }
 }
@@ -57,12 +85,12 @@ impl Results {
     pub fn new() -> Results {
         Results {
             version: 1,
-            info: HashMap::new()
+            info: HashMap::new(),
         }
     }
 
-    pub fn process(path: PathBuf) -> Summary {
-        let info = fs::read(path.canonicalize().unwrap()).unwrap();
+    pub fn process(path: PathBuf) -> Result<Summary, ResultError> {
+        let info = fs::read(path.canonicalize()?)?;
         let result_str: String = String::from_utf8_lossy(&info).parse().unwrap();
         let result: RawResult = serde_json::from_str(result_str.as_str()).unwrap();
 
@@ -71,21 +99,23 @@ impl Results {
             ..Summary::default()
         };
 
-        result.iter().fold(default_summary,|mut acc, r| {
+        let summary = result.iter().fold(default_summary, |mut acc, r| {
             acc.stats.total += 1;
-            match r.status {
-                "SUCCEED" => acc.stats.succeeded += 1,
+            match (r.status, r.validation.status) {
+                ("SUCCEED", "SKIPPED") => acc.stats.succeeded += 1,
+                (_, "SUCCEED") => acc.stats.succeeded += 1,
                 _ => {
                     acc.stats.failed += 1;
                     acc.passed = false;
                 }
             }
             acc
-        })
+        });
+        Ok(summary)
     }
 
-    pub fn show() {
-        let file = File::open("results.json").unwrap();
+    pub fn show() -> Result<(), ShowResultsError> {
+        let file = File::open("results.json")?;
         let reader = BufReader::new(file);
         let results: Results = serde_json::from_reader(reader).unwrap();
 
@@ -100,7 +130,7 @@ impl Results {
                     None => {
                         table_results.descriptions.push(vec![(&feature).cell()]);
                         table_results.descriptions.get_mut(index).unwrap().push(summary[feature].passed.cell());
-                    },
+                    }
                     Some(d) => d.push(summary[feature].passed.cell())
                 }
             };
@@ -108,5 +138,6 @@ impl Results {
 
         let table = table_results.descriptions.table().title(table_results.titles);
         println!("{}", table.display().unwrap());
+        Ok(())
     }
 }

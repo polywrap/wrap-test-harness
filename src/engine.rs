@@ -1,11 +1,54 @@
 use std::collections::HashMap;
-use std::fs;
-use std::fs::{DirEntry, read_dir};
+use std::{fs, io};
+use std::fs::read_dir;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::string::FromUtf8Error;
 use crate::{Results};
-use crate::generator::Generate;
+use crate::generator::{Generate,GenerateError};
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
+use crate::engine::BuildError::BuildExecutionError;
+use crate::engine::TestError::TestExecutionError;
+use crate::result::{ResultError, ShowResultsError};
+
+#[derive(Error, Debug)]
+pub enum EngineError {
+    #[error("Generate error")]
+    GenerateError(#[from] GenerateError),
+    #[error("Build error")]
+    BuildError(#[from] BuildError),
+    #[error("Test error")]
+    TestError(#[from] TestError),
+    #[error("Show result error")]
+    ShowResultsError(#[from] ShowResultsError)
+}
+
+#[derive(Error, Debug)]
+pub enum BuildError {
+    #[error("Output from build process can not be parsed")]
+    ConsoleOutputError(#[from] FromUtf8Error),
+    #[error("Build folder not found")]
+    BuildFolderNotFound,
+    #[error("Expected file not found")]
+    FileNotFound(#[from] io::Error),
+    #[error("Build execution error")]
+    BuildExecutionError(String),
+}
+
+#[derive(Error, Debug)]
+pub enum TestError {
+    #[error("Output from run process can not be parsed")]
+    ConsoleOutputError(#[from] FromUtf8Error),
+    #[error("Test folder not found")]
+    TestFolderNotFound,
+    #[error("Fetch of results failed")]
+    ResultError(#[from] ResultError),
+    #[error("File not found")]
+    FileNotFound(#[from] io::Error),
+    #[error("Test execution error")]
+    TestExecutionError(String),
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Engine {
@@ -45,7 +88,7 @@ impl Engine {
         self.implementation = implementation;
     }
 
-    pub fn execute(&mut self, action: Executor) {
+    pub fn execute(&mut self, action: Executor) -> Result<(), EngineError> {
         let wrapper_path = Path::new(
             &self.destination_path.as_str()
         ).join(&self.feature).join("implementations");
@@ -53,52 +96,53 @@ impl Engine {
         match action {
             Executor::Generate => {
                 let destination_path = Path::new(self.destination_path.as_str());
-                fs::create_dir(&destination_path.join(&self.feature)).unwrap();
                 Generate::project(
-                    destination_path,
+                    destination_path.canonicalize().unwrap().as_path(),
                     Path::new(self.source_path.as_str()),
                     self.feature.as_str(),
                     self.implementation.as_str()
-                );
+                )?;
             }
             Executor::Build => {
                 if !self.implementation.is_empty() {
-                    self.build(dir);
+                    self.build(dir)?;
                 } else {
                     for implementation in read_dir(&wrapper_path).unwrap() {
-                        self.build(&implementation.unwrap().path());
+                        self.build(&implementation.unwrap().path())?;
                     }
                 }
             }
             Executor::Run => {
                 if !self.implementation.is_empty() {
-                    self.run(dir);
+                    self.run(dir)?;
                 } else {
                     for implementation in read_dir(&wrapper_path).unwrap() {
-                        self.run(&implementation.unwrap().path());
+                        self.run(&implementation.unwrap().path())?;
                     }
                 }
-                Results::show();
+                Results::show()?;
             }
         };
+        Ok(())
     }
 
-    pub fn build(&self, dir: &PathBuf) {
-        let mut build = Command::new("npx");
-        build.current_dir(dir.canonicalize().unwrap());
-        build.arg("../../../../../monorepo/packages/cli").arg("build").arg("-v");
+    pub fn build(&self, dir: &PathBuf) -> Result<(), BuildError> {
+        println!(
+            "Building implementation: {} in test case {}",
+            &self.implementation,
+            self.feature
+        );
+        let mut build = Command::new("node");
+        build.current_dir(dir.canonicalize()?);
+        build.arg("../../../../../monorepo/packages/cli/bin/polywrap").arg("build").arg("-v");
 
         match build.output() {
             Ok(t) => {
-                let error = String::from_utf8(t.stderr).unwrap();
+                let error = String::from_utf8(t.stderr)?;
                 if !error.is_empty() {
-                    dbg!(error);
-                    // TODO: Return error instead of panicking
-                //     panic!("Error installing packages")
+                    return Err(BuildExecutionError("Build command has failed".to_string()))
                 }
-                let message = String::from_utf8(t.stdout).unwrap();
-                // println!("Message from build");
-                dbg!(message);
+                // let message = String::from_utf8(t.stdout)?;
                 t.status.success()
             }
             Err(e) => {
@@ -106,12 +150,13 @@ impl Engine {
                 false
             }
         };
+        Ok(())
     }
 
-    pub fn run(&self, dir: &PathBuf) {
-        let mut run = Command::new("npx");
-        run.current_dir(dir.canonicalize().unwrap());
-        run.arg("../../../../../monorepo/packages/cli").arg("run")
+    pub fn run(&self, dir: &PathBuf) -> Result<(), TestError> {
+        let mut run = Command::new("node");
+        run.current_dir(dir.canonicalize()?);
+        run.arg("../../../../../monorepo/packages/cli/bin/polywrap").arg("run")
             .arg("-m").arg("../../polywrap.test.yaml")
             .arg("-o").arg("./output.json");
 
@@ -122,25 +167,23 @@ impl Engine {
 
         match run.output() {
             Ok(t) => {
-                let error = String::from_utf8(t.stderr).unwrap();
-                let message = String::from_utf8(t.stdout).unwrap();
-                dbg!(message);
-                dbg!(error);
-                dbg!(&dir);
+                let error = String::from_utf8(t.stderr)?;
+                if !error.is_empty() {
+                    return Err(TestExecutionError("Run command has failed".to_string()))
+                }
+                // let message = String::from_utf8(t.stdout)?;
+
                 let impl_name = dir.file_name().unwrap().to_str().unwrap();
-
-
                 let results_dir = dir.join("output.json");
-                let summary = Results::process(results_dir);
+                let summary = Results::process(results_dir)?;
 
                 let info_path = Path::new(self.destination_path.as_str())
                     .join("..")
                     .join("results.json");
                 let feature_name = &self.feature;
-
                 match fs::read(&info_path) {
                     Ok(f) => {
-                        let result_str: String = String::from_utf8_lossy(&f).parse().unwrap();
+                        let result_str = String::from_utf8_lossy(&f).parse::<String>().unwrap();
                         let mut results: Results = serde_json::from_str(result_str.as_str()).unwrap();
                         results.info.entry(impl_name.to_string()).or_default().insert(feature_name.to_string(), summary);
                         let results_file = fs::OpenOptions::new()
@@ -168,5 +211,6 @@ impl Engine {
                 dbg!(e);
             }
         };
+        Ok(())
     }
 }

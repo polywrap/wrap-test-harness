@@ -1,10 +1,21 @@
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 use crate::constants::Implementation;
+
+#[derive(Error, Debug)]
+pub enum MergeManifestError {
+    #[error("Source in manifest not found")]
+    SourceNotFound,
+    #[error("Project in manifest not found")]
+    ProjectNotFound,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Workflow {
     pub format: Option<String>,
     pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    validation: Option<String>,
     jobs: serde_json::Value,
 }
 
@@ -39,8 +50,8 @@ pub struct Manifest {
 }
 
 impl Manifest {
-    pub fn merge(self, custom: Manifest) -> Result<Manifest, ()> {
-        let default_project = self.project.unwrap();
+    pub fn merge(self, custom: Manifest) -> Result<Manifest, MergeManifestError> {
+        let default_project = self.project.ok_or(MergeManifestError::ProjectNotFound)?;
 
         let project  = match custom.project {
             Some(p) => Some(Project {
@@ -50,7 +61,7 @@ impl Manifest {
             _ => Some(default_project)
         };
 
-        let default_source = self.source.unwrap();
+        let default_source = self.source.ok_or(MergeManifestError::SourceNotFound)?;
         let source = match custom.source {
             Some(s) => Some(Source {
                 schema: s.schema.or(default_source.schema),

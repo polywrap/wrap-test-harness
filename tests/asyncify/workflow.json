@@ -1,14 +1,6 @@
 {
   "name": "asyncify",
   "jobs": {
-    "getData": {
-      "steps": [
-        {
-          "uri": "wrap://fs/./build",
-          "method": "getData"
-        }
-      ]
-    },
     "localVarMethod": {
       "steps": [
         {
