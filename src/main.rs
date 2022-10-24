@@ -16,6 +16,7 @@ use crate::engine::{Engine, Executor};
 use crate::result::{Results};
 use crate::input::{BUILD_FOLDER, TEST_FOLDER};
 use crate::error::HarnessError;
+use crate::new_engine::{NewEngine};
 
 fn main() -> Result<(), HarnessError> {
     let destination_path = Path::new(BUILD_FOLDER);
@@ -25,19 +26,12 @@ fn main() -> Result<(), HarnessError> {
     let feature = &sanitized_args.feature;
     let implementation = &sanitized_args.implementation;
 
-    // @TODO: Remove this match, it's unnecessary
-    let feature = match feature.as_str() {
-        "" => None,
-        f => Some(f)
-    };
     let mut engine = Engine::new();
 
-    // let engine = Engine::start(
-    //     destination_path,
-    //     source_path,
-    //     feature,
-    //     implementation,
-    // );
+    let old_implementation = match implementation {
+        Some(f) => f.to_string(),
+        None => "".to_string()
+    };
 
     if feature.is_none() {
         for entry in fs::read_dir(&source_path)? {
@@ -45,42 +39,53 @@ fn main() -> Result<(), HarnessError> {
                 destination_path,
                 source_path,
                 String::from(entry?.file_name().to_str().unwrap()),
-                implementation.to_string(),
+                old_implementation.to_string(),
             );
             engine.execute(Executor::Generate)?;
         }
 
-        for entry in fs::read_dir(&source_path)? {
-            engine.set_case(
-                destination_path,
-                source_path,
-                String::from(entry?.file_name().to_str().unwrap()),
-                implementation.to_string(),
-            );
-            engine.execute(Executor::Build)?;
-        }
-
-        for entry in fs::read_dir(&source_path)? {
-            engine.set_case(
-                destination_path,
-                source_path,
-                String::from(entry?.file_name().to_str().unwrap()),
-                implementation.to_string(),
-            );
-            engine.execute(Executor::Run)?;
-        }
+        // for entry in fs::read_dir(&source_path)? {
+        //     engine.set_case(
+        //         destination_path,
+        //         source_path,
+        //         String::from(entry?.file_name().to_str().unwrap()),
+        //         implementation.to_string(),
+        //     );
+        //     engine.execute(Executor::Build)?;
+        // }
+        //
+        // for entry in fs::read_dir(&source_path)? {
+        //     engine.set_case(
+        //         destination_path,
+        //         source_path,
+        //         String::from(entry?.file_name().to_str().unwrap()),
+        //         implementation.to_string(),
+        //     );
+        //     engine.execute(Executor::Run)?;
+        // }
         return Ok(());
     }
+
+    let old_feature = match feature {
+        Some(f) => f.to_string(),
+        None => "".to_string()
+    };
 
     engine.set_case(
         destination_path,
         source_path,
-        feature.unwrap().to_string(),
-        implementation.to_string(),
+        old_feature,
+        old_implementation,
     );
     engine.execute(Executor::Generate)?;
-    engine.execute(Executor::Build)?;
-    engine.execute(Executor::Run)?;
+    // engine.execute(Executor::Build)?;
+    // engine.execute(Executor::Run)?;
+
+    let new_engine = NewEngine::start(
+        destination_path,
+        source_path
+    );
+    new_engine.execute(*feature, *implementation)?;
 
     Ok(())
 }

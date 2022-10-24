@@ -7,7 +7,7 @@ use std::string::FromUtf8Error;
 use crate::{Results};
 use crate::generator::{Generate};
 use serde::{Deserialize, Serialize};
-use crate::error::{BuildError, EngineError, TestError, GenerateError};
+use crate::error::{BuildError, TestError, GenerateError, ExecutionError};
 use crate::error::BuildError::BuildExecutionError;
 use crate::error::TestError::TestExecutionError;
 
@@ -49,7 +49,7 @@ impl Engine {
         self.implementation = implementation;
     }
 
-    pub fn execute(&mut self, action: Executor) -> Result<(), EngineError> {
+    pub fn execute(&mut self, action: Executor) -> Result<(), ExecutionError> {
         let wrapper_path = Path::new(
             &self.destination_path.as_str()
         ).join(&self.feature).join("implementations");
@@ -57,9 +57,12 @@ impl Engine {
         match action {
             Executor::Generate => {
                 let destination_path = Path::new(self.destination_path.as_str());
-                Generate::project(
+                let generate = Generate::new(
                     destination_path.canonicalize().unwrap().as_path(),
                     Path::new(self.source_path.as_str()),
+                )?;
+
+                generate.project(
                     self.feature.as_str(),
                     self.implementation.as_str()
                 )?;

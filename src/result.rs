@@ -44,7 +44,6 @@ pub struct Results {
     pub info: Info,
 }
 
-
 type RawResult<'a> = Vec<Job<'a>>;
 
 pub struct TableResults {
@@ -82,8 +81,7 @@ impl Results {
         let summary = result.iter().fold(default_summary, |mut acc, r| {
             acc.stats.total += 1;
             match (r.status, r.validation.status) {
-                ("SUCCEED", "SKIPPED") => acc.stats.succeeded += 1,
-                (_, "SUCCEED") => acc.stats.succeeded += 1,
+                ("SUCCEED", "SKIPPED") | (_, "SUCCEED") => acc.stats.succeeded += 1,
                 _ => {
                     acc.stats.failed += 1;
                     acc.passed = false;

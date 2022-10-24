@@ -8,21 +8,27 @@ use crate::error::ResultError::FileNotFound;
 #[derive(Error, Debug)]
 pub enum HarnessError {
     #[error(transparent)]
-    EngineError(#[from] EngineError),
+    ExecutionError(#[from] ExecutionError),
     #[error(transparent)]
     FileNotFound(#[from] io::Error)
 }
 
 #[derive(Error, Debug)]
-pub enum EngineError {
+pub enum ExecutionError {
+    #[error(transparent)]
+    HandlerError(#[from] HandlerError),
+    #[error(transparent)]
+    ShowResultsError(#[from] ShowResultsError)
+}
+
+#[derive(Error, Debug)]
+pub enum HandlerError {
     #[error(transparent)]
     GenerateError(#[from] GenerateError),
     #[error(transparent)]
     BuildError(#[from] BuildError),
     #[error(transparent)]
-    TestError(#[from] TestError),
-    #[error(transparent)]
-    ShowResultsError(#[from] ShowResultsError)
+    TestError(#[from] TestError)
 }
 
 #[derive(Error, Debug)]

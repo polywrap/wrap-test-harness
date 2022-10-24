@@ -19,18 +19,22 @@ pub struct Generate<'a> {
 }
 
 impl Generate<'_> {
-    pub fn project<'a>(
+    pub fn new<'a>(
         dest_path: &'a Path,
-        source_path: &'a Path,
-        feature: &'a str,
-        implementation: &'a str,
-    ) -> Result<(), GenerateError> {
-        let generator = Generate {
+        source_path: &'a Path
+    ) -> Self {
+        Generate {
             dest_path,
-            source_path,
-        };
-        fs::create_dir(&dest_path.join(feature))?;
-        let test_folder = source_path.join(feature);
+            source_path
+        }
+    }
+    pub fn project<'a>(
+        self,
+        feature: &'a str,
+        implementation: &'a str
+    ) -> Result<(), GenerateError> {
+        fs::create_dir(self.dest_path.join(feature))?;
+        let test_folder = self.source_path.join(feature);
         let files = fs::read_dir(&test_folder).map_err(|_| {
             let message = format!("Error reading folder from tests: {}. Make sure there's no type in the feature argument", feature);
             ReadError(message)
@@ -50,18 +54,12 @@ impl Generate<'_> {
             return Err(MissingExpectedFile(missing_files[0].to_string(), feature.to_string()));
         };
 
-        println!(
-            "Generating implementation: {} in test case {}",
-            implementation,
-            feature
-        );
-
         // Generate test manifest from workflow
-        generator.test_manifest(feature)?;
+        self.test_manifest(feature)?;
         // Copy schema to implementation folder
-        generator.schema(feature)?;
+        self.schema(feature)?;
         // Create implementation folder & respective files
-        generator.implementation_files(feature, implementation)?;
+        self.implementation_files(feature, implementation)?;
         Ok(())
     }
 

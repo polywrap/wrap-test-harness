@@ -23,15 +23,22 @@ struct Args {
 }
 
 pub struct SanitizedArgs {
-    pub(crate) implementation: String,
-    pub(crate) feature: String
+    pub(crate) implementation: Option<&'static str>,
+    pub(crate) feature: Option<&'static str>
 }
 
 pub fn handle_args() -> SanitizedArgs {
     let args = Args::parse();
 
-    let implementation = args.implementation.unwrap_or_else(|| String::new());
-    let feature = args.feature.unwrap_or_else(|| String::new());
+    let implementation = match args.implementation {
+      Some(i) => i.as_str(),
+      None => None
+    };
+
+    let feature = match args.feature {
+        Some(f) => f.as_str(),
+        None => None
+    };
 
     match fs::create_dir(BUILD_FOLDER) {
         Err(_) => {
