@@ -30,16 +30,6 @@ pub struct SanitizedArgs {
 pub fn handle_args() -> SanitizedArgs {
     let args = Args::parse();
 
-    // let implementation = match args.implementation {
-    //   Some(i) => Some(i.as_str()),
-    //   None => None
-    // };
-    //
-    // let feature = match args.feature {
-    //     Some(f) => Some(f.as_str()),
-    //     None => None
-    // };
-
     match fs::create_dir(BUILD_FOLDER) {
         Err(_) => {
             if args.reset {
@@ -51,11 +41,6 @@ pub fn handle_args() -> SanitizedArgs {
         _ => {}
     }
 
-    return SanitizedArgs {
-        implementation: args.implementation,
-        feature: args.feature
-    }
-
     // You can see how many times a particular flag or argument occurred
     // Note, only flags can have multiple occurrences
     // match args.verbose {
@@ -64,4 +49,10 @@ pub fn handle_args() -> SanitizedArgs {
     //     2 => println!("Debug mode is on"),
     //     _ => println!("Don't be crazy"),
     // }
+
+    return SanitizedArgs {
+        implementation: args.implementation,
+        feature: args.feature
+    }
+
 }

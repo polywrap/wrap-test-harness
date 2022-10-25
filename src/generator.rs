@@ -1,5 +1,4 @@
 use std::{fs, io};
-use std::fs::File;
 use std::io::{BufReader};
 use std::path::{Path, PathBuf};
 use serde_json;
@@ -32,9 +31,14 @@ impl Generate {
         feature: &str,
         implementation: &str
     ) -> Result<(), GenerateError> {
-        fs::create_dir(self.dest_path.join(feature))?;
+        let feature_path = self.dest_path.join(feature);
+        if !feature_path.exists() {
+            fs::create_dir(feature_path)?;
+        }
+
         let test_folder = self.source_path.join(feature);
-        let files = fs::read_dir(&test_folder).map_err(|_| {
+
+        let files = fs::read_dir(&test_folder).map_err(|e| {
             let message = format!("Error reading folder from tests: {}. Make sure there's no type in the feature argument", feature);
             ReadError(message)
         })?;
@@ -91,32 +95,21 @@ impl Generate {
     pub fn implementation_files(&self, feature: &str, implementation: &str) -> Result<(), GenerateImplementationError> {
         let dest_implementation_folder = &self.dest_path.join(feature).join("implementations");
         let template_implementation_folder = &self.source_path.join(feature).join("implementations");
-        // fs::create_dir(dest_implementation_folder)?;
 
-        // if implementation.is_empty() {
-        //     let implementations = fs::read_dir(template_implementation_folder)?;
-        //     for implementation in implementations {
-        //         let imp = implementation?;
-        //         let impl_name = &imp.file_name();
-        //         let source_path = &template_implementation_folder.join(impl_name);
-        //         let dest_path = &dest_implementation_folder.join(impl_name);
-        //         self.create_implementation(
-        //             source_path,
-        //             dest_path,
-        //             feature,
-        //             impl_name.to_str().unwrap(),
-        //         )?;
-        //     };
-        // } else {
-            let source_path = &template_implementation_folder.join(implementation);
-            let dest_path = &dest_implementation_folder.join(implementation);
-            self.create_implementation(
-                source_path,
-                dest_path,
-                feature,
-                implementation,
-            )?;
-        // };
+
+        if !dest_implementation_folder.exists() {
+            fs::create_dir(dest_implementation_folder)?
+        }
+
+        let source_path = &template_implementation_folder.join(implementation);
+        let dest_path = &dest_implementation_folder.join(implementation);
+        self.create_implementation(
+            source_path,
+            dest_path,
+            feature,
+            implementation,
+        )?;
+
         Ok(())
     }
 
@@ -127,15 +120,15 @@ impl Generate {
         feature: &str,
         implementation: &str,
     ) -> Result<(), CreateImplementationError> {
-        fs::create_dir(&destination_path.join(&implementation).join("implementations"))?;
+        fs::create_dir(&destination_path)?;
         // Generate implementation files (i.e: index.ts/lib.rs)
         let files = fs::read_dir(source_path)?;
         for file in files {
-            let destination_folder = &destination_path.join("src");
-            fs::create_dir_all(destination_folder)?;
+            let destination_source_folder = &destination_path.join("src");
+            fs::create_dir(destination_source_folder)?;
             let name = file?.file_name();
             let impl_source = source_path.join(&name);
-            let impl_dest = destination_folder.join(name);
+            let impl_dest = destination_source_folder.join(name);
             fs::copy(impl_source, impl_dest)?;
         }
 
@@ -159,7 +152,7 @@ impl Generate {
         let mut manifest = Manifest::default(feature, implementation_info);
         match index {
             Some(i) => {
-                let file = File::open(root_files[i].path())?;
+                let file = fs::File::open(root_files[i].path())?;
                 let reader = BufReader::new(file);
                 let custom_manifest: Manifest = serde_json::from_reader(reader)?;
 
