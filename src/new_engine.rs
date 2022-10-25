@@ -5,8 +5,6 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use serde::{Deserialize, Serialize};
 use crate::error::{ExecutionError, HandlerError, TestError, BuildError};
-use crate::error::TestError::TestExecutionError;
-use crate::generator::Generate;
 use crate::Results;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -39,30 +37,38 @@ impl NewEngine {
         }
     }
 
-    pub fn execute<'a>(self, feature: Option<&'a str>, implementation: Option<&'a str>) -> Result<(), ExecutionError> {
+    pub fn execute(&self, feature: Option<&str>, implementation: Option<&str>) -> Result<(), ExecutionError> {
         // let generator = Generate::new(
         //     self.path.destination.as_path(),
         //     self.path.source.as_path()
         // )?;
         // self.handler(generator.project, feature, implementation)?;
-        self.handler(self.build, feature, implementation)?;
-        self.handler(self.test, feature, implementation)?;
+        self.handler(
+            Box::new(|a, b| self.build(a, b).map_err(|e| ExecutionError::BuildError(e))),
+            feature,
+            implementation
+        )?;
+        self.handler(
+            Box::new(|a,b| self.test(a, b).map_err(|e| ExecutionError::TestError(e))),
+            feature,
+            implementation
+        )?;
         Ok(())
     }
 
     fn handler<'a>(
-        self,
-        executor: impl Fn(Self, &str, &str) -> Result<(), ExecutionError>,
-        feature: Option<&'a str>,
-        implementation: Option<&'a str>
+        &self,
+        executor: Box<dyn Fn(&str, &str) -> Result<(), ExecutionError> + 'a>,
+        feature: Option<&str>,
+        implementation: Option<&str>
     ) -> Result<(), HandlerError>  {
         type FeatureImplMap = HashMap<String, Vec<String>>;
         let mut feature_map : FeatureImplMap = HashMap::new();
 
         match feature {
             None => {
-                feature_map = read_dir(self.path.source)?.fold(feature_map, |mut current, f| {
-                    current.insert(String::from(f?.file_name().to_str().unwrap()), vec![]);
+                feature_map = read_dir(&self.path.source)?.fold(feature_map, |mut current, f| {
+                    current.insert(String::from(f.unwrap().file_name().to_str().unwrap()), vec![]);
                     current
                 });
             },
@@ -71,36 +77,37 @@ impl NewEngine {
             }
         }
 
-        let features = feature_map.into_keys();
         match implementation {
             None => {
-                for feature in features {
-                    let implementation_folder = self.path.source.join(feature);
+                for feature in feature_map.clone().into_keys() {
+                    let implementation_folder = self.path.source.join(&feature).join("implementations");
                     let implementations = read_dir(implementation_folder)?.map(|i| {
-                        i?.file_name().into_string().unwrap()
+                        i.unwrap().file_name().into_string().unwrap()
                     }).collect::<Vec<String>>();
 
-                    feature_map.insert(feature.to_string(), implementations)
+                    feature_map.insert(feature.to_string(), implementations);
                 }
             },
             Some(i) => {
-                for feature in features {
-                    feature_map.insert(feature.to_string(), vec![i.to_string()])
+                for feature in feature_map.clone().into_keys() {
+                    feature_map.insert(feature.to_string(), vec![i.to_string()]);
                 }
             }
         }
 
-        for feature in features {
+        for feature in feature_map.clone().into_keys() {
             let f = feature_map.get(feature.as_str());
             for implementation in f.unwrap() {
-                executor(feature.as_str(), implementation.as_str())
+                executor(feature.as_str(), implementation.as_str());
             }
         }
 
         Ok(())
     }
 
-    fn build(self, feature: &str, implementation: &str) -> Result<(), BuildError> {
+    fn build(&self, feature: &str, implementation: &str) -> Result<(), BuildError> {
+        dbg!(&feature);
+        dbg!(&implementation);
         let mut build = Command::new("node");
         let directory = self.path.destination
             .join(feature)
@@ -111,6 +118,7 @@ impl NewEngine {
 
         match build.output() {
             Ok(output) => {
+                dbg!("hola");
                 // let error = String::from_utf8(t.stderr)?;
                 // if !error.is_empty() {
                 //     return Err(BuildError(BuildExecutionError("Build command has failed".to_string())))
@@ -119,19 +127,20 @@ impl NewEngine {
                 // t.status.success()?;
             }
             Err(e) => {
+                dbg!(e);
                 return Ok(());
             }
         };
         Ok(())
     }
 
-    fn test(self, feature: Option<&str>, implementation: Option<&str>) -> Result<(), TestError> {
+    fn test(&self, feature: &str, implementation: &str) -> Result<(), TestError> {
         let mut test = Command::new("node");
         let directory = self.path.destination
             .join(feature)
             .join("implementations")
             .join(implementation);
-        test.current_dir(directory);
+        test.current_dir(&directory);
         test.arg(CLI_PATH).arg("run")
             .arg("-m").arg("../../polywrap.test.yaml")
             .arg("-o").arg("./output.json");
@@ -141,11 +150,12 @@ impl NewEngine {
             test.arg("-c").arg("../../client-config.ts");
         };
 
+        dbg!("before testing :)");
         match test.output() {
             Ok(t) => {
                 let error = String::from_utf8(t.stderr)?;
                 if !error.is_empty() {
-                    return Err(TestExecutionError("Run command has failed".to_string()))
+                    return Err(TestError::TestExecutionError("Run command has failed".to_string()))
                 }
                 // let message = String::from_utf8(t.stdout)?;
 
@@ -153,10 +163,11 @@ impl NewEngine {
                 let results_dir = directory.join("output.json");
                 let summary = Results::process(results_dir)?;
 
-                let info_path = Path::new(self.path.destination.as_str())
+                let info_path = Path::new(self.path.destination.as_os_str())
                     .join("..")
                     .join("results.json");
-                let feature_name = &self.feature;
+                let feature_name = feature.clone();
+                dbg!(&feature_name);
                 match fs::read(&info_path) {
                     Ok(f) => {
                         let result_str = String::from_utf8_lossy(&f).parse::<String>().unwrap();
@@ -182,6 +193,7 @@ impl NewEngine {
                         serde_json::to_writer_pretty(results_file, &results).unwrap();
                     }
                 };
+                Results::show()?;
             }
             Err(e) => {
                 dbg!(e);

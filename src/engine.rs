@@ -1,13 +1,12 @@
 use std::collections::HashMap;
-use std::{fs, io};
+use std::{fs};
 use std::fs::read_dir;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::string::FromUtf8Error;
 use crate::{Results};
 use crate::generator::{Generate};
 use serde::{Deserialize, Serialize};
-use crate::error::{BuildError, TestError, GenerateError, ExecutionError};
+use crate::error::{BuildError, TestError, ExecutionError};
 use crate::error::BuildError::BuildExecutionError;
 use crate::error::TestError::TestExecutionError;
 
@@ -49,7 +48,7 @@ impl Engine {
         self.implementation = implementation;
     }
 
-    pub fn execute(&mut self, action: Executor) -> Result<(), ExecutionError> {
+    pub fn execute(&self, action: Executor) -> Result<(), ExecutionError> {
         let wrapper_path = Path::new(
             &self.destination_path.as_str()
         ).join(&self.feature).join("implementations");
@@ -57,35 +56,34 @@ impl Engine {
         match action {
             Executor::Generate => {
                 let destination_path = Path::new(self.destination_path.as_str());
-                let generate = Generate::new(
-                    destination_path.canonicalize().unwrap().as_path(),
-                    Path::new(self.source_path.as_str()),
-                )?;
-
-                generate.project(
+                Generate::new(
+                    destination_path.canonicalize().unwrap().to_path_buf(),
+                    PathBuf::from(&self.source_path),
+                ).project(
                     self.feature.as_str(),
                     self.implementation.as_str()
                 )?;
             }
-            Executor::Build => {
-                if !self.implementation.is_empty() {
-                    self.build(dir)?;
-                } else {
-                    for implementation in read_dir(&wrapper_path).unwrap() {
-                        self.build(&implementation.unwrap().path())?;
-                    }
-                }
-            }
-            Executor::Run => {
-                if !self.implementation.is_empty() {
-                    self.run(dir)?;
-                } else {
-                    for implementation in read_dir(&wrapper_path).unwrap() {
-                        self.run(&implementation.unwrap().path())?;
-                    }
-                }
-                Results::show()?;
-            }
+            // Executor::Build => {
+            //     if !self.implementation.is_empty() {
+            //         self.build(dir)?;
+            //     } else {
+            //         for implementation in read_dir(&wrapper_path).unwrap() {
+            //             self.build(&implementation.unwrap().path())?;
+            //         }
+            //     }
+            // }
+            // Executor::Run => {
+            //     if !self.implementation.is_empty() {
+            //         self.run(dir)?;
+            //     } else {
+            //         for implementation in read_dir(&wrapper_path).unwrap() {
+            //             self.run(&implementation.unwrap().path())?;
+            //         }
+            //     }
+            //     Results::show()?;
+            // }
+            _ => {}
         };
         Ok(())
     }

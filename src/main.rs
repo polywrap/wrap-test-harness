@@ -9,7 +9,7 @@ mod manifest;
 mod new_engine;
 mod error;
 
-use std::{fs, io};
+use std::{fs};
 use std::path::Path;
 
 use crate::engine::{Engine, Executor};
@@ -23,8 +23,15 @@ fn main() -> Result<(), HarnessError> {
     let source_path = Path::new(TEST_FOLDER);
 
     let sanitized_args = &input::handle_args();
-    let feature = &sanitized_args.feature;
-    let implementation = &sanitized_args.implementation;
+    let feature = match &sanitized_args.feature {
+        Some(t) =>  Some(t.as_str()),
+        None => None
+    };
+
+    let implementation = match &sanitized_args.implementation {
+        Some(t) => Some(t.as_str()),
+        None => None
+    };
 
     let mut engine = Engine::new();
 
@@ -81,11 +88,9 @@ fn main() -> Result<(), HarnessError> {
     // engine.execute(Executor::Build)?;
     // engine.execute(Executor::Run)?;
 
-    let new_engine = NewEngine::start(
+    NewEngine::start(
         destination_path,
         source_path
-    );
-    new_engine.execute(*feature, *implementation)?;
-
+    ).execute(feature, implementation)?;
     Ok(())
 }

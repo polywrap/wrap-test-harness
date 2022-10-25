@@ -4,24 +4,23 @@ use std::io::{BufReader};
 use std::path::{Path, PathBuf};
 use serde_json;
 use serde_yaml;
-use thiserror::Error;
 use crate::constants::{IMPLEMENTATIONS};
-use crate::error::{CreateImplementationError, GenerateError, GenerateImplementationError, MergeManifestError, GenerateTestManifestError};
+use crate::error::{CreateImplementationError, GenerateError, GenerateImplementationError, GenerateTestManifestError};
 use crate::generator::GenerateError::{MissingExpectedFile, ReadError};
 use crate::manifest::{Manifest, Workflow};
 
 const CUSTOM_MANIFEST: &str = "polywrap.json";
 const EXPECTED_FILES: [&str; 3] = ["workflow.json", "schema.graphql", "implementations"];
 
-pub struct Generate<'a> {
-    pub dest_path: &'a Path,
-    pub source_path: &'a Path,
+pub struct Generate {
+    pub dest_path: PathBuf,
+    pub source_path: PathBuf,
 }
 
-impl Generate<'_> {
-    pub fn new<'a>(
-        dest_path: &'a Path,
-        source_path: &'a Path
+impl Generate {
+    pub fn new(
+        dest_path: PathBuf,
+        source_path: PathBuf
     ) -> Self {
         Generate {
             dest_path,

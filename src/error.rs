@@ -18,7 +18,13 @@ pub enum ExecutionError {
     #[error(transparent)]
     HandlerError(#[from] HandlerError),
     #[error(transparent)]
-    ShowResultsError(#[from] ShowResultsError)
+    ShowResultsError(#[from] ShowResultsError),
+    #[error(transparent)]
+    GenerateError(#[from] GenerateError),
+    #[error(transparent)]
+    BuildError(#[from] BuildError),
+    #[error(transparent)]
+    TestError(#[from] TestError)
 }
 
 #[derive(Error, Debug)]
@@ -28,7 +34,9 @@ pub enum HandlerError {
     #[error(transparent)]
     BuildError(#[from] BuildError),
     #[error(transparent)]
-    TestError(#[from] TestError)
+    TestError(#[from] TestError),
+    #[error(transparent)]
+    FileNotFound(#[from] io::Error)
 }
 
 #[derive(Error, Debug)]
@@ -118,6 +126,8 @@ pub enum TestError {
     FileNotFound(#[from] io::Error),
     #[error("Test execution error")]
     TestExecutionError(String),
+    #[error("Show results error error")]
+    ShowResultsError(#[from] ShowResultsError),
 }
 
 #[derive(Error, Debug)]

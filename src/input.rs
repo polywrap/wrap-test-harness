@@ -23,22 +23,22 @@ struct Args {
 }
 
 pub struct SanitizedArgs {
-    pub(crate) implementation: Option<&'static str>,
-    pub(crate) feature: Option<&'static str>
+    pub implementation: Option<String>,
+    pub feature: Option<String>,
 }
 
 pub fn handle_args() -> SanitizedArgs {
     let args = Args::parse();
 
-    let implementation = match args.implementation {
-      Some(i) => i.as_str(),
-      None => None
-    };
-
-    let feature = match args.feature {
-        Some(f) => f.as_str(),
-        None => None
-    };
+    // let implementation = match args.implementation {
+    //   Some(i) => Some(i.as_str()),
+    //   None => None
+    // };
+    //
+    // let feature = match args.feature {
+    //     Some(f) => Some(f.as_str()),
+    //     None => None
+    // };
 
     match fs::create_dir(BUILD_FOLDER) {
         Err(_) => {
@@ -52,8 +52,8 @@ pub fn handle_args() -> SanitizedArgs {
     }
 
     return SanitizedArgs {
-        implementation,
-        feature
+        implementation: args.implementation,
+        feature: args.feature
     }
 
     // You can see how many times a particular flag or argument occurred
