@@ -41,15 +41,15 @@ fn main() -> Result<(), HarnessError> {
     };
 
     if feature.is_none() {
-        for entry in fs::read_dir(&source_path)? {
-            engine.set_case(
-                destination_path,
-                source_path,
-                String::from(entry?.file_name().to_str().unwrap()),
-                old_implementation.to_string(),
-            );
-            engine.execute(Executor::Generate)?;
-        }
+        // for entry in fs::read_dir(&source_path)? {
+        //     engine.set_case(
+        //         destination_path,
+        //         source_path,
+        //         String::from(entry?.file_name().to_str().unwrap()),
+        //         old_implementation.to_string(),
+        //     );
+        //     engine.execute(Executor::Generate)?;
+        // }
 
         // for entry in fs::read_dir(&source_path)? {
         //     engine.set_case(
@@ -73,18 +73,18 @@ fn main() -> Result<(), HarnessError> {
         return Ok(());
     }
 
-    let old_feature = match feature {
-        Some(f) => f.to_string(),
-        None => "".to_string()
-    };
+    // let old_feature = match feature {
+    //     Some(f) => f.to_string(),
+    //     None => "".to_string()
+    // };
 
-    engine.set_case(
-        destination_path,
-        source_path,
-        old_feature,
-        old_implementation,
-    );
-    engine.execute(Executor::Generate)?;
+    // engine.set_case(
+    //     destination_path,
+    //     source_path,
+    //     old_feature,
+    //     old_implementation,
+    // );
+    // engine.execute(Executor::Generate)?;
     // engine.execute(Executor::Build)?;
     // engine.execute(Executor::Run)?;
 

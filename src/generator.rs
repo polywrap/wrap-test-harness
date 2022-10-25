@@ -27,10 +27,10 @@ impl Generate {
             source_path
         }
     }
-    pub fn project<'a>(
-        self,
-        feature: &'a str,
-        implementation: &'a str
+    pub fn project(
+        &self,
+        feature: &str,
+        implementation: &str
     ) -> Result<(), GenerateError> {
         fs::create_dir(self.dest_path.join(feature))?;
         let test_folder = self.source_path.join(feature);
@@ -91,23 +91,23 @@ impl Generate {
     pub fn implementation_files(&self, feature: &str, implementation: &str) -> Result<(), GenerateImplementationError> {
         let dest_implementation_folder = &self.dest_path.join(feature).join("implementations");
         let template_implementation_folder = &self.source_path.join(feature).join("implementations");
-        fs::create_dir(dest_implementation_folder)?;
+        // fs::create_dir(dest_implementation_folder)?;
 
-        if implementation.is_empty() {
-            let implementations = fs::read_dir(template_implementation_folder)?;
-            for implementation in implementations {
-                let imp = implementation?;
-                let impl_name = &imp.file_name();
-                let source_path = &template_implementation_folder.join(impl_name);
-                let dest_path = &dest_implementation_folder.join(impl_name);
-                self.create_implementation(
-                    source_path,
-                    dest_path,
-                    feature,
-                    impl_name.to_str().unwrap(),
-                )?;
-            };
-        } else {
+        // if implementation.is_empty() {
+        //     let implementations = fs::read_dir(template_implementation_folder)?;
+        //     for implementation in implementations {
+        //         let imp = implementation?;
+        //         let impl_name = &imp.file_name();
+        //         let source_path = &template_implementation_folder.join(impl_name);
+        //         let dest_path = &dest_implementation_folder.join(impl_name);
+        //         self.create_implementation(
+        //             source_path,
+        //             dest_path,
+        //             feature,
+        //             impl_name.to_str().unwrap(),
+        //         )?;
+        //     };
+        // } else {
             let source_path = &template_implementation_folder.join(implementation);
             let dest_path = &dest_implementation_folder.join(implementation);
             self.create_implementation(
@@ -116,7 +116,7 @@ impl Generate {
                 feature,
                 implementation,
             )?;
-        };
+        // };
         Ok(())
     }
 
@@ -127,6 +127,7 @@ impl Generate {
         feature: &str,
         implementation: &str,
     ) -> Result<(), CreateImplementationError> {
+        fs::create_dir(&destination_path.join(&implementation).join("implementations"))?;
         // Generate implementation files (i.e: index.ts/lib.rs)
         let files = fs::read_dir(source_path)?;
         for file in files {

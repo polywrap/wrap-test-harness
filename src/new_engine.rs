@@ -6,6 +6,7 @@ use std::process::Command;
 use serde::{Deserialize, Serialize};
 use crate::error::{ExecutionError, HandlerError, TestError, BuildError};
 use crate::Results;
+use crate::generator::{Generate};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct NewEngine {
@@ -38,11 +39,15 @@ impl NewEngine {
     }
 
     pub fn execute(&self, feature: Option<&str>, implementation: Option<&str>) -> Result<(), ExecutionError> {
-        // let generator = Generate::new(
-        //     self.path.destination.as_path(),
-        //     self.path.source.as_path()
-        // )?;
-        // self.handler(generator.project, feature, implementation)?;
+        let generator = Generate::new(
+            self.path.destination.to_path_buf(),
+            self.path.source.to_path_buf()
+        );
+        self.handler(
+            Box::new(|a, b| generator.project(a, b).map_err(|e| ExecutionError::GenerateError(e))),
+            feature,
+            implementation
+        )?;
         self.handler(
             Box::new(|a, b| self.build(a, b).map_err(|e| ExecutionError::BuildError(e))),
             feature,
@@ -118,7 +123,6 @@ impl NewEngine {
 
         match build.output() {
             Ok(output) => {
-                dbg!("hola");
                 // let error = String::from_utf8(t.stderr)?;
                 // if !error.is_empty() {
                 //     return Err(BuildError(BuildExecutionError("Build command has failed".to_string())))
@@ -150,7 +154,6 @@ impl NewEngine {
             test.arg("-c").arg("../../client-config.ts");
         };
 
-        dbg!("before testing :)");
         match test.output() {
             Ok(t) => {
                 let error = String::from_utf8(t.stderr)?;
