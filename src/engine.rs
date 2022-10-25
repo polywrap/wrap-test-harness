@@ -1,186 +1,174 @@
 use std::collections::HashMap;
-use std::{fs, io};
+use std::fs;
 use std::fs::read_dir;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::string::FromUtf8Error;
-use crate::{Results};
-use crate::generator::{Generate,GenerateError};
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
-use crate::engine::BuildError::BuildExecutionError;
-use crate::engine::TestError::TestExecutionError;
-use crate::result::{ResultError, ShowResultsError};
-
-#[derive(Error, Debug)]
-pub enum EngineError {
-    #[error("Generate error")]
-    GenerateError(#[from] GenerateError),
-    #[error("Build error")]
-    BuildError(#[from] BuildError),
-    #[error("Test error")]
-    TestError(#[from] TestError),
-    #[error("Show result error")]
-    ShowResultsError(#[from] ShowResultsError)
-}
-
-#[derive(Error, Debug)]
-pub enum BuildError {
-    #[error("Output from build process can not be parsed")]
-    ConsoleOutputError(#[from] FromUtf8Error),
-    #[error("Build folder not found")]
-    BuildFolderNotFound,
-    #[error("Expected file not found")]
-    FileNotFound(#[from] io::Error),
-    #[error("Build execution error")]
-    BuildExecutionError(String),
-}
-
-#[derive(Error, Debug)]
-pub enum TestError {
-    #[error("Output from run process can not be parsed")]
-    ConsoleOutputError(#[from] FromUtf8Error),
-    #[error("Test folder not found")]
-    TestFolderNotFound,
-    #[error("Fetch of results failed")]
-    ResultError(#[from] ResultError),
-    #[error("File not found")]
-    FileNotFound(#[from] io::Error),
-    #[error("Test execution error")]
-    TestExecutionError(String),
-}
+use crate::error::{ExecutionError, HandlerError, TestError, BuildError};
+use crate::Results;
+use crate::generator::{Generate};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Engine {
-    pub destination_path: String,
-    pub source_path: String,
-    pub feature: String,
-    pub implementation: String,
+    pub path: EnginePath,
+    pub feature: Option<String>,
+    pub implementation: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum Executor {
-    Build,
-    Run,
-    Generate
+pub struct EnginePath {
+    pub destination: PathBuf,
+    pub source: PathBuf,
 }
 
+const CLI_PATH: &'static str = "../../../../../monorepo/packages/cli/bin/polywrap";
+
 impl Engine {
-    pub fn new() -> Self {
+    pub fn start(
+        destination: &Path,
+        source: &Path
+    ) -> Self {
         Self {
-            destination_path: String::new(),
-            source_path: String::new(),
-            feature: String::new(),
-            implementation: String::new(),
+            path: EnginePath {
+                destination: destination.to_path_buf(),
+                source: source.to_path_buf(),
+            },
+            feature: None,
+            implementation: None
         }
     }
 
-    pub fn set_case(
-        &mut self,
-        destination_path: &Path,
-        source_path: &Path,
-        feature: String,
-        implementation: String,
-    )  {
-        self.destination_path = String::from(destination_path.to_str().unwrap());
-        self.source_path = String::from(source_path.to_str().unwrap());
-        self.feature = feature;
-        self.implementation = implementation;
-    }
-
-    pub fn execute(&mut self, action: Executor) -> Result<(), EngineError> {
-        let wrapper_path = Path::new(
-            &self.destination_path.as_str()
-        ).join(&self.feature).join("implementations");
-        let dir = &wrapper_path.join(&self.implementation);
-        match action {
-            Executor::Generate => {
-                let destination_path = Path::new(self.destination_path.as_str());
-                Generate::project(
-                    destination_path.canonicalize().unwrap().as_path(),
-                    Path::new(self.source_path.as_str()),
-                    self.feature.as_str(),
-                    self.implementation.as_str()
-                )?;
-            }
-            Executor::Build => {
-                if !self.implementation.is_empty() {
-                    self.build(dir)?;
-                } else {
-                    for implementation in read_dir(&wrapper_path).unwrap() {
-                        self.build(&implementation.unwrap().path())?;
-                    }
-                }
-            }
-            Executor::Run => {
-                if !self.implementation.is_empty() {
-                    self.run(dir)?;
-                } else {
-                    for implementation in read_dir(&wrapper_path).unwrap() {
-                        self.run(&implementation.unwrap().path())?;
-                    }
-                }
-                Results::show()?;
-            }
-        };
+    pub fn execute(&self, feature: Option<&str>, implementation: Option<&str>) -> Result<(), ExecutionError> {
+        let generator = Generate::new(
+            self.path.destination.to_path_buf(),
+            self.path.source.to_path_buf()
+        );
+        self.handler(
+            Box::new(|a, b| generator.project(a, b).map_err(|e| ExecutionError::GenerateError(e))),
+            feature,
+            implementation
+        )?;
+        self.handler(
+            Box::new(|a, b| self.build(a, b).map_err(|e| ExecutionError::BuildError(e))),
+            feature,
+            implementation
+        )?;
+        self.handler(
+            Box::new(|a,b| self.test(a, b).map_err(|e| ExecutionError::TestError(e))),
+            feature,
+            implementation
+        )?;
         Ok(())
     }
 
-    pub fn build(&self, dir: &PathBuf) -> Result<(), BuildError> {
-        println!(
-            "Building implementation: {} in test case {}",
-            &self.implementation,
-            self.feature
-        );
+    fn handler<'a>(
+        &self,
+        executor: Box<dyn Fn(&str, &str) -> Result<(), ExecutionError> + 'a>,
+        feature: Option<&str>,
+        implementation: Option<&str>
+    ) -> Result<(), HandlerError>  {
+        type FeatureImplMap = HashMap<String, Vec<String>>;
+        let mut feature_map : FeatureImplMap = HashMap::new();
+
+        match feature {
+            None => {
+                feature_map = read_dir(&self.path.source)?.fold(feature_map, |mut current, f| {
+                    current.insert(String::from(f.unwrap().file_name().to_str().unwrap()), vec![]);
+                    current
+                });
+            },
+            Some(f) => {
+                feature_map.insert(f.to_string(), vec![]);
+            }
+        }
+
+        match implementation {
+            None => {
+                for feature in feature_map.clone().into_keys() {
+                    let implementation_folder = self.path.source.join(&feature).join("implementations");
+                    let implementations = read_dir(implementation_folder)?.map(|i| {
+                        i.unwrap().file_name().into_string().unwrap()
+                    }).collect::<Vec<String>>();
+
+                    feature_map.insert(feature.to_string(), implementations);
+                }
+            },
+            Some(i) => {
+                for feature in feature_map.clone().into_keys() {
+                    feature_map.insert(feature.to_string(), vec![i.to_string()]);
+                }
+            }
+        }
+
+        for feature in feature_map.clone().into_keys() {
+            let f = feature_map.get(feature.as_str());
+            for implementation in f.unwrap() {
+                executor(feature.as_str(), implementation.as_str());
+            }
+        }
+
+        Ok(())
+    }
+
+    fn build(&self, feature: &str, implementation: &str) -> Result<(), BuildError> {
         let mut build = Command::new("node");
-        build.current_dir(dir.canonicalize()?);
-        build.arg("../../../../../monorepo/packages/cli/bin/polywrap").arg("build").arg("-v");
+        let directory = self.path.destination
+            .join(feature)
+            .join("implementations")
+            .join(implementation);
+        build.current_dir(directory);
+        build.arg(CLI_PATH).arg("build").arg("-v");
 
         match build.output() {
-            Ok(t) => {
-                let error = String::from_utf8(t.stderr)?;
+            Ok(output) => {
+                let error = String::from_utf8(output.stderr)?;
                 if !error.is_empty() {
-                    return Err(BuildExecutionError("Build command has failed".to_string()))
+                    return Err(BuildError::BuildExecutionError("Build command has failed".to_string()));
                 }
                 // let message = String::from_utf8(t.stdout)?;
-                t.status.success()
+                // t.status.success()?;
             }
             Err(e) => {
+                // TODO: Return error
                 dbg!(e);
-                false
+                return Ok(());
             }
         };
         Ok(())
     }
 
-    pub fn run(&self, dir: &PathBuf) -> Result<(), TestError> {
-        let mut run = Command::new("node");
-        run.current_dir(dir.canonicalize()?);
-        run.arg("../../../../../monorepo/packages/cli/bin/polywrap").arg("run")
+    fn test(&self, feature: &str, implementation: &str) -> Result<(), TestError> {
+        let mut test = Command::new("node");
+        let directory = self.path.destination
+            .join(feature)
+            .join("implementations")
+            .join(implementation);
+        test.current_dir(&directory);
+        test.arg(CLI_PATH).arg("run")
             .arg("-m").arg("../../polywrap.test.yaml")
             .arg("-o").arg("./output.json");
 
-        let custom_config = dir.join("../../client-config.ts").exists();
+        let custom_config = directory.join("../../client-config.ts").exists();
         if custom_config {
-            run.arg("-c").arg("../../client-config.ts");
-        }
+            test.arg("-c").arg("../../client-config.ts");
+        };
 
-        match run.output() {
-            Ok(t) => {
-                let error = String::from_utf8(t.stderr)?;
+        match test.output() {
+            Ok(output) => {
+                let error = String::from_utf8(output.stderr)?;
                 if !error.is_empty() {
-                    return Err(TestExecutionError("Run command has failed".to_string()))
+                    return Err(TestError::TestExecutionError("Run command has failed".to_string()))
                 }
                 // let message = String::from_utf8(t.stdout)?;
 
-                let impl_name = dir.file_name().unwrap().to_str().unwrap();
-                let results_dir = dir.join("output.json");
+                let impl_name = directory.file_name().unwrap().to_str().unwrap();
+                let results_dir = directory.join("output.json");
                 let summary = Results::process(results_dir)?;
 
-                let info_path = Path::new(self.destination_path.as_str())
+                let info_path = Path::new(self.path.destination.as_os_str())
                     .join("..")
                     .join("results.json");
-                let feature_name = &self.feature;
+                let feature_name = feature.clone();
                 match fs::read(&info_path) {
                     Ok(f) => {
                         let result_str = String::from_utf8_lossy(&f).parse::<String>().unwrap();
@@ -206,8 +194,10 @@ impl Engine {
                         serde_json::to_writer_pretty(results_file, &results).unwrap();
                     }
                 };
+                Results::show()?;
             }
             Err(e) => {
+                // TODO: Return error
                 dbg!(e);
             }
         };

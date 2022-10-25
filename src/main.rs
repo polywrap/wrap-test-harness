@@ -3,78 +3,37 @@ extern crate core;
 mod generator;
 mod constants;
 mod result;
-mod engine;
 mod input;
 mod manifest;
+mod engine;
+mod error;
 
-use std::{fs, io};
+use std::{fs};
 use std::path::Path;
 
-use crate::engine::{Engine, EngineError, Executor};
+use crate::engine::{Engine};
 use crate::result::{Results};
-use crate::input::{BUILD_FOLDER,TEST_FOLDER};
-use thiserror::Error;
-
-#[derive(Error, Debug)]
-pub enum HarnessError {
-    #[error("Engine failed")]
-    EngineError(#[from] EngineError),
-    #[error("File not found")]
-    FileNotFound(#[from] io::Error)
-}
+use crate::input::{BUILD_FOLDER, TEST_FOLDER};
+use crate::error::HarnessError;
 
 fn main() -> Result<(), HarnessError> {
     let destination_path = Path::new(BUILD_FOLDER);
     let source_path = Path::new(TEST_FOLDER);
 
     let sanitized_args = &input::handle_args();
-    let feature = &sanitized_args.feature;
-    let implementation = &sanitized_args.implementation;
-    let mut engine = Engine::new();
+    let feature = match &sanitized_args.feature {
+        Some(t) =>  Some(t.as_str()),
+        None => None
+    };
 
-    // Engine::execute
-    if feature.is_empty() {
-        for entry in fs::read_dir(&source_path)? {
-            engine.set_case(
-                destination_path,
-                source_path,
-                String::from(entry?.file_name().to_str().unwrap()),
-                implementation.to_string(),
-            );
-            engine.execute(Executor::Generate)?;
-        }
+    let implementation = match &sanitized_args.implementation {
+        Some(t) => Some(t.as_str()),
+        None => None
+    };
 
-        for entry in fs::read_dir(&source_path)? {
-            engine.set_case(
-                destination_path,
-                source_path,
-                String::from(entry?.file_name().to_str().unwrap()),
-                implementation.to_string(),
-            );
-            engine.execute(Executor::Build)?;
-        }
-
-        for entry in fs::read_dir(&source_path)? {
-            engine.set_case(
-                destination_path,
-                source_path,
-                String::from(entry?.file_name().to_str().unwrap()),
-                implementation.to_string(),
-            );
-            engine.execute(Executor::Run)?;
-        }
-        return Ok(())
-    }
-
-    engine.set_case(
+    Engine::start(
         destination_path,
-        source_path,
-        String::from(feature),
-        implementation.to_string(),
-    );
-    engine.execute(Executor::Generate)?;
-    engine.execute(Executor::Build)?;
-    engine.execute(Executor::Run)?;
-
+        source_path
+    ).execute(feature, implementation)?;
     Ok(())
 }

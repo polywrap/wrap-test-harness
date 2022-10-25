@@ -1,14 +1,6 @@
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 use crate::constants::Implementation;
-
-#[derive(Error, Debug)]
-pub enum MergeManifestError {
-    #[error("Source in manifest not found")]
-    SourceNotFound,
-    #[error("Project in manifest not found")]
-    ProjectNotFound,
-}
+use crate::error::{MergeManifestError};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Workflow {

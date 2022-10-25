@@ -1,32 +1,12 @@
 use std::collections::HashMap;
-use std::{fs, io};
+use std::{fs};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value};
 use cli_table::{Cell, Table, CellStruct};
-use thiserror::Error;
-use crate::result::ResultError::FileNotFound;
-
-#[derive(Error, Debug)]
-pub enum ResultError {
-    #[error("Result file not found")]
-    FileNotFound(String)
-}
-
-impl From<io::Error> for ResultError {
-    fn from(_: io::Error) -> Self {
-        FileNotFound("Results file has not been found".to_string())
-    }
-}
-
-#[derive(Error, Debug)]
-pub enum ShowResultsError {
-    #[error("Show of results failed")]
-    FileNotFound(#[from] io::Error),
-}
-
+use crate::error::{ResultError, ShowResultsError};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, Copy)]
 pub struct Summary {
@@ -63,7 +43,6 @@ pub struct Results {
     pub version: i8,
     pub info: Info,
 }
-
 
 type RawResult<'a> = Vec<Job<'a>>;
 
@@ -102,8 +81,7 @@ impl Results {
         let summary = result.iter().fold(default_summary, |mut acc, r| {
             acc.stats.total += 1;
             match (r.status, r.validation.status) {
-                ("SUCCEED", "SKIPPED") => acc.stats.succeeded += 1,
-                (_, "SUCCEED") => acc.stats.succeeded += 1,
+                ("SUCCEED", "SKIPPED") | (_, "SUCCEED") => acc.stats.succeeded += 1,
                 _ => {
                     acc.stats.failed += 1;
                     acc.passed = false;
