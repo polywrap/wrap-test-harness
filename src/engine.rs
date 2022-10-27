@@ -84,7 +84,6 @@ impl Engine {
     ) -> Result<(), ExecutionError>  {
         type FeatureImplMap = HashMap<String, CaseType>;
         let mut feature_map : FeatureImplMap = HashMap::new();
-
         match feature {
             None => {
                 feature_map = read_dir(&self.path.source)?.fold(feature_map, |mut current, f| {
@@ -112,6 +111,7 @@ impl Engine {
                         read_dir(feature_folder)?.into_iter().filter(|i| {
                             i.as_ref().unwrap().metadata().unwrap().is_dir()
                         }).for_each(|entry| {
+                            dbg!(&entry);
                             let dir = entry.unwrap();
                             let step_name = dir.file_name().into_string().unwrap();
                             let step_implementations = dir.path().join("implementations");
@@ -144,6 +144,7 @@ impl Engine {
                     }
                 }
                 CaseType::Complex(cases) => {
+                    dbg!(&feature_map);
                     let mut steps = cases.clone().into_keys().map(|c| c).collect::<Vec<String>>();
                     steps.sort();
                     for step in steps {

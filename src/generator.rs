@@ -86,10 +86,13 @@ impl Generate {
         if let Some(path) = subpath {
             source_path = source_path.join(path);
             dest_path = dest_path.join(path);
-            fs::create_dir(&dest_path)?;
+            if !dest_path.exists() {
+                fs::create_dir(&dest_path)?;
+            }
         }
 
         source_path = source_path.join(SCHEMA);
+        dest_path = dest_path.join(SCHEMA);
         if !source_path.exists() {
             return Err(GenerateSchemaError::MissingExpectedFile(
                 SCHEMA.to_string(),
@@ -97,13 +100,23 @@ impl Generate {
             ));
         }
 
-        fs::copy(source_path, dest_path.join(SCHEMA))?;
+        if !dest_path.exists() {
+            fs::copy(source_path, dest_path)?;
+        }
+
         Ok(())
     }
 
     pub fn implementation_files(&self, feature: &str, implementation: &str, subpath: Option<&str>) -> Result<(), GenerateImplementationError> {
-        let dest_implementation_folder = self.dest_path.join(feature).join(IMPLEMENTATIONS_FOLDER);
-        let template_implementation_folder = self.source_path.join(feature).join(IMPLEMENTATIONS_FOLDER);
+        let mut dest_implementation_folder = self.dest_path.join(feature);
+        let mut template_implementation_folder = self.source_path.join(feature);
+        if let Some(path) = subpath {
+            dest_implementation_folder = dest_implementation_folder.join(path);
+            template_implementation_folder = template_implementation_folder.join(path);
+        }
+
+        dest_implementation_folder = dest_implementation_folder.join(IMPLEMENTATIONS_FOLDER);
+        template_implementation_folder = template_implementation_folder.join(IMPLEMENTATIONS_FOLDER);
 
         if !dest_implementation_folder.exists() {
             fs::create_dir(&dest_implementation_folder)?
