@@ -4,7 +4,7 @@ use std::fs::read_dir;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use serde::{Deserialize, Serialize};
-use crate::error::{ExecutionError, HandlerError, TestError, BuildError};
+use crate::error::{ExecutionError, TestError, BuildError};
 use crate::Results;
 use crate::generator::{Generate};
 
@@ -22,6 +22,12 @@ pub struct EnginePath {
 }
 
 const CLI_PATH: &'static str = "../../../../../monorepo/packages/cli/bin/polywrap";
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+enum ProjectType {
+    Simple(Vec<String>),
+    Complex(Vec<HashMap<String, Option<Vec<String>>>>)
+}
 
 impl Engine {
     pub fn start(
@@ -66,19 +72,30 @@ impl Engine {
         executor: Box<dyn Fn(&str, &str) -> Result<(), ExecutionError> + 'a>,
         feature: Option<&str>,
         implementation: Option<&str>
-    ) -> Result<(), HandlerError>  {
-        type FeatureImplMap = HashMap<String, Vec<String>>;
+    ) -> Result<(), ExecutionError>  {
+        type FeatureImplMap = HashMap<String, ProjectType>;
+        //
+        // {
+        //     "json-type": ["as", "go"]
+        // },
+        // {
+        //     "interface-invoke": [{
+        //         "00-interface": None,
+        //         "01-implementation": Some(["as", "rs" ])
+        //     }]
+        // }
+
         let mut feature_map : FeatureImplMap = HashMap::new();
 
         match feature {
             None => {
                 feature_map = read_dir(&self.path.source)?.fold(feature_map, |mut current, f| {
-                    current.insert(String::from(f.unwrap().file_name().to_str().unwrap()), vec![]);
+                    current.insert(String::from(f.unwrap().file_name().to_str().unwrap()), ProjectType::Simple(vec![]));
                     current
                 });
             },
             Some(f) => {
-                feature_map.insert(f.to_string(), vec![]);
+                feature_map.insert(f.to_string(), ProjectType::Simple(vec![]));
             }
         }
 
@@ -86,25 +103,37 @@ impl Engine {
             None => {
                 for feature in feature_map.clone().into_keys() {
                     let implementation_folder = self.path.source.join(&feature).join("implementations");
-                    let implementations = read_dir(implementation_folder)?.map(|i| {
-                        i.unwrap().file_name().into_string().unwrap()
-                    }).collect::<Vec<String>>();
+                    if implementation_folder.exists() {
+                        let implementations = read_dir(implementation_folder)?.map(|i| {
+                            i.unwrap().file_name().into_string().unwrap()
+                        }).collect::<Vec<String>>();
 
-                    feature_map.insert(feature.to_string(), implementations);
+                        feature_map.insert(feature.to_string(), ProjectType::Simple(implementations));
+                    } else {
+
+                    }
                 }
             },
             Some(i) => {
                 for feature in feature_map.clone().into_keys() {
-                    feature_map.insert(feature.to_string(), vec![i.to_string()]);
+                    feature_map.insert(feature.to_string(), ProjectType::Simple(vec![i.to_string()]));
                 }
             }
         }
 
         for feature in feature_map.clone().into_keys() {
             let f = feature_map.get(feature.as_str());
-            for implementation in f.unwrap() {
-                executor(feature.as_str(), implementation.as_str());
+            match f.unwrap() {
+                ProjectType::Simple(implementations) => {
+                    for implementation in implementations {
+                        executor(feature.as_str(), implementation.as_str())?;
+                    }
+                }
+                ProjectType::Complex(_) => {
+                    dbg!("we found a complex guy but let's ignore it :)");
+                }
             }
+
         }
 
         Ok(())
@@ -144,7 +173,7 @@ impl Engine {
             .join("implementations")
             .join(implementation);
         test.current_dir(&directory);
-        test.arg(CLI_PATH).arg("run")
+        test.arg(CLI_PATH).arg("test")
             .arg("-m").arg("../../polywrap.test.yaml")
             .arg("-o").arg("./output.json");
 
@@ -157,7 +186,7 @@ impl Engine {
             Ok(output) => {
                 let error = String::from_utf8(output.stderr)?;
                 if !error.is_empty() {
-                    return Err(TestError::TestExecutionError("Run command has failed".to_string()))
+                    return Err(TestError::TestExecutionError(error))
                 }
                 // let message = String::from_utf8(t.stdout)?;
 
@@ -194,7 +223,6 @@ impl Engine {
                         serde_json::to_writer_pretty(results_file, &results).unwrap();
                     }
                 };
-                Results::show()?;
             }
             Err(e) => {
                 // TODO: Return error

@@ -1,6 +1,6 @@
 use std::{fs, io};
 use std::io::{BufReader};
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
 use serde_json;
 use serde_yaml;
 use crate::constants::{IMPLEMENTATIONS};
@@ -9,7 +9,11 @@ use crate::generator::GenerateError::{MissingExpectedFile, ReadError};
 use crate::manifest::{Manifest, Workflow};
 
 const CUSTOM_MANIFEST: &str = "polywrap.json";
-const EXPECTED_FILES: [&str; 3] = ["workflow.json", "schema.graphql", "implementations"];
+const TEST_SCRIPT: &str = "workflow.json";
+const SCHEMA: &str = "schema.graphql";
+const IMPLEMENTATIONS_FOLDER: &str = "implementations";
+
+const SIMPLE_CASE_EXPECTED_FILES: [&str; 3] = [TEST_SCRIPT, SCHEMA, IMPLEMENTATIONS_FOLDER];
 
 pub struct Generate {
     pub dest_path: PathBuf,
@@ -36,19 +40,30 @@ impl Generate {
             fs::create_dir(feature_path)?;
         }
 
+
         let test_folder = self.source_path.join(feature);
 
-        let files = fs::read_dir(&test_folder).map_err(|e| {
+        let files = fs::read_dir(&test_folder).map_err(|_| {
             let message = format!("Error reading folder from tests: {}. Make sure there's no type in the feature argument", feature);
             ReadError(message)
         })?;
 
+        // Complex projects steps:
+        // 1- Files wont be files, but rather folders (and a workflow file)
+        // 2- In these folders, we can not check the expected files, what needs to happen
+        //    is that we go to every folder, if it doesn't has implementations folder
+        //    we assume it's an interface. Every folder **must** have schema.graphql file
         let files = files.map(|directory| {
             let name = directory.unwrap().file_name();
             return name.into_string().unwrap();
         }).collect::<Vec<_>>();
 
-        let missing_files = EXPECTED_FILES
+        // if self.is_complex(files) {
+        //     self.generate_complex()?;
+        //     Ok(())
+        // }
+
+        let missing_files = SIMPLE_CASE_EXPECTED_FILES
             .into_iter()
             .filter(|&file| !files.contains(&file.to_string()))
             .collect::<Vec<_>>();
@@ -67,7 +82,7 @@ impl Generate {
     }
 
     pub fn test_manifest(&self, feature: &str) -> Result<(), GenerateTestManifestError> {
-        let workflow_path = self.source_path.join(feature).join(EXPECTED_FILES[0]);
+        let workflow_path = self.source_path.join(feature).join(SIMPLE_CASE_EXPECTED_FILES[0]);
         let workflow_str = fs::read_to_string(&workflow_path)?;
         let mut workflow = serde_json::from_str::<Workflow>(&workflow_str.as_str())?;
 
@@ -86,16 +101,15 @@ impl Generate {
     }
 
     pub fn schema(&self, feature: &str) -> Result<(), io::Error> {
-        let source_path = self.source_path.join(feature).join("schema.graphql");
-        let dest_path = self.dest_path.join(feature).join("schema.graphql");
+        let source_path = self.source_path.join(feature).join(SCHEMA);
+        let dest_path = self.dest_path.join(feature).join(SCHEMA);
         fs::copy(source_path, dest_path)?;
         Ok(())
     }
 
     pub fn implementation_files(&self, feature: &str, implementation: &str) -> Result<(), GenerateImplementationError> {
-        let dest_implementation_folder = &self.dest_path.join(feature).join("implementations");
-        let template_implementation_folder = &self.source_path.join(feature).join("implementations");
-
+        let dest_implementation_folder = &self.dest_path.join(feature).join(IMPLEMENTATIONS_FOLDER);
+        let template_implementation_folder = &self.source_path.join(feature).join(IMPLEMENTATIONS_FOLDER);
 
         if !dest_implementation_folder.exists() {
             fs::create_dir(dest_implementation_folder)?
@@ -141,7 +155,7 @@ impl Generate {
 
         let root = source_path.join("..").join("..");
         let mut root_files = fs::read_dir(root)?.into_iter().filter(
-            |file| !EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
+            |file| !SIMPLE_CASE_EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
         ).map(|entry| entry.unwrap()).collect::<Vec<_>>();
 
         // Generate polywrap manifest (i.e: polywrap.yaml)
@@ -180,5 +194,13 @@ impl Generate {
         };
 
         Ok(())
+    }
+
+    fn is_complex(&self, files: Vec<String>) {
+
+    }
+
+    fn generate_complex(&self) {
+
     }
 }

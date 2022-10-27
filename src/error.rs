@@ -10,25 +10,13 @@ pub enum HarnessError {
     #[error(transparent)]
     ExecutionError(#[from] ExecutionError),
     #[error(transparent)]
-    FileNotFound(#[from] io::Error)
+    FileNotFound(#[from] io::Error),
+    #[error(transparent)]
+    ShowResultsError(#[from] ShowResultsError),
 }
 
 #[derive(Error, Debug)]
 pub enum ExecutionError {
-    #[error(transparent)]
-    HandlerError(#[from] HandlerError),
-    #[error(transparent)]
-    ShowResultsError(#[from] ShowResultsError),
-    #[error(transparent)]
-    GenerateError(#[from] GenerateError),
-    #[error(transparent)]
-    BuildError(#[from] BuildError),
-    #[error(transparent)]
-    TestError(#[from] TestError)
-}
-
-#[derive(Error, Debug)]
-pub enum HandlerError {
     #[error(transparent)]
     GenerateError(#[from] GenerateError),
     #[error(transparent)]
