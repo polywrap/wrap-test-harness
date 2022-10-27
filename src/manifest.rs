@@ -29,6 +29,7 @@ pub struct Project {
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Source {
     schema: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     module: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     import_abis: Option<ImportAbis>,
@@ -72,17 +73,27 @@ impl Manifest {
 
     pub fn default(
         feature: &str,
-        implementation: &Implementation<'_>,
+        implementation: Option<&Implementation<'_>>,
     ) -> Manifest {
+        let (module, schema, _type) = match implementation {
+            Some(i) => {
+                (
+                    Some(i.module.to_string()),
+                    Some("../../schema.graphql".to_string()),
+                    Some(format!("wasm/{}", i.name.to_string()))
+                )
+            },
+            None => (None, Some("./schema.graphql".to_string()), Some("interface".to_string()))
+        };
         Manifest {
             format: Some("0.2.0".to_string()),
             project: Some(Project {
                 name: Some(feature.to_string()),
-                _type: Some(format!("wasm/{}", &implementation.name.to_string())),
+                _type,
             }),
             source: Some(Source {
-                schema: Some("../../schema.graphql".to_string()),
-                module: Some(implementation.module.to_string()),
+                schema,
+                module,
                 import_abis: None,
             })
         }

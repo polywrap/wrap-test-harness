@@ -40,7 +40,9 @@ pub enum GenerateError {
     #[error(transparent)]
     GenerateImplementationError(#[from] GenerateImplementationError),
     #[error(transparent)]
-    GenerateSchemaError(#[from] GenerateSchemaError)
+    GenerateSchemaError(#[from] GenerateSchemaError),
+    #[error(transparent)]
+    CreateManifestAndCommonFilesError(#[from] CreateManifestAndCommonFilesError)
 }
 
 #[derive(Error, Debug)]
@@ -75,6 +77,17 @@ pub enum GenerateSchemaError {
 
 #[derive(Error, Debug)]
 pub enum CreateImplementationError {
+    #[error(transparent)]
+    FileError(#[from] io::Error),
+    #[error("File manipulation error")]
+    OpenFileError(File),
+    #[error("File manipulation error")]
+    CreateManifestAndCommonFilesError(#[from] CreateManifestAndCommonFilesError),
+
+}
+
+#[derive(Error, Debug)]
+pub enum CreateManifestAndCommonFilesError {
     #[error(transparent)]
     FileError(#[from] io::Error),
     #[error("File manipulation error")]

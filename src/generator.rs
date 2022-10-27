@@ -1,10 +1,10 @@
 use std::{fs, io};
 use std::io::{BufReader};
-use std::path::{PathBuf};
+use std::path::{Path, PathBuf};
 use serde_json;
 use serde_yaml;
-use crate::constants::{IMPLEMENTATIONS};
-use crate::error::{CreateImplementationError, GenerateError, GenerateImplementationError, GenerateSchemaError, GenerateTestManifestError};
+use crate::constants::{Implementation, IMPLEMENTATIONS};
+use crate::error::{CreateImplementationError, CreateManifestAndCommonFilesError, GenerateError, GenerateImplementationError, GenerateSchemaError, GenerateTestManifestError};
 use crate::generator::GenerateError::{MissingExpectedFile, ReadError};
 use crate::manifest::{Manifest, Workflow};
 
@@ -49,6 +49,8 @@ impl Generate {
         // Create implementation folder & respective files
         if let Some(i) = implementation {
             self.implementation_files(feature, i, subpath)?;
+        } else {
+            self.manifest_and_common_files(feature, None, self.dest_path.join(feature), subpath)?;
         }
         Ok(())
     }
@@ -159,18 +161,28 @@ impl Generate {
         let dependencies_source = defaults_folder.join(&implementation_info.dependency);
         let dependencies_dest = destination_path.join(&implementation_info.dependency);
         fs::copy(dependencies_source, dependencies_dest)?;
+        self.manifest_and_common_files(feature, Some(implementation_info), destination_path, None)?;
+        Ok(())
+    }
 
-        let root = source_path.join("..").join("..");
+    fn manifest_and_common_files(
+        &self,
+        feature: &str,
+        implementation_info: Option<&Implementation>,
+        destination_path: PathBuf,
+        subpath: Option<&str>
+    ) -> Result<(), CreateManifestAndCommonFilesError> {
+        let root = self.source_path.join(feature);
         let mut root_files = fs::read_dir(root)?.into_iter().filter(
             |file| !SIMPLE_CASE_EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
-        ).map(|entry| entry.unwrap()).collect::<Vec<_>>();
+        ).filter(|f| !f.as_ref().unwrap().metadata().unwrap().is_dir()).map(|entry| entry.unwrap()).collect::<Vec<_>>();
 
         // Generate polywrap manifest (i.e: polywrap.yaml)
         let index = root_files.iter().position(|file| {
             file.file_name().eq(CUSTOM_MANIFEST)
         });
 
-        let mut manifest = Manifest::default(feature, implementation_info);
+        let mut manifest = Manifest::default(&feature, implementation_info);
         match index {
             Some(i) => {
                 let file = fs::File::open(root_files[i].path())?;
@@ -187,19 +199,26 @@ impl Generate {
             _ => {}
         }
 
-        let manifest_path = destination_path.join("polywrap.yaml");
+        let mut manifest_path = destination_path.clone();
+        if let Some(path) = subpath {
+            manifest_path = destination_path.join(path)
+        }
+
+        manifest_path = manifest_path.join("polywrap.yaml");
+
         let f = fs::OpenOptions::new()
             .write(true)
             .create(true)
             .open(&manifest_path)?;
         serde_yaml::to_writer(f, &manifest)?;
 
+        // Copy common files
+        dbg!(&root_files);
         for file in root_files {
-            let dest_file = destination_path.join("../..").join(file.file_name());
-            let source_file = source_path.join("../..").join(file.file_name());
+            let dest_file = self.dest_path.join(feature).join(file.file_name());
+            let source_file = self.source_path.join(feature).join(file.file_name());
             fs::copy(source_file, dest_file)?;
         };
-
         Ok(())
     }
 }
