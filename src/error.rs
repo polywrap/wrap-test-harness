@@ -38,11 +38,15 @@ pub enum GenerateError {
     #[error(transparent)]
     GenerateTestManifestError(#[from] GenerateTestManifestError),
     #[error(transparent)]
-    GenerateImplementationError(#[from] GenerateImplementationError)
+    GenerateImplementationError(#[from] GenerateImplementationError),
+    #[error(transparent)]
+    GenerateSchemaError(#[from] GenerateSchemaError)
 }
 
 #[derive(Error, Debug)]
 pub enum GenerateTestManifestError {
+    #[error("Missing expected file")]
+    MissingExpectedFile(String, String),
     #[error(transparent)]
     FileError(#[from] io::Error),
     #[error(transparent)]
@@ -59,6 +63,14 @@ pub enum GenerateImplementationError {
     DirEntryError(String),
     #[error(transparent)]
     CreateImplementationError(#[from] CreateImplementationError)
+}
+
+#[derive(Error, Debug)]
+pub enum GenerateSchemaError {
+    #[error(transparent)]
+    FileError(#[from] io::Error),
+    #[error("Missing expected file")]
+    MissingExpectedFile(String, String),
 }
 
 #[derive(Error, Debug)]

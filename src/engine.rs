@@ -23,10 +23,12 @@ pub struct EnginePath {
 
 const CLI_PATH: &'static str = "../../../../../monorepo/packages/cli/bin/polywrap";
 
+type ComplexCase = HashMap<String, Option<Vec<String>>>;
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-enum ProjectType {
+enum CaseType {
     Simple(Vec<String>),
-    Complex(Vec<HashMap<String, Option<Vec<String>>>>)
+    Complex(ComplexCase)
 }
 
 impl Engine {
@@ -50,17 +52,24 @@ impl Engine {
             self.path.source.to_path_buf()
         );
         self.handler(
-            Box::new(|a, b| generator.project(a, b).map_err(|e| ExecutionError::GenerateError(e))),
+            Box::new(|a, b, c| generator.project(a, b, c).map_err(|e| ExecutionError::GenerateError(e))),
             feature,
             implementation
         )?;
         self.handler(
-            Box::new(|a, b| self.build(a, b).map_err(|e| ExecutionError::BuildError(e))),
+            Box::new(|a, b, c| self.build(a,b,c).map_err(|e| ExecutionError::BuildError(e))),
             feature,
             implementation
         )?;
+
         self.handler(
-            Box::new(|a,b| self.test(a, b).map_err(|e| ExecutionError::TestError(e))),
+            Box::new(
+                |a, b, _| {
+                    if let Some(i) = b {
+                        return self.test(a, i).map_err(|e| ExecutionError::TestError(e));
+                    }
+                    Ok(())
+                }),
             feature,
             implementation
         )?;
@@ -69,54 +78,59 @@ impl Engine {
 
     fn handler<'a>(
         &self,
-        executor: Box<dyn Fn(&str, &str) -> Result<(), ExecutionError> + 'a>,
+        executor: Box<dyn Fn(&str, Option<&str>, Option<&str>) -> Result<(), ExecutionError> + 'a>,
         feature: Option<&str>,
         implementation: Option<&str>
     ) -> Result<(), ExecutionError>  {
-        type FeatureImplMap = HashMap<String, ProjectType>;
-        //
-        // {
-        //     "json-type": ["as", "go"]
-        // },
-        // {
-        //     "interface-invoke": [{
-        //         "00-interface": None,
-        //         "01-implementation": Some(["as", "rs" ])
-        //     }]
-        // }
-
+        type FeatureImplMap = HashMap<String, CaseType>;
         let mut feature_map : FeatureImplMap = HashMap::new();
 
         match feature {
             None => {
                 feature_map = read_dir(&self.path.source)?.fold(feature_map, |mut current, f| {
-                    current.insert(String::from(f.unwrap().file_name().to_str().unwrap()), ProjectType::Simple(vec![]));
+                    current.insert(String::from(f.unwrap().file_name().to_str().unwrap()), CaseType::Simple(vec![]));
                     current
                 });
             },
             Some(f) => {
-                feature_map.insert(f.to_string(), ProjectType::Simple(vec![]));
+                feature_map.insert(f.to_string(), CaseType::Simple(vec![]));
             }
         }
 
         match implementation {
             None => {
                 for feature in feature_map.clone().into_keys() {
-                    let implementation_folder = self.path.source.join(&feature).join("implementations");
+                    let feature_folder = self.path.source.join(&feature);
+                    let implementation_folder = feature_folder.join("implementations");
                     if implementation_folder.exists() {
                         let implementations = read_dir(implementation_folder)?.map(|i| {
                             i.unwrap().file_name().into_string().unwrap()
                         }).collect::<Vec<String>>();
-
-                        feature_map.insert(feature.to_string(), ProjectType::Simple(implementations));
+                        feature_map.insert(feature.to_string(), CaseType::Simple(implementations));
                     } else {
-
-                    }
-                }
+                        let mut complex_case_map: ComplexCase = HashMap::new();
+                        read_dir(feature_folder)?.into_iter().filter(|i| {
+                            i.as_ref().unwrap().metadata().unwrap().is_dir()
+                        }).for_each(|entry| {
+                            let dir = entry.unwrap();
+                            let step_name = dir.file_name().into_string().unwrap();
+                            let step_implementations = dir.path().join("implementations");
+                            if step_implementations.exists() {
+                                let implementations = read_dir(step_implementations).unwrap().map(|i| {
+                                    i.unwrap().file_name().into_string().unwrap()
+                                }).collect::<Vec<String>>();
+                                complex_case_map.insert(step_name, Some(implementations));
+                            } else {
+                                complex_case_map.insert(step_name, None);
+                            }
+                        });
+                        feature_map.insert(feature, CaseType::Complex(complex_case_map));
+                    };
+                };
             },
             Some(i) => {
                 for feature in feature_map.clone().into_keys() {
-                    feature_map.insert(feature.to_string(), ProjectType::Simple(vec![i.to_string()]));
+                    feature_map.insert(feature.to_string(), CaseType::Simple(vec![i.to_string()]));
                 }
             }
         }
@@ -124,27 +138,43 @@ impl Engine {
         for feature in feature_map.clone().into_keys() {
             let f = feature_map.get(feature.as_str());
             match f.unwrap() {
-                ProjectType::Simple(implementations) => {
+                CaseType::Simple(implementations) => {
                     for implementation in implementations {
-                        executor(feature.as_str(), implementation.as_str())?;
+                        executor(feature.as_str(), Some(implementation.as_str()), None)?;
                     }
                 }
-                ProjectType::Complex(_) => {
-                    dbg!("we found a complex guy but let's ignore it :)");
+                CaseType::Complex(cases) => {
+                    let mut steps = cases.clone().into_keys().map(|c| c).collect::<Vec<String>>();
+                    steps.sort();
+                    for step in steps {
+                        let implementations = cases.get(step.as_str()).unwrap();
+                        if let Some(implementation) = implementations {
+                            for i in implementation {
+                                executor(feature.as_str(), Some(i.as_str()), Some(step.as_str()))?;
+                            }
+                        } else {
+                            executor(feature.as_str(), None, Some(step.as_str()))?;
+                        }
+                    }
                 }
             }
-
         }
-
         Ok(())
     }
 
-    fn build(&self, feature: &str, implementation: &str) -> Result<(), BuildError> {
+    fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>) -> Result<(), BuildError> {
         let mut build = Command::new("node");
-        let directory = self.path.destination
-            .join(feature)
-            .join("implementations")
-            .join(implementation);
+        let mut directory = self.path.destination.join(feature);
+
+        if let Some(p) = subpath {
+            directory = directory.join(p);
+        };
+
+        if let Some(i) = implementation {
+            directory = directory
+                .join("implementations")
+                .join(i);
+        };
         build.current_dir(directory);
         build.arg(CLI_PATH).arg("build").arg("-v");
 

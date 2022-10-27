@@ -4,7 +4,7 @@ use std::path::{PathBuf};
 use serde_json;
 use serde_yaml;
 use crate::constants::{IMPLEMENTATIONS};
-use crate::error::{CreateImplementationError, GenerateError, GenerateImplementationError, GenerateTestManifestError};
+use crate::error::{CreateImplementationError, GenerateError, GenerateImplementationError, GenerateSchemaError, GenerateTestManifestError};
 use crate::generator::GenerateError::{MissingExpectedFile, ReadError};
 use crate::manifest::{Manifest, Workflow};
 
@@ -15,6 +15,7 @@ const IMPLEMENTATIONS_FOLDER: &str = "implementations";
 
 const SIMPLE_CASE_EXPECTED_FILES: [&str; 3] = [TEST_SCRIPT, SCHEMA, IMPLEMENTATIONS_FOLDER];
 
+#[derive(Debug)]
 pub struct Generate {
     pub dest_path: PathBuf,
     pub source_path: PathBuf,
@@ -33,56 +34,34 @@ impl Generate {
     pub fn project(
         &self,
         feature: &str,
-        implementation: &str
+        implementation: Option<&str>,
+        subpath: Option<&str>
     ) -> Result<(), GenerateError> {
         let feature_path = self.dest_path.join(feature);
         if !feature_path.exists() {
             fs::create_dir(feature_path)?;
         }
 
-
-        let test_folder = self.source_path.join(feature);
-
-        let files = fs::read_dir(&test_folder).map_err(|_| {
-            let message = format!("Error reading folder from tests: {}. Make sure there's no type in the feature argument", feature);
-            ReadError(message)
-        })?;
-
-        // Complex projects steps:
-        // 1- Files wont be files, but rather folders (and a workflow file)
-        // 2- In these folders, we can not check the expected files, what needs to happen
-        //    is that we go to every folder, if it doesn't has implementations folder
-        //    we assume it's an interface. Every folder **must** have schema.graphql file
-        let files = files.map(|directory| {
-            let name = directory.unwrap().file_name();
-            return name.into_string().unwrap();
-        }).collect::<Vec<_>>();
-
-        // if self.is_complex(files) {
-        //     self.generate_complex()?;
-        //     Ok(())
-        // }
-
-        let missing_files = SIMPLE_CASE_EXPECTED_FILES
-            .into_iter()
-            .filter(|&file| !files.contains(&file.to_string()))
-            .collect::<Vec<_>>();
-
-        if missing_files.len() > 0 {
-            return Err(MissingExpectedFile(missing_files[0].to_string(), feature.to_string()));
-        };
-
         // Generate test manifest from workflow
         self.test_manifest(feature)?;
         // Copy schema to implementation folder
-        self.schema(feature)?;
+        self.schema(feature, subpath)?;
         // Create implementation folder & respective files
-        self.implementation_files(feature, implementation)?;
+        if let Some(i) = implementation {
+            self.implementation_files(feature, i, subpath)?;
+        }
         Ok(())
     }
 
     pub fn test_manifest(&self, feature: &str) -> Result<(), GenerateTestManifestError> {
-        let workflow_path = self.source_path.join(feature).join(SIMPLE_CASE_EXPECTED_FILES[0]);
+        let workflow_path = self.source_path.join(feature).join(TEST_SCRIPT);
+        if !workflow_path.exists() {
+            return Err(GenerateTestManifestError::MissingExpectedFile(
+                TEST_SCRIPT.to_string(),
+                feature.to_string()
+            ));
+        }
+
         let workflow_str = fs::read_to_string(&workflow_path)?;
         let mut workflow = serde_json::from_str::<Workflow>(&workflow_str.as_str())?;
 
@@ -100,23 +79,38 @@ impl Generate {
         Ok(())
     }
 
-    pub fn schema(&self, feature: &str) -> Result<(), io::Error> {
-        let source_path = self.source_path.join(feature).join(SCHEMA);
-        let dest_path = self.dest_path.join(feature).join(SCHEMA);
-        fs::copy(source_path, dest_path)?;
+    pub fn schema(&self, feature: &str, subpath: Option<&str>) -> Result<(), GenerateSchemaError> {
+        let mut source_path = self.source_path.join(feature);
+        let mut dest_path = self.dest_path.join(feature);
+
+        if let Some(path) = subpath {
+            source_path = source_path.join(path);
+            dest_path = dest_path.join(path);
+            fs::create_dir(&dest_path)?;
+        }
+
+        source_path = source_path.join(SCHEMA);
+        if !source_path.exists() {
+            return Err(GenerateSchemaError::MissingExpectedFile(
+                SCHEMA.to_string(),
+                feature.to_string()
+            ));
+        }
+
+        fs::copy(source_path, dest_path.join(SCHEMA))?;
         Ok(())
     }
 
-    pub fn implementation_files(&self, feature: &str, implementation: &str) -> Result<(), GenerateImplementationError> {
-        let dest_implementation_folder = &self.dest_path.join(feature).join(IMPLEMENTATIONS_FOLDER);
-        let template_implementation_folder = &self.source_path.join(feature).join(IMPLEMENTATIONS_FOLDER);
+    pub fn implementation_files(&self, feature: &str, implementation: &str, subpath: Option<&str>) -> Result<(), GenerateImplementationError> {
+        let dest_implementation_folder = self.dest_path.join(feature).join(IMPLEMENTATIONS_FOLDER);
+        let template_implementation_folder = self.source_path.join(feature).join(IMPLEMENTATIONS_FOLDER);
 
         if !dest_implementation_folder.exists() {
-            fs::create_dir(dest_implementation_folder)?
+            fs::create_dir(&dest_implementation_folder)?
         }
 
-        let source_path = &template_implementation_folder.join(implementation);
-        let dest_path = &dest_implementation_folder.join(implementation);
+        let source_path = template_implementation_folder.join(implementation);
+        let dest_path = dest_implementation_folder.join(implementation);
         self.create_implementation(
             source_path,
             dest_path,
@@ -129,14 +123,14 @@ impl Generate {
 
     fn create_implementation(
         &self,
-        source_path: &PathBuf,
-        destination_path: &PathBuf,
+        source_path: PathBuf,
+        destination_path: PathBuf,
         feature: &str,
         implementation: &str,
     ) -> Result<(), CreateImplementationError> {
         fs::create_dir(&destination_path)?;
         // Generate implementation files (i.e: index.ts/lib.rs)
-        let files = fs::read_dir(source_path)?;
+        let files = fs::read_dir(&source_path)?;
         for file in files {
             let destination_source_folder = &destination_path.join("src");
             fs::create_dir(destination_source_folder)?;
@@ -194,13 +188,5 @@ impl Generate {
         };
 
         Ok(())
-    }
-
-    fn is_complex(&self, files: Vec<String>) {
-
-    }
-
-    fn generate_complex(&self) {
-
     }
 }
