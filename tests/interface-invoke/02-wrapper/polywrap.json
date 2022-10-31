@@ -1,0 +1,10 @@
+{
+  "source": {
+    "import_abis": [
+      {
+        "uri": "wrap://ens/interface.eth",
+        "abi": "../../../00-interface/build/wrap.info"
+      }
+    ]
+  }
+}

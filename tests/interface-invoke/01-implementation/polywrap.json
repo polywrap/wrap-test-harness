@@ -3,7 +3,7 @@
     "import_abis": [
       {
         "uri": "wrap://ens/interface.eth",
-        "abi": "../test-interface/build/wrap.info"
+        "abi": "../../../00-interface/build/wrap.info"
       }
     ]
   }

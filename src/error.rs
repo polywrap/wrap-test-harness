@@ -10,25 +10,13 @@ pub enum HarnessError {
     #[error(transparent)]
     ExecutionError(#[from] ExecutionError),
     #[error(transparent)]
-    FileNotFound(#[from] io::Error)
+    FileNotFound(#[from] io::Error),
+    #[error(transparent)]
+    ShowResultsError(#[from] ShowResultsError),
 }
 
 #[derive(Error, Debug)]
 pub enum ExecutionError {
-    #[error(transparent)]
-    HandlerError(#[from] HandlerError),
-    #[error(transparent)]
-    ShowResultsError(#[from] ShowResultsError),
-    #[error(transparent)]
-    GenerateError(#[from] GenerateError),
-    #[error(transparent)]
-    BuildError(#[from] BuildError),
-    #[error(transparent)]
-    TestError(#[from] TestError)
-}
-
-#[derive(Error, Debug)]
-pub enum HandlerError {
     #[error(transparent)]
     GenerateError(#[from] GenerateError),
     #[error(transparent)]
@@ -50,11 +38,17 @@ pub enum GenerateError {
     #[error(transparent)]
     GenerateTestManifestError(#[from] GenerateTestManifestError),
     #[error(transparent)]
-    GenerateImplementationError(#[from] GenerateImplementationError)
+    GenerateImplementationError(#[from] GenerateImplementationError),
+    #[error(transparent)]
+    GenerateSchemaError(#[from] GenerateSchemaError),
+    #[error(transparent)]
+    CreateManifestAndCommonFilesError(#[from] CreateManifestAndCommonFilesError)
 }
 
 #[derive(Error, Debug)]
 pub enum GenerateTestManifestError {
+    #[error("Missing expected file")]
+    MissingExpectedFile(String, String),
     #[error(transparent)]
     FileError(#[from] io::Error),
     #[error(transparent)]
@@ -74,7 +68,26 @@ pub enum GenerateImplementationError {
 }
 
 #[derive(Error, Debug)]
+pub enum GenerateSchemaError {
+    #[error(transparent)]
+    FileError(#[from] io::Error),
+    #[error("Missing expected file")]
+    MissingExpectedFile(String, String),
+}
+
+#[derive(Error, Debug)]
 pub enum CreateImplementationError {
+    #[error(transparent)]
+    FileError(#[from] io::Error),
+    #[error("File manipulation error")]
+    OpenFileError(File),
+    #[error("File manipulation error")]
+    CreateManifestAndCommonFilesError(#[from] CreateManifestAndCommonFilesError),
+
+}
+
+#[derive(Error, Debug)]
+pub enum CreateManifestAndCommonFilesError {
     #[error(transparent)]
     FileError(#[from] io::Error),
     #[error("File manipulation error")]

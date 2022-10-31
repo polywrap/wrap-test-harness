@@ -8,7 +8,6 @@ mod manifest;
 mod engine;
 mod error;
 
-use std::{fs};
 use std::path::Path;
 
 use crate::engine::{Engine};
@@ -35,5 +34,6 @@ fn main() -> Result<(), HarnessError> {
         destination_path,
         source_path
     ).execute(feature, implementation)?;
+    Results::show()?;
     Ok(())
 }
