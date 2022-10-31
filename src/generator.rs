@@ -1,12 +1,10 @@
 use std::{fs, io};
-use std::borrow::Borrow;
 use std::io::{BufReader};
 use std::path::{Path, PathBuf};
 use serde_json;
 use serde_yaml;
 use crate::constants::{Implementation, IMPLEMENTATIONS};
 use crate::error::{CreateImplementationError, CreateManifestAndCommonFilesError, GenerateError, GenerateImplementationError, GenerateSchemaError, GenerateTestManifestError};
-use crate::generator::GenerateError::{MissingExpectedFile, ReadError};
 use crate::manifest::{Manifest, Workflow};
 
 const CUSTOM_MANIFEST: &str = "polywrap.json";
@@ -216,7 +214,7 @@ impl Generate {
             .open(&manifest_path)?;
         serde_yaml::to_writer(f, &manifest)?;
 
-        let mut root_files = fs::read_dir(&root)?.into_iter().filter(
+        let root_files = fs::read_dir(&root)?.into_iter().filter(
             |file| !SIMPLE_CASE_EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
         ).filter(|f| !f.as_ref().unwrap().metadata().unwrap().is_dir()).map(|entry| entry.unwrap()).collect::<Vec<_>>();
 

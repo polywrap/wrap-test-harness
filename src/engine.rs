@@ -1,4 +1,3 @@
-use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::fs;
 use std::fs::read_dir;
@@ -52,16 +51,16 @@ impl Engine {
             self.path.destination.to_path_buf(),
             self.path.source.to_path_buf()
         );
-        // self.handler(
-        //     Box::new(|a, b, c| generator.project(a, b, c).map_err(|e| ExecutionError::GenerateError(e))),
-        //     feature,
-        //     implementation
-        // )?;
-        // self.handler(
-        //     Box::new(|a, b, c| self.build(a,b,c).map_err(|e| ExecutionError::BuildError(e))),
-        //     feature,
-        //     implementation
-        // )?;
+        self.handler(
+            Box::new(|a, b, c| generator.project(a, b, c).map_err(|e| ExecutionError::GenerateError(e))),
+            feature,
+            implementation
+        )?;
+        self.handler(
+            Box::new(|a, b, c| self.build(a,b,c).map_err(|e| ExecutionError::BuildError(e))),
+            feature,
+            implementation
+        )?;
 
         self.handler(
             Box::new(
