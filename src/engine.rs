@@ -52,22 +52,22 @@ impl Engine {
             self.path.destination.to_path_buf(),
             self.path.source.to_path_buf()
         );
-        self.handler(
-            Box::new(|a, b, c| generator.project(a, b, c).map_err(|e| ExecutionError::GenerateError(e))),
-            feature,
-            implementation
-        )?;
-        self.handler(
-            Box::new(|a, b, c| self.build(a,b,c).map_err(|e| ExecutionError::BuildError(e))),
-            feature,
-            implementation
-        )?;
+        // self.handler(
+        //     Box::new(|a, b, c| generator.project(a, b, c).map_err(|e| ExecutionError::GenerateError(e))),
+        //     feature,
+        //     implementation
+        // )?;
+        // self.handler(
+        //     Box::new(|a, b, c| self.build(a,b,c).map_err(|e| ExecutionError::BuildError(e))),
+        //     feature,
+        //     implementation
+        // )?;
 
         self.handler(
             Box::new(
-                |a, b, _| {
+                |a, b, c| {
                     if let Some(i) = b {
-                        return self.test(a, i).map_err(|e| ExecutionError::TestError(e));
+                        return self.test(a, i, c).map_err(|e| ExecutionError::TestError(e));
                     }
                     Ok(())
                 }),
@@ -214,21 +214,49 @@ impl Engine {
         Ok(())
     }
 
-    fn test(&self, feature: &str, implementation: &str) -> Result<(), TestError> {
+    fn test(&self, feature: &str, implementation: &str, subpath: Option<&str>) -> Result<(), TestError> {
         let mut test = Command::new("node");
-        let directory = self.path.destination
-            .join(feature)
-            .join("implementations")
-            .join(implementation);
-        test.current_dir(&directory);
-        test.arg(CLI_PATH).arg("test")
-            .arg("-m").arg("../../polywrap.test.yaml")
-            .arg("-o").arg("./output.json");
+        let mut directory = self.path.destination.join(feature);
 
-        let custom_config = directory.join("../../client-config.ts").exists();
-        if custom_config {
-            test.arg("-c").arg("../../client-config.ts");
-        };
+        test.arg(CLI_PATH).arg("test");
+
+        if let Some(p) = subpath {
+             let mut folders = read_dir(&directory)?
+                 .filter_map(|f| {
+                     let file = f.unwrap();
+                     if file.metadata().unwrap().is_dir() {
+                        return Some(file.file_name().into_string().unwrap());
+                     }
+
+                     return None
+                 }).collect::<Vec<_>>();
+            folders.sort();
+
+            if !folders.last().eq(&Some(&String::from(p))) {
+                return Ok(());
+            }
+            directory = directory
+                .join(p)
+                .join("implementations")
+                .join(implementation);
+            test.arg("-m").arg("../../../polywrap.test.yaml");
+            let custom_config = directory.join("../../../client-config.ts").exists();
+            if custom_config {
+                test.arg("-c").arg("../../../client-config.ts");
+            };
+        } else {
+            directory = directory
+                .join("implementations")
+                .join(implementation);
+            test.arg("-m").arg("../../polywrap.test.yaml");
+            let custom_config = directory.join("../../client-config.ts").exists();
+            if custom_config {
+                test.arg("-c").arg("../../client-config.ts");
+            };
+        }
+
+        test.current_dir(&directory);
+        test.arg("-o").arg("./output.json");
 
         match test.output() {
             Ok(output) => {
