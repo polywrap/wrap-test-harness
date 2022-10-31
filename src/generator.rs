@@ -176,9 +176,6 @@ impl Generate {
         subpath: Option<&str>
     ) -> Result<(), CreateManifestAndCommonFilesError> {
         let root = self.source_path.join(feature);
-        let mut root_files = fs::read_dir(&root)?.into_iter().filter(
-            |file| !SIMPLE_CASE_EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
-        ).filter(|f| !f.as_ref().unwrap().metadata().unwrap().is_dir()).map(|entry| entry.unwrap()).collect::<Vec<_>>();
 
         let mut manifest_path = destination_path.clone();
         // Generate polywrap manifest (i.e: polywrap.yaml)
@@ -205,9 +202,7 @@ impl Generate {
         manifest_path = manifest_path.join("polywrap.yaml");
         let mut manifest = Manifest::default(&feature, implementation_info);
         if let Some(custom_path) = custom_manifest_path {
-            dbg!(&custom_path);
             let file = fs::File::open(custom_path?.path())?;
-            dbg!(&file);
             let reader = BufReader::new(file);
             let custom_manifest: Manifest = serde_json::from_reader(reader)?;
 
@@ -215,12 +210,15 @@ impl Generate {
             manifest = manifest.merge(custom_manifest)?;
         }
 
-
         let f = fs::OpenOptions::new()
             .write(true)
             .create(true)
             .open(&manifest_path)?;
         serde_yaml::to_writer(f, &manifest)?;
+
+        let mut root_files = fs::read_dir(&root)?.into_iter().filter(
+            |file| !SIMPLE_CASE_EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
+        ).filter(|f| !f.as_ref().unwrap().metadata().unwrap().is_dir()).map(|entry| entry.unwrap()).collect::<Vec<_>>();
 
         // Copy common files
         for file in root_files {

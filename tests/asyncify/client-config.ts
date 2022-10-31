@@ -6,9 +6,9 @@ export const getCustomConfig = async (): Promise<Partial<ClientConfig>> => {
     manifest: {}
   }
   return {
-    plugins: [{
+    packages: [{
       uri: "wrap://ens/memory-storage.polywrap.eth",
-      plugin: memoryStoragePackage
+      package: memoryStoragePackage
     }]
   }
 }

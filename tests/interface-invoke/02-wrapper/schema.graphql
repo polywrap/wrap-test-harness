@@ -1,7 +1,7 @@
 #import { Module, InterfaceType } into Interface from "wrap://ens/interface.eth"
 #use { getImplementations } for Interface
 
-type Module {
+type Module implements Interface_Module {
   moduleMethod(
     arg: ImplementationType!
   ): ImplementationType!
