@@ -1,10 +1,9 @@
-import { ClientConfig, PluginModule } from "@polywrap/core-js";
-import { WrapManifest } from "@polywrap/wrap-manifest-types-js";
+import { ClientConfig } from "@polywrap/client-config-builder-js";
 
 export const getCustomConfig = async (): Promise<Partial<ClientConfig>> => {
   const memoryStoragePackage = {
-    factory: () => new MemoryStoragePlugin({}),
-    manifest: {} as WrapManifest
+    factory: () => new MemoryStoragePlugin(),
+    manifest: {}
   }
   return {
     plugins: [{
@@ -14,7 +13,7 @@ export const getCustomConfig = async (): Promise<Partial<ClientConfig>> => {
   }
 }
 
-class MemoryStoragePlugin extends PluginModule<Record<string, never>> {
+class MemoryStoragePlugin {
   private _value: number;
 
   async getData(_: {}): Promise<number> {

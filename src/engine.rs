@@ -21,7 +21,7 @@ pub struct EnginePath {
     pub source: PathBuf,
 }
 
-const CLI_PATH: &'static str = "../../../../../monorepo/packages/cli/bin/polywrap";
+const CLI_PATH: &'static str = "/home/cesar/dev/polywrap/toolchain/packages/cli/bin/polywrap";
 
 type ComplexCase = HashMap<String, Option<Vec<String>>>;
 
@@ -169,6 +169,8 @@ impl Engine {
             directory = directory.join(p);
         };
 
+        dbg!(&implementation);
+
         if let Some(i) = implementation {
             directory = directory
                 .join("implementations")
@@ -181,6 +183,7 @@ impl Engine {
             Ok(output) => {
                 let error = String::from_utf8(output.stderr)?;
                 if !error.is_empty() {
+                    dbg!(error);
                     return Err(BuildError::BuildExecutionError("Build command has failed".to_string()));
                 }
                 // let message = String::from_utf8(t.stdout)?;

@@ -1,4 +1,5 @@
 use std::{fs, io};
+use std::borrow::Borrow;
 use std::io::{BufReader};
 use std::path::{Path, PathBuf};
 use serde_json;
@@ -13,7 +14,7 @@ const TEST_SCRIPT: &str = "workflow.json";
 const SCHEMA: &str = "schema.graphql";
 const IMPLEMENTATIONS_FOLDER: &str = "implementations";
 
-const SIMPLE_CASE_EXPECTED_FILES: [&str; 3] = [TEST_SCRIPT, SCHEMA, IMPLEMENTATIONS_FOLDER];
+const SIMPLE_CASE_EXPECTED_FILES: [&str; 4] = [TEST_SCRIPT, SCHEMA, IMPLEMENTATIONS_FOLDER, CUSTOM_MANIFEST];
 
 #[derive(Debug)]
 pub struct Generate {
@@ -131,6 +132,7 @@ impl Generate {
             dest_path,
             feature,
             implementation,
+            subpath
         )?;
 
         Ok(())
@@ -142,6 +144,7 @@ impl Generate {
         destination_path: PathBuf,
         feature: &str,
         implementation: &str,
+        subpath: Option<&str>
     ) -> Result<(), CreateImplementationError> {
         fs::create_dir(&destination_path)?;
         // Generate implementation files (i.e: index.ts/lib.rs)
@@ -161,7 +164,7 @@ impl Generate {
         let dependencies_source = defaults_folder.join(&implementation_info.dependency);
         let dependencies_dest = destination_path.join(&implementation_info.dependency);
         fs::copy(dependencies_source, dependencies_dest)?;
-        self.manifest_and_common_files(feature, Some(implementation_info), destination_path, None)?;
+        self.manifest_and_common_files(feature, Some(implementation_info), destination_path, subpath)?;
         Ok(())
     }
 
@@ -173,38 +176,45 @@ impl Generate {
         subpath: Option<&str>
     ) -> Result<(), CreateManifestAndCommonFilesError> {
         let root = self.source_path.join(feature);
-        let mut root_files = fs::read_dir(root)?.into_iter().filter(
+        let mut root_files = fs::read_dir(&root)?.into_iter().filter(
             |file| !SIMPLE_CASE_EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
         ).filter(|f| !f.as_ref().unwrap().metadata().unwrap().is_dir()).map(|entry| entry.unwrap()).collect::<Vec<_>>();
 
-        // Generate polywrap manifest (i.e: polywrap.yaml)
-        let index = root_files.iter().position(|file| {
-            file.file_name().eq(CUSTOM_MANIFEST)
-        });
-
-        let mut manifest = Manifest::default(&feature, implementation_info);
-        match index {
-            Some(i) => {
-                let file = fs::File::open(root_files[i].path())?;
-                let reader = BufReader::new(file);
-                let custom_manifest: Manifest = serde_json::from_reader(reader)?;
-
-                manifest = manifest.merge(custom_manifest)?;
-                // TODO: Validate manifest
-
-                root_files = root_files.into_iter().filter(|file| {
-                    return !file.file_name().eq(CUSTOM_MANIFEST);
-                }).collect::<Vec<_>>();
-            }
-            _ => {}
-        }
-
         let mut manifest_path = destination_path.clone();
+        // Generate polywrap manifest (i.e: polywrap.yaml)
+        let mut custom_manifest_path = None;
         if let Some(path) = subpath {
-            manifest_path = destination_path.join(path)
+            let mut complex_path = root.join(path);
+            if let Some(_) = implementation_info {
+                let test_path = manifest_path.clone().into_os_string().to_str().unwrap().replace("build", "tests");
+                complex_path = Path::new(test_path.as_str()).to_path_buf().join("../..");
+            } else {
+                manifest_path = manifest_path.join(path);
+            }
+            custom_manifest_path = complex_path.read_dir()?.into_iter().find(|file| {
+                let file = file.as_ref().unwrap().file_name();
+                file.to_str().unwrap().eq(CUSTOM_MANIFEST)
+            });
+        } else {
+            custom_manifest_path = root.read_dir()?.into_iter().find(|file| {
+                let file = file.as_ref().unwrap().file_name();
+                file.to_str().unwrap().eq(CUSTOM_MANIFEST)
+            });
         }
 
         manifest_path = manifest_path.join("polywrap.yaml");
+        let mut manifest = Manifest::default(&feature, implementation_info);
+        if let Some(custom_path) = custom_manifest_path {
+            dbg!(&custom_path);
+            let file = fs::File::open(custom_path?.path())?;
+            dbg!(&file);
+            let reader = BufReader::new(file);
+            let custom_manifest: Manifest = serde_json::from_reader(reader)?;
+
+            // TODO: Validate manifest
+            manifest = manifest.merge(custom_manifest)?;
+        }
+
 
         let f = fs::OpenOptions::new()
             .write(true)
@@ -213,7 +223,6 @@ impl Generate {
         serde_yaml::to_writer(f, &manifest)?;
 
         // Copy common files
-        dbg!(&root_files);
         for file in root_files {
             let dest_file = self.dest_path.join(feature).join(file.file_name());
             let source_file = self.source_path.join(feature).join(file.file_name());

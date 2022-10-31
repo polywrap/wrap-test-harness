@@ -1,6 +1,6 @@
 import { ClientConfig } from "@polywrap/core-js";
 
-export const getClientConfig = async (): Partial<ClientConfig> => {
+export const getCustomConfig = async (): Promise<Partial<ClientConfig>> => {
     const implementationPath = "implementation/implementations/as"
     const implementationUri = `fs/${implementationPath}/build`
     return {
