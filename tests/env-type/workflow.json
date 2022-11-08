@@ -6,7 +6,7 @@
       "steps": [
         {
           "uri": "wrap://fs/./build",
-          "method": "methodRequireEnv",
+          "method": "methodNoEnv",
           "args": {
             "arg": "string"
           }

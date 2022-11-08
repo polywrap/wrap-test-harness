@@ -18,31 +18,32 @@ const SIMPLE_CASE_EXPECTED_FILES: [&str; 4] = [TEST_SCRIPT, SCHEMA, IMPLEMENTATI
 pub struct Generate {
     pub dest_path: PathBuf,
     pub source_path: PathBuf,
+    pub build_only: bool
 }
 
 impl Generate {
     pub fn new(
         dest_path: PathBuf,
-        source_path: PathBuf
+        source_path: PathBuf,
+        build_only: bool
     ) -> Self {
         Generate {
             dest_path,
-            source_path
+            source_path,
+            build_only
         }
     }
     pub fn project(
         &self,
         feature: &str,
         implementation: Option<&str>,
-        subpath: Option<&str>
+        subpath: Option<&str>,
     ) -> Result<(), GenerateError> {
         let feature_path = self.dest_path.join(feature);
         if !feature_path.exists() {
             fs::create_dir(feature_path)?;
         }
 
-        // Generate test manifest from workflow
-        self.test_manifest(feature)?;
         // Copy schema to implementation folder
         self.schema(feature, subpath)?;
         // Create implementation folder & respective files
@@ -175,8 +176,24 @@ impl Generate {
     ) -> Result<(), CreateManifestAndCommonFilesError> {
         let root = self.source_path.join(feature);
 
+        if !self.build_only {
+            // Generate test manifest from workflow
+            self.test_manifest(feature)?;
+            // Get the name of the files to copy, excluding the already processed (and expected) files
+            let root_files = fs::read_dir(&root)?.into_iter().filter(
+                |file| !SIMPLE_CASE_EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
+            ).filter(|f| !f.as_ref().unwrap().metadata().unwrap().is_dir()).map(|entry| entry.unwrap()).collect::<Vec<_>>();
+
+            // Copy common files
+            for file in root_files {
+                let dest_file = self.dest_path.join(feature).join(file.file_name());
+                let source_file = self.source_path.join(feature).join(file.file_name());
+                fs::copy(source_file, dest_file)?;
+            };
+        }
+
+        // Get manifest path
         let mut manifest_path = destination_path.clone();
-        // Generate polywrap manifest (i.e: polywrap.yaml)
         let mut custom_manifest_path = None;
         if let Some(path) = subpath {
             let mut complex_path = root.join(path);
@@ -197,6 +214,7 @@ impl Generate {
             });
         }
 
+        // Generate polywrap manifest (i.e: polywrap.yaml)
         manifest_path = manifest_path.join("polywrap.yaml");
         let mut manifest = Manifest::default(&feature, &implementation_info);
         if let Some(custom_path) = custom_manifest_path {
@@ -218,16 +236,6 @@ impl Generate {
             .open(&manifest_path)?;
         serde_yaml::to_writer(f, &manifest)?;
 
-        let root_files = fs::read_dir(&root)?.into_iter().filter(
-            |file| !SIMPLE_CASE_EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
-        ).filter(|f| !f.as_ref().unwrap().metadata().unwrap().is_dir()).map(|entry| entry.unwrap()).collect::<Vec<_>>();
-
-        // Copy common files
-        for file in root_files {
-            let dest_file = self.dest_path.join(feature).join(file.file_name());
-            let source_file = self.source_path.join(feature).join(file.file_name());
-            fs::copy(source_file, dest_file)?;
-        };
         Ok(())
     }
 }

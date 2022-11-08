@@ -36,8 +36,6 @@ pub enum GenerateError {
     #[error("Missing expected file")]
     MissingExpectedFile(String, String),
     #[error(transparent)]
-    GenerateTestManifestError(#[from] GenerateTestManifestError),
-    #[error(transparent)]
     GenerateImplementationError(#[from] GenerateImplementationError),
     #[error(transparent)]
     GenerateSchemaError(#[from] GenerateSchemaError),
@@ -97,7 +95,9 @@ pub enum CreateManifestAndCommonFilesError {
     #[error(transparent)]
     MergeManifestError(#[from] MergeManifestError),
     #[error(transparent)]
-    YamlParseError(#[from] serde_yaml::Error)
+    YamlParseError(#[from] serde_yaml::Error),
+    #[error(transparent)]
+    GenerateTestManifestError(#[from] GenerateTestManifestError),
 }
 
 

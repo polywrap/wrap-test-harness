@@ -9,13 +9,12 @@ with the WRAP Protocol.
 
 ### How
 Test lives in `tests` folder, organized by features/use-cases (i.e: `json-type`, `union-type`),
-inside each feature folder, we have every supported implementation (i.e: `rust`, `assemblyscript`).
+inside each feature folder, we have every supported implementation (i.e: `rust`, `assemblyscript`) inside an`implementations`
+folder, along with the [common files](#common-files) between implementations.
+
 The problem this architecture solves is that for every case, we need to give opinionated
 input per WASM implementation (i.e: `index.ts|lib.rs` or `Cargo.toml|package.json`), being able
 to easily add new features and/or implementations.
-
-Inside every feature folder, an `implementations` sub-folder is going to live, along with the [common files](#common-files)
-between implementations.
 
 It consists of three main steps:
 - Build folder generation
@@ -39,14 +38,23 @@ Implementation agnostic files. It allows to add different behavior to build & te
 - npx
 - [polywrap cli](https://github.com/polywrap/toolchain/tree/origin/packages/cli) 
 
+> Note: It's recommended to run `npm i -D polywrap` to make sure polywrap cli is installed locally
 ### Run
 
-> cargo build
+> cargo run
 
 ### Accepted arguments:
 
 - implementations
 - feature
-- verbose
-- 
+- build only
+- reset
+
+
+In order to run the arguments with `cargo run` command you need to define them using the 
+following way: 
+`cargo run -- --arg_name=value`
+
+An example of running a command with the reset option can be:
+`cargo run -- -r` or `cargo run -- --reset`. Note how you can use the command with just one letter
 

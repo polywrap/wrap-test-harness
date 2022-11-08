@@ -33,7 +33,10 @@ fn main() -> Result<(), HarnessError> {
     Engine::start(
         destination_path,
         source_path
-    ).execute(feature, implementation)?;
-    Results::show()?;
+    ).execute(feature, implementation, sanitized_args.build)?;
+
+    if !sanitized_args.build {
+        Results::show()?;
+    }
     Ok(())
 }

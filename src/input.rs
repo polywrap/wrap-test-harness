@@ -17,14 +17,13 @@ struct Args {
     #[arg(short, long, action = clap::ArgAction::Count)]
     verbose: u8,
     #[arg(short, long)]
-    generate: bool,
-    #[arg(short, long)]
-    build: bool,
+    build: Option<bool>,
 }
 
 pub struct SanitizedArgs {
     pub implementation: Option<String>,
     pub feature: Option<String>,
+    pub build: bool
 }
 
 pub fn handle_args() -> SanitizedArgs {
@@ -50,9 +49,15 @@ pub fn handle_args() -> SanitizedArgs {
     //     _ => println!("Don't be crazy"),
     // }
 
+    let mut build_only = false;
+    if let Some(b) = args.build {
+        build_only = b;
+    }
+
     return SanitizedArgs {
         implementation: args.implementation,
-        feature: args.feature
+        feature: args.feature,
+        build: build_only
     }
 
 }

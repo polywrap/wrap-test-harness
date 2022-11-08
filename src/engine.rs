@@ -21,8 +21,6 @@ pub struct EnginePath {
     pub source: PathBuf,
 }
 
-const CLI_PATH: &'static str = "/home/cesar/dev/polywrap/toolchain/packages/cli/bin/polywrap";
-
 type ComplexCase = HashMap<String, Option<Vec<String>>>;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -46,33 +44,36 @@ impl Engine {
         }
     }
 
-    pub fn execute(&self, feature: Option<&str>, implementation: Option<&str>) -> Result<(), ExecutionError> {
+    pub fn execute(&self, feature: Option<&str>, implementation: Option<&str>, build_only: bool) -> Result<(), ExecutionError> {
         let generator = Generate::new(
             self.path.destination.to_path_buf(),
-            self.path.source.to_path_buf()
+            self.path.source.to_path_buf(),
+            build_only
         );
         self.handler(
-            Box::new(|a, b, c| generator.project(a, b, c).map_err(|e| ExecutionError::GenerateError(e))),
+            Box::new(|feature, implementation, subpath| generator.project(feature, implementation, subpath).map_err(|e| ExecutionError::GenerateError(e))),
             feature,
             implementation
         )?;
         self.handler(
-            Box::new(|a, b, c| self.build(a,b,c).map_err(|e| ExecutionError::BuildError(e))),
+            Box::new(|feature, implementation, subpath| self.build(feature, implementation, subpath).map_err(|e| ExecutionError::BuildError(e))),
             feature,
             implementation
         )?;
 
-        self.handler(
-            Box::new(
-                |a, b, c| {
-                    if let Some(i) = b {
-                        return self.test(a, i, c).map_err(|e| ExecutionError::TestError(e));
-                    }
-                    Ok(())
-                }),
-            feature,
-            implementation
-        )?;
+        if !build_only {
+            self.handler(
+                Box::new(
+                    |feature, implementation, subpath| {
+                        if let Some(i) = implementation {
+                            return self.test(feature, i, subpath).map_err(|e| ExecutionError::TestError(e));
+                        }
+                        Ok(())
+                    }),
+                feature,
+                implementation
+            )?;
+        }
         Ok(())
     }
 
@@ -92,7 +93,10 @@ impl Engine {
                 });
             },
             Some(f) => {
-                feature_map.insert(f.to_string(), CaseType::Simple(vec![]));
+                let features = f.split(",").map(|feature| feature.trim().to_string()).collect::<Vec<String>>();
+                features.into_iter().for_each(|f| {
+                    feature_map.insert(f, CaseType::Simple(vec![]));
+                });
             }
         }
 
