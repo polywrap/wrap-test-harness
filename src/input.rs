@@ -34,7 +34,8 @@ pub fn handle_args() -> SanitizedArgs {
             if args.reset {
                 fs::remove_dir_all(BUILD_FOLDER).unwrap();
                 fs::create_dir(BUILD_FOLDER).unwrap();
-                fs::remove_file("results.json").unwrap_or_default()
+                fs::remove_file("results.json").unwrap_or_default();
+                fs::remove_dir_all("./wrappers").unwrap_or_default()
             }
         }
         _ => {}

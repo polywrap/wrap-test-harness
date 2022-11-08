@@ -50,13 +50,17 @@ impl Engine {
             self.path.source.to_path_buf(),
             build_only
         );
+        if build_only {
+            fs::create_dir("./wrappers")?;
+        }
+
         self.handler(
             Box::new(|feature, implementation, subpath| generator.project(feature, implementation, subpath).map_err(|e| ExecutionError::GenerateError(e))),
             feature,
             implementation
         )?;
         self.handler(
-            Box::new(|feature, implementation, subpath| self.build(feature, implementation, subpath).map_err(|e| ExecutionError::BuildError(e))),
+            Box::new(|feature, implementation, subpath| self.build(feature, implementation, subpath, build_only).map_err(|e| ExecutionError::BuildError(e))),
             feature,
             implementation
         )?;
@@ -180,22 +184,23 @@ impl Engine {
         Ok(())
     }
 
-    fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>) -> Result<(), BuildError> {
+    fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>, generate_folder: bool) -> Result<(), BuildError> {
         let mut build = Command::new("npx");
         let mut directory = self.path.destination.join(feature);
 
+        let mut copy_dest = self.path.source.join("..").join("wrappers").join(feature);
         if let Some(p) = subpath {
             directory = directory.join(p);
+            copy_dest = copy_dest.join(p);
         };
 
-        dbg!(&implementation);
-
         if let Some(i) = implementation {
+            copy_dest = copy_dest.join("implementations").join(i);
             directory = directory
                 .join("implementations")
                 .join(i);
         };
-        build.current_dir(directory);
+        build.current_dir(&directory);
         build.arg("polywrap").arg("build").arg("-v");
 
         match build.output() {
@@ -205,8 +210,15 @@ impl Engine {
                     dbg!(error);
                     return Err(BuildError::BuildExecutionError("Build command has failed".to_string()));
                 }
-                // let message = String::from_utf8(t.stdout)?;
-                // t.status.success()?;
+
+                if generate_folder {
+                    directory = directory.join("build");
+                    fs::create_dir_all(&copy_dest)?;
+                    if directory.join("wrap.wasm").exists() {
+                        fs::copy(directory.join("wrap.wasm"), copy_dest.join("wrap.wasm"))?;
+                    }
+                    fs::copy(directory.join("wrap.info"), copy_dest.join("wrap.info"))?;
+                }
             }
             Err(e) => {
                 // TODO: Return error
