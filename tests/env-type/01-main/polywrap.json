@@ -1,0 +1,10 @@
+{
+  "source": {
+    "import_abis": [
+      {
+        "uri": "ens/external-env.polywrap.eth",
+        "abi": "../../../00-external"
+      }
+    ]
+  }
+}

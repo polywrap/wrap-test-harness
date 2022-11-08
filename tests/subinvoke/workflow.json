@@ -1,0 +1,17 @@
+{
+  "name": "sub-invoke",
+  "jobs": {
+    "add": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "addAndIncrement",
+          "args": {
+            "a": 1,
+            "b": 2
+          }
+        }
+      ]
+    }
+  }
+}

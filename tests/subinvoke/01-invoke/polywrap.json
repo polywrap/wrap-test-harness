@@ -1,0 +1,10 @@
+{
+  "source": {
+    "import_abis": [
+      {
+        "uri": "wrap://ens/add.eth",
+        "abi": "../../../00-subinvoke"
+      }
+    ]
+  }
+}

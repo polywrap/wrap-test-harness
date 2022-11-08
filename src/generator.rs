@@ -198,14 +198,18 @@ impl Generate {
         }
 
         manifest_path = manifest_path.join("polywrap.yaml");
-        let mut manifest = Manifest::default(&feature, implementation_info);
+        let mut manifest = Manifest::default(&feature, &implementation_info);
         if let Some(custom_path) = custom_manifest_path {
             let file = fs::File::open(custom_path?.path())?;
             let reader = BufReader::new(file);
             let custom_manifest: Manifest = serde_json::from_reader(reader)?;
 
+            let mut  implementation_id: Option<&str> = None;
+            if let Some(_) = subpath {
+                implementation_id = Some(implementation_info.unwrap().id.clone())
+            };
             // TODO: Validate manifest
-            manifest = manifest.merge(custom_manifest)?;
+            manifest = manifest.merge(custom_manifest, implementation_id)?;
         }
 
         let f = fs::OpenOptions::new()

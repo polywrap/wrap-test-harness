@@ -1,3 +1,4 @@
+use std::path::Path;
 use serde::{Deserialize, Serialize};
 use crate::constants::Implementation;
 use crate::error::{MergeManifestError};
@@ -43,7 +44,7 @@ pub struct Manifest {
 }
 
 impl Manifest {
-    pub fn merge(self, custom: Manifest) -> Result<Manifest, MergeManifestError> {
+    pub fn merge(self, custom: Manifest, implementation: Option<&str>) -> Result<Manifest, MergeManifestError> {
         let default_project = self.project.ok_or(MergeManifestError::ProjectNotFound)?;
 
         let project  = match custom.project {
@@ -54,13 +55,35 @@ impl Manifest {
             _ => Some(default_project)
         };
 
+
         let default_source = self.source.ok_or(MergeManifestError::SourceNotFound)?;
+
         let source = match custom.source {
-            Some(s) => Some(Source {
-                schema: s.schema.or(default_source.schema),
-                module: s.module.or(default_source.module),
-                import_abis: s.import_abis.or(default_source.import_abis)
-            }),
+            Some(s) => {
+                let mut import_abis = default_source.import_abis;
+                if s.import_abis.is_some() && implementation.is_some() {
+                    let imports = s.import_abis.unwrap().iter().map(|import_abi| {
+                        let abi_path = Path::new(&import_abi.abi);
+                        if !abi_path.ends_with("build/wrap.info") {
+                            let abi = abi_path.join("implementations").join(implementation.unwrap()).join("build/wrap.info");
+                            return ImportAbi {
+                                uri: import_abi.clone().uri,
+                                abi: abi.clone().to_str().unwrap().to_string()
+                            }
+                        }
+
+                        return import_abi.clone()
+                    }).collect::<ImportAbis>();
+                    import_abis = Some(imports);
+                }
+
+                let source = Source {
+                    schema: s.schema.or(default_source.schema),
+                    module: s.module.or(default_source.module),
+                    import_abis
+                };
+                Some(source)
+            },
             _ => Some(default_source)
         };
 
@@ -73,7 +96,7 @@ impl Manifest {
 
     pub fn default(
         feature: &str,
-        implementation: Option<&Implementation<'_>>,
+        implementation: &Option<&Implementation<'_>>,
     ) -> Manifest {
         let (module, schema, _type) = match implementation {
             Some(i) => {

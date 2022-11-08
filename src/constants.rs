@@ -6,7 +6,7 @@ pub struct Implementation<'a> {
     pub dependency: &'a str,
     pub name: &'a str,
     pub module: &'a str,
-    pub index: u8
+    pub id: &'a str
 }
 
 lazy_static! {
@@ -16,13 +16,13 @@ lazy_static! {
             dependency: "package.json",
             name: "assemblyscript",
             module: "./src/index.ts",
-            index: 1,
+            id: "as"
         });
         map.insert("rs", Implementation {
             dependency: "Cargo.toml",
             name: "rust",
             module: "./Cargo.toml",
-            index: 2
+            id: "rs"
         });
         return map
     };

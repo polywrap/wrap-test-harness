@@ -96,58 +96,58 @@ impl Engine {
             }
         }
 
-    for feature in feature_map.clone().into_keys() {
-        let feature_folder = self.path.source.join(&feature);
-        let implementation_folder = feature_folder.join("implementations");
-        match implementation {
-            None => {
-                if implementation_folder.exists() {
-                    let implementations = read_dir(implementation_folder)?.map(|i| {
-                        i.unwrap().file_name().into_string().unwrap()
-                    }).collect::<Vec<String>>();
-                    feature_map.insert(feature.to_string(), CaseType::Simple(implementations));
-                } else {
-                    let mut complex_case_map: ComplexCase = HashMap::new();
-                    read_dir(feature_folder)?.into_iter().filter(|i| {
-                        i.as_ref().unwrap().metadata().unwrap().is_dir()
-                    }).for_each(|entry| {
-                        let dir = entry.unwrap();
-                        let step_name = dir.file_name().into_string().unwrap();
-                        let step_implementations = dir.path().join("implementations");
-                        if step_implementations.exists() {
-                            let implementations = read_dir(step_implementations).unwrap().map(|i| {
-                                i.unwrap().file_name().into_string().unwrap()
-                            }).collect::<Vec<String>>();
-                            complex_case_map.insert(step_name, Some(implementations));
-                        } else {
-                            complex_case_map.insert(step_name, None);
-                        }
-                    });
-                    feature_map.insert(feature.to_string(), CaseType::Complex(complex_case_map));
-                };
-            },
-            Some(i) => {
-                if implementation_folder.exists() {
-                    feature_map.insert(feature.to_string(), CaseType::Simple(vec![i.to_string()]));
-                } else {
-                    let mut complex_case_map: ComplexCase = HashMap::new();
-                    read_dir(feature_folder)?.into_iter().filter(|i| {
-                        i.as_ref().unwrap().metadata().unwrap().is_dir()
-                    }).for_each(|entry| {
-                        let dir = entry.unwrap();
-                        let step_name = dir.file_name().into_string().unwrap();
-                        let step_implementations = dir.path().join("implementations");
-                        if step_implementations.exists() {
-                            complex_case_map.insert(step_name, Some(vec![i.to_string()]));
-                        } else {
-                            complex_case_map.insert(step_name, None);
-                        }
-                    });
-                    feature_map.insert(feature.to_string(), CaseType::Complex(complex_case_map));
+        for feature in feature_map.clone().into_keys() {
+            let feature_folder = self.path.source.join(&feature);
+            let implementation_folder = feature_folder.join("implementations");
+            match implementation {
+                None => {
+                    if implementation_folder.exists() {
+                        let implementations = read_dir(implementation_folder)?.map(|i| {
+                            i.unwrap().file_name().into_string().unwrap()
+                        }).collect::<Vec<String>>();
+                        feature_map.insert(feature.to_string(), CaseType::Simple(implementations));
+                    } else {
+                        let mut complex_case_map: ComplexCase = HashMap::new();
+                        read_dir(feature_folder)?.into_iter().filter(|i| {
+                            i.as_ref().unwrap().metadata().unwrap().is_dir()
+                        }).for_each(|entry| {
+                            let dir = entry.unwrap();
+                            let step_name = dir.file_name().into_string().unwrap();
+                            let step_implementations = dir.path().join("implementations");
+                            if step_implementations.exists() {
+                                let implementations = read_dir(step_implementations).unwrap().map(|i| {
+                                    i.unwrap().file_name().into_string().unwrap()
+                                }).collect::<Vec<String>>();
+                                complex_case_map.insert(step_name, Some(implementations));
+                            } else {
+                                complex_case_map.insert(step_name, None);
+                            }
+                        });
+                        feature_map.insert(feature.to_string(), CaseType::Complex(complex_case_map));
+                    };
+                },
+                Some(i) => {
+                    if implementation_folder.exists() {
+                        feature_map.insert(feature.to_string(), CaseType::Simple(vec![i.to_string()]));
+                    } else {
+                        let mut complex_case_map: ComplexCase = HashMap::new();
+                        read_dir(feature_folder)?.into_iter().filter(|i| {
+                            i.as_ref().unwrap().metadata().unwrap().is_dir()
+                        }).for_each(|entry| {
+                            let dir = entry.unwrap();
+                            let step_name = dir.file_name().into_string().unwrap();
+                            let step_implementations = dir.path().join("implementations");
+                            if step_implementations.exists() {
+                                complex_case_map.insert(step_name, Some(vec![i.to_string()]));
+                            } else {
+                                complex_case_map.insert(step_name, None);
+                            }
+                        });
+                        feature_map.insert(feature.to_string(), CaseType::Complex(complex_case_map));
+                    }
                 }
             }
         }
-    }
 
         for feature in feature_map.clone().into_keys() {
             let f = feature_map.get(feature.as_str());
@@ -177,7 +177,7 @@ impl Engine {
     }
 
     fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>) -> Result<(), BuildError> {
-        let mut build = Command::new("node");
+        let mut build = Command::new("npx");
         let mut directory = self.path.destination.join(feature);
 
         if let Some(p) = subpath {
@@ -192,7 +192,7 @@ impl Engine {
                 .join(i);
         };
         build.current_dir(directory);
-        build.arg(CLI_PATH).arg("build").arg("-v");
+        build.arg("polywrap").arg("build").arg("-v");
 
         match build.output() {
             Ok(output) => {
@@ -214,10 +214,10 @@ impl Engine {
     }
 
     fn test(&self, feature: &str, implementation: &str, subpath: Option<&str>) -> Result<(), TestError> {
-        let mut test = Command::new("node");
+        let mut test = Command::new("npx");
         let mut directory = self.path.destination.join(feature);
 
-        test.arg(CLI_PATH).arg("test");
+        test.arg("polywrap").arg("test");
 
         if let Some(p) = subpath {
              let mut folders = read_dir(&directory)?

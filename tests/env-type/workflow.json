@@ -1,0 +1,17 @@
+{
+  "name": "env-type",
+  "validation": "./validator.cue",
+  "jobs": {
+    "methodRequireEnv": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "methodRequireEnv",
+          "args": {
+            "arg": "string"
+          }
+        }
+      ]
+    }
+  }
+}
