@@ -222,6 +222,7 @@ impl Engine {
             }
             Err(e) => {
                 // TODO: Return error
+                dbg!("siu");
                 dbg!(e);
                 return Ok(());
             }
@@ -318,6 +319,7 @@ impl Engine {
             Err(e) => {
                 // TODO: Return error
                 dbg!(e);
+                dbg!("q campeon bro");
             }
         };
         Ok(())

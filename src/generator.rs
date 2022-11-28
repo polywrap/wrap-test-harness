@@ -1,4 +1,5 @@
-use std::{fs, io};
+use std::{fs};
+use std::fs::DirEntry;
 use std::io::{BufReader};
 use std::path::{Path, PathBuf};
 use serde_json;
@@ -194,8 +195,12 @@ impl Generate {
 
         // Get manifest path
         let mut manifest_path = destination_path.clone();
-        let mut custom_manifest_path = None;
-        if let Some(path) = subpath {
+
+        let get_manifest = |file: &Result<DirEntry, std::io::Error>| {
+            let file = file.as_ref().unwrap().file_name();
+            file.to_str().unwrap().eq(CUSTOM_MANIFEST)
+        };
+        let custom_manifest_path = if let Some(path) = subpath {
             let mut complex_path = root.join(path);
             if let Some(_) = implementation_info {
                 let test_path = manifest_path.clone().into_os_string().to_str().unwrap().replace("build", "tests");
@@ -203,16 +208,10 @@ impl Generate {
             } else {
                 manifest_path = manifest_path.join(path);
             }
-            custom_manifest_path = complex_path.read_dir()?.into_iter().find(|file| {
-                let file = file.as_ref().unwrap().file_name();
-                file.to_str().unwrap().eq(CUSTOM_MANIFEST)
-            });
+            complex_path.read_dir()?.into_iter().find(get_manifest)
         } else {
-            custom_manifest_path = root.read_dir()?.into_iter().find(|file| {
-                let file = file.as_ref().unwrap().file_name();
-                file.to_str().unwrap().eq(CUSTOM_MANIFEST)
-            });
-        }
+            root.read_dir()?.into_iter().find(get_manifest)
+        };
 
         // Generate polywrap manifest (i.e: polywrap.yaml)
         manifest_path = manifest_path.join("polywrap.yaml");
