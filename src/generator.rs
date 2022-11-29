@@ -221,9 +221,9 @@ impl Generate {
             let reader = BufReader::new(file);
             let custom_manifest: Manifest = serde_json::from_reader(reader)?;
 
-            let mut  implementation_id: Option<&str> = None;
-            if subpath.is_some() {
-                implementation_id = Some(implementation_info.unwrap().id)
+            let mut implementation_id: Option<&str> = None;
+            if let Some(i) = implementation_info {
+                implementation_id = Some(i.id);
             };
             // TODO: Validate manifest
             manifest = manifest.merge(custom_manifest, implementation_id)?;

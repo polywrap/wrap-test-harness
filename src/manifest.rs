@@ -61,11 +61,11 @@ impl Manifest {
         let source = match custom.source {
             Some(s) => {
                 let mut import_abis = default_source.import_abis;
-                if let Some(imports) = s.import_abis {
+                if let Some(import_abi) = s.import_abis {
                     if let Some(i) = implementation {
-                        let imports = imports.iter().map(|import_abi| {
+                        let imports = import_abi.iter().map(|import_abi| {
                             let abi_path = Path::new(&import_abi.abi);
-                            if !abi_path.ends_with("build/wrap.info") {
+                            if abi_path.is_dir() {
                                 let abi = abi_path.join("implementations")
                                     .join(i)
                                     .join("build/wrap.info");
@@ -75,7 +75,7 @@ impl Manifest {
                                 }
                             }
 
-                            import_abi.clone()
+                            return import_abi.clone();
                         }).collect::<ImportAbis>();
                         import_abis = Some(imports);
                     }

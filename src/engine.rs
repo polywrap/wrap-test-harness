@@ -213,13 +213,14 @@ impl Engine {
         build.current_dir(&directory);
         build.arg("polywrap").arg("build").arg("-v");
 
+        dbg!(&directory);
         match build.output() {
             Ok(output) => {
                 let error = String::from_utf8(output.stderr)?;
-                if !error.is_empty() {
-                    dbg!(error);
-                    return Err(BuildError::BuildExecutionError("Build command has failed".to_string()));
-                }
+                // if !error.is_empty() {
+                //     dbg!(error);
+                //     return Err(BuildError::BuildExecutionError("Build command has failed".to_string()));
+                // }
 
                 if generate_folder {
                     directory = directory.join("build");
