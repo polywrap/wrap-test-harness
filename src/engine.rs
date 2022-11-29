@@ -22,6 +22,7 @@ pub struct EnginePath {
 }
 
 type ComplexCase = HashMap<String, Option<Vec<String>>>;
+type ExecutionCallback<'a> = dyn Fn(&str, Option<&str>, Option<&str>) -> Result<(), ExecutionError> + 'a;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 enum CaseType {
@@ -55,12 +56,18 @@ impl Engine {
         }
 
         self.handler(
-            Box::new(|feature, implementation, subpath| generator.project(feature, implementation, subpath).map_err(|e| ExecutionError::GenerateError(e))),
+            Box::new(
+                |feature, implementation, subpath|
+                    generator.project(feature, implementation, subpath).map_err(ExecutionError::GenerateError)
+            ),
             feature,
             implementation
         )?;
         self.handler(
-            Box::new(|feature, implementation, subpath| self.build(feature, implementation, subpath, build_only).map_err(|e| ExecutionError::BuildError(e))),
+            Box::new(
+                |feature, implementation, subpath|
+                    self.build(feature, implementation, subpath, build_only).map_err(ExecutionError::BuildError)
+            ),
             feature,
             implementation
         )?;
@@ -70,7 +77,7 @@ impl Engine {
                 Box::new(
                     |feature, implementation, subpath| {
                         if let Some(i) = implementation {
-                            return self.test(feature, i, subpath).map_err(|e| ExecutionError::TestError(e));
+                            return self.test(feature, i, subpath).map_err(ExecutionError::TestError);
                         }
                         Ok(())
                     }),
@@ -83,7 +90,7 @@ impl Engine {
 
     fn handler<'a>(
         &self,
-        executor: Box<dyn Fn(&str, Option<&str>, Option<&str>) -> Result<(), ExecutionError> + 'a>,
+        executor: Box<ExecutionCallback<'a>>,
         feature: Option<&str>,
         implementation: Option<&str>
     ) -> Result<(), ExecutionError>  {
@@ -97,10 +104,13 @@ impl Engine {
                 });
             },
             Some(f) => {
-                let features = f.split(",").map(|feature| feature.trim().to_string()).collect::<Vec<String>>();
-                features.into_iter().for_each(|f| {
-                    feature_map.insert(f, CaseType::Simple(vec![]));
-                });
+                f.split(',')
+                    .map(|feature|
+                        feature.trim().to_string()
+                    ).into_iter().for_each(|f| {
+                        feature_map.insert(f, CaseType::Simple(vec![]));
+                    }
+                );
             }
         }
 
@@ -166,7 +176,7 @@ impl Engine {
                     }
                 }
                 CaseType::Complex(cases) => {
-                    let mut steps = cases.clone().into_keys().map(|c| c).collect::<Vec<String>>();
+                    let mut steps = cases.clone().into_keys().collect::<Vec<String>>();
                     steps.sort();
                     for step in steps {
                         let implementations = cases.get(step.as_str()).unwrap();
@@ -244,7 +254,7 @@ impl Engine {
                         return Some(file.file_name().into_string().unwrap());
                      }
 
-                     return None
+                     None
                  }).collect::<Vec<_>>();
             folders.sort();
 
@@ -289,12 +299,11 @@ impl Engine {
                 let info_path = Path::new(self.path.destination.as_os_str())
                     .join("..")
                     .join("results.json");
-                let feature_name = feature.clone();
                 match fs::read(&info_path) {
                     Ok(f) => {
                         let result_str = String::from_utf8_lossy(&f).parse::<String>().unwrap();
                         let mut results: Results = serde_json::from_str(result_str.as_str()).unwrap();
-                        results.info.entry(impl_name.to_string()).or_default().insert(feature_name.to_string(), summary);
+                        results.info.entry(impl_name.to_string()).or_default().insert(feature.to_string(), summary);
                         let results_file = fs::OpenOptions::new()
                             .write(true)
                             .open(&info_path)
@@ -304,7 +313,7 @@ impl Engine {
                     Err(_) => {
                         let mut results = Results::new();
                         let summaries = HashMap::from([
-                            (feature_name.to_string(), summary)
+                            (feature.to_string(), summary)
                         ]);
                         results.info.insert(impl_name.to_string(), summaries);
                         let results_file = fs::OpenOptions::new()

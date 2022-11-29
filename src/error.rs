@@ -1,4 +1,3 @@
-use std::fs::File;
 use std::io;
 use std::string::FromUtf8Error;
 use thiserror::Error;
@@ -33,8 +32,6 @@ pub enum GenerateError {
     ReadError(String),
     #[error("Feature folder could not be created")]
     CreateFeatureDirErr,
-    #[error("Missing expected file")]
-    MissingExpectedFile(String, String),
     #[error(transparent)]
     GenerateImplementationError(#[from] GenerateImplementationError),
     #[error(transparent)]
@@ -59,8 +56,6 @@ pub enum GenerateTestManifestError {
 pub enum GenerateImplementationError {
     #[error(transparent)]
     FileError(#[from] io::Error),
-    #[error("Directory entry not found")]
-    DirEntryError(String),
     #[error(transparent)]
     CreateImplementationError(#[from] CreateImplementationError)
 }
@@ -77,25 +72,20 @@ pub enum GenerateSchemaError {
 pub enum CreateImplementationError {
     #[error(transparent)]
     FileError(#[from] io::Error),
-    #[error("File manipulation error")]
-    OpenFileError(File),
-    #[error("File manipulation error")]
+    #[error(transparent)]
     CreateManifestAndCommonFilesError(#[from] CreateManifestAndCommonFilesError),
-
 }
 
 #[derive(Error, Debug)]
 pub enum CreateManifestAndCommonFilesError {
     #[error(transparent)]
     FileError(#[from] io::Error),
-    #[error("File manipulation error")]
-    OpenFileError(File),
     #[error(transparent)]
-    JsonParseError(#[from] serde_json::Error),
+    JsonParse(#[from] serde_json::Error),
+    #[error(transparent)]
+    YamlParse(#[from] serde_yaml::Error),
     #[error(transparent)]
     MergeManifestError(#[from] MergeManifestError),
-    #[error(transparent)]
-    YamlParseError(#[from] serde_yaml::Error),
     #[error(transparent)]
     GenerateTestManifestError(#[from] GenerateTestManifestError),
 }
@@ -119,8 +109,6 @@ pub enum MergeManifestError {
 pub enum BuildError {
     #[error(transparent)]
     ConsoleOutputError(#[from] FromUtf8Error),
-    #[error("Build folder not found")]
-    BuildFolderNotFound,
     #[error(transparent)]
     FileNotFound(#[from] io::Error),
     #[error("Build execution error")]
@@ -131,8 +119,6 @@ pub enum BuildError {
 pub enum TestError {
     #[error(transparent)]
     ConsoleOutputError(#[from] FromUtf8Error),
-    #[error("Test folder not found")]
-    TestFolderNotFound,
     #[error(transparent)]
     ResultError(#[from] ResultError),
     #[error(transparent)]

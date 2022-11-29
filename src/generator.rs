@@ -2,8 +2,6 @@ use std::{fs};
 use std::fs::DirEntry;
 use std::io::{BufReader};
 use std::path::{Path, PathBuf};
-use serde_json;
-use serde_yaml;
 use crate::constants::{Implementation, IMPLEMENTATIONS};
 use crate::error::{CreateImplementationError, CreateManifestAndCommonFilesError, GenerateError, GenerateImplementationError, GenerateSchemaError, GenerateTestManifestError};
 use crate::manifest::{Manifest, Workflow};
@@ -41,8 +39,10 @@ impl Generate {
         subpath: Option<&str>,
     ) -> Result<(), GenerateError> {
         let feature_path = self.dest_path.join(feature);
-        if !feature_path.exists() {
-            fs::create_dir(feature_path)?;
+        if !feature_path.exists() && fs::create_dir(
+            feature_path
+        ).is_err() {
+            return Err(GenerateError::CreateFeatureDirErr);
         }
 
         // Copy schema to implementation folder
@@ -66,7 +66,7 @@ impl Generate {
         }
 
         let workflow_str = fs::read_to_string(&workflow_path)?;
-        let mut workflow = serde_json::from_str::<Workflow>(&workflow_str.as_str())?;
+        let mut workflow = serde_json::from_str::<Workflow>(workflow_str.as_str())?;
 
         workflow.format = Some(String::from("0.1.0"));
         workflow.name = Some(String::from(feature));
@@ -194,7 +194,7 @@ impl Generate {
         }
 
         // Get manifest path
-        let mut manifest_path = destination_path.clone();
+        let mut manifest_path = destination_path;
 
         let get_manifest = |file: &Result<DirEntry, std::io::Error>| {
             let file = file.as_ref().unwrap().file_name();
@@ -202,7 +202,7 @@ impl Generate {
         };
         let custom_manifest_path = if let Some(path) = subpath {
             let mut complex_path = root.join(path);
-            if let Some(_) = implementation_info {
+            if implementation_info.is_some() {
                 let test_path = manifest_path.clone().into_os_string().to_str().unwrap().replace("build", "tests");
                 complex_path = Path::new(test_path.as_str()).to_path_buf().join("../..");
             } else {
@@ -215,15 +215,15 @@ impl Generate {
 
         // Generate polywrap manifest (i.e: polywrap.yaml)
         manifest_path = manifest_path.join("polywrap.yaml");
-        let mut manifest = Manifest::default(&feature, &implementation_info);
+        let mut manifest = Manifest::default(feature, &implementation_info);
         if let Some(custom_path) = custom_manifest_path {
             let file = fs::File::open(custom_path?.path())?;
             let reader = BufReader::new(file);
             let custom_manifest: Manifest = serde_json::from_reader(reader)?;
 
             let mut  implementation_id: Option<&str> = None;
-            if let Some(_) = subpath {
-                implementation_id = Some(implementation_info.unwrap().id.clone())
+            if subpath.is_some() {
+                implementation_id = Some(implementation_info.unwrap().id)
             };
             // TODO: Validate manifest
             manifest = manifest.merge(custom_manifest, implementation_id)?;

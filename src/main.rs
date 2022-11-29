@@ -20,15 +20,8 @@ fn main() -> Result<(), HarnessError> {
     let source_path = Path::new(TEST_FOLDER);
 
     let sanitized_args = &input::handle_args();
-    let feature = match &sanitized_args.feature {
-        Some(t) =>  Some(t.as_str()),
-        None => None
-    };
-
-    let implementation = match &sanitized_args.implementation {
-        Some(t) => Some(t.as_str()),
-        None => None
-    };
+    let feature = sanitized_args.feature.as_deref();
+    let implementation = sanitized_args.implementation.as_deref();
 
     Engine::start(
         destination_path,

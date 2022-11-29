@@ -17,7 +17,7 @@ struct Args {
     #[arg(short, long, action = clap::ArgAction::Count)]
     verbose: u8,
     #[arg(short, long)]
-    build: Option<bool>,
+    build: bool,
 }
 
 pub struct SanitizedArgs {
@@ -29,16 +29,11 @@ pub struct SanitizedArgs {
 pub fn handle_args() -> SanitizedArgs {
     let args = Args::parse();
 
-    match fs::create_dir(BUILD_FOLDER) {
-        Err(_) => {
-            if args.reset {
-                fs::remove_dir_all(BUILD_FOLDER).unwrap();
-                fs::create_dir(BUILD_FOLDER).unwrap();
-                fs::remove_file("results.json").unwrap_or_default();
-                fs::remove_dir_all("./wrappers").unwrap_or_default()
-            }
-        }
-        _ => {}
+    if fs::create_dir(BUILD_FOLDER).is_err() && args.reset {
+        fs::remove_dir_all(BUILD_FOLDER).unwrap();
+        fs::create_dir(BUILD_FOLDER).unwrap();
+        fs::remove_file("results.json").unwrap_or_default();
+        fs::remove_dir_all("./wrappers").unwrap_or_default()
     }
 
     // You can see how many times a particular flag or argument occurred
@@ -50,15 +45,10 @@ pub fn handle_args() -> SanitizedArgs {
     //     _ => println!("Don't be crazy"),
     // }
 
-    let mut build_only = false;
-    if let Some(b) = args.build {
-        build_only = b;
-    }
-
-    return SanitizedArgs {
+    SanitizedArgs {
         implementation: args.implementation,
         feature: args.feature,
-        build: build_only
+        build: args.build
     }
 
 }

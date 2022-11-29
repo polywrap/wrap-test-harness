@@ -24,6 +24,6 @@ lazy_static! {
             module: "./Cargo.toml",
             id: "rs"
         });
-        return map
+        map
     };
 }

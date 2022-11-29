@@ -61,20 +61,24 @@ impl Manifest {
         let source = match custom.source {
             Some(s) => {
                 let mut import_abis = default_source.import_abis;
-                if s.import_abis.is_some() && implementation.is_some() {
-                    let imports = s.import_abis.unwrap().iter().map(|import_abi| {
-                        let abi_path = Path::new(&import_abi.abi);
-                        if !abi_path.ends_with("build/wrap.info") {
-                            let abi = abi_path.join("implementations").join(implementation.unwrap()).join("build/wrap.info");
-                            return ImportAbi {
-                                uri: import_abi.clone().uri,
-                                abi: abi.clone().to_str().unwrap().to_string()
+                if let Some(imports) = s.import_abis {
+                    if let Some(i) = implementation {
+                        let imports = imports.iter().map(|import_abi| {
+                            let abi_path = Path::new(&import_abi.abi);
+                            if !abi_path.ends_with("build/wrap.info") {
+                                let abi = abi_path.join("implementations")
+                                    .join(i)
+                                    .join("build/wrap.info");
+                                return ImportAbi {
+                                    uri: import_abi.clone().uri,
+                                    abi: abi.to_str().unwrap().to_string()
+                                }
                             }
-                        }
 
-                        return import_abi.clone()
-                    }).collect::<ImportAbis>();
-                    import_abis = Some(imports);
+                            import_abi.clone()
+                        }).collect::<ImportAbis>();
+                        import_abis = Some(imports);
+                    }
                 }
 
                 let source = Source {
@@ -103,7 +107,7 @@ impl Manifest {
                 (
                     Some(i.module.to_string()),
                     Some("../../schema.graphql".to_string()),
-                    Some(format!("wasm/{}", i.name.to_string()))
+                    Some(format!("wasm/{}", i.name))
                 )
             },
             None => (None, Some("./schema.graphql".to_string()), Some("interface".to_string()))
