@@ -4,7 +4,7 @@
     "add": {
       "steps": [
         {
-          "uri": "wrap://fs/./build",
+          "uri": "wrap://fs/./01-invoke/implementations/${implementation}/build",
           "method": "addAndIncrement",
           "args": {
             "a": 1,

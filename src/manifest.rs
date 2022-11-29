@@ -9,7 +9,7 @@ pub struct Workflow {
     pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     validation: Option<String>,
-    jobs: serde_json::Value,
+    pub jobs: serde_json::Value,
 }
 
 pub type ImportAbis = Vec<ImportAbi>;
@@ -64,18 +64,15 @@ impl Manifest {
                 if let Some(import_abi) = s.import_abis {
                     if let Some(i) = implementation {
                         let imports = import_abi.iter().map(|import_abi| {
-                            let abi_path = Path::new(&import_abi.abi);
-                            if abi_path.is_dir() {
-                                let abi = abi_path.join("implementations")
-                                    .join(i)
-                                    .join("build/wrap.info");
-                                return ImportAbi {
-                                    uri: import_abi.clone().uri,
-                                    abi: abi.to_str().unwrap().to_string()
-                                }
+                            let mut abi_path = import_abi.clone().abi;
+                            if abi_path.contains("${implementation}") {
+                                abi_path = abi_path.replace("${implementation}", i);
                             }
 
-                            return import_abi.clone();
+                            return ImportAbi {
+                                uri: import_abi.clone().uri,
+                                abi: abi_path
+                            }
                         }).collect::<ImportAbis>();
                         import_abis = Some(imports);
                     }
