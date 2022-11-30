@@ -57,7 +57,7 @@ impl Generate {
         Ok(())
     }
 
-    pub fn test_manifest(&self, feature: &str, implementation_info: Option<&Implementation>) -> Result<(), GenerateTestManifestError> {
+    pub fn test_manifest(&self, feature: &str) -> Result<(), GenerateTestManifestError> {
         let workflow_path = self.source_path.join(feature).join(TEST_SCRIPT);
         if !workflow_path.exists() {
             return Err(GenerateTestManifestError::MissingExpectedFile(
@@ -71,37 +71,6 @@ impl Generate {
 
         workflow.format = Some(String::from("0.1.0"));
         workflow.name = Some(String::from(feature));
-
-        if let Some(implementation) = implementation_info {
-            let mut workflow_jobs = workflow.jobs.as_object_mut();
-            if let Some(mut jobs) = workflow_jobs {
-                for (_, job) in jobs {
-                    if let Some(steps) = job.get_mut("steps") {
-                        if let Some(mut s) = steps.as_array_mut() {
-                            for step in s {
-                                let mut step = step.as_object_mut().unwrap();
-                                let current_uri = step.get("uri");
-                                if let Some(uri) = current_uri {
-                                    if uri.clone().to_string().contains("${implementation}") {
-                                        step.insert(
-                                            "uri".to_string(),
-                                            Value::String(
-                                                String::from(
-                                                    uri.to_string().replace(
-                                                        "${implementation}",
-                                                        implementation.id
-                                                    )
-                                                )
-                                            )
-                                        );
-                                    };
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
         // TODO: Add validation to test manifest from JS
         let test_manifest_path = self.dest_path.join(feature).join("polywrap.test.yaml");
@@ -211,7 +180,7 @@ impl Generate {
 
         if !self.build_only {
             // Generate test manifest from workflow
-            self.test_manifest(feature, implementation_info)?;
+            self.test_manifest(feature)?;
             // Get the name of the files to copy, excluding the already processed (and expected) files
             let root_files = fs::read_dir(&root)?.into_iter().filter(
                 |file| !SIMPLE_CASE_EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())

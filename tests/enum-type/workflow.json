@@ -1,5 +1,6 @@
 {
   "name": "enum-type",
+  "validation": "./validator.cue",
   "jobs": {
     "methodOne": {
       "steps": [
@@ -9,6 +10,29 @@
           "args": {
             "en": 2,
             "optEnum": 1
+          }
+        }
+      ]
+    },
+    "failedMethodOne": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "method1",
+          "args": {
+            "en": 5
+          }
+        }
+      ]
+    },
+    "failedAgainMethodOne": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "method1",
+          "args": {
+            "en": 5,
+            "optEnum": "INVALID"
           }
         }
       ]

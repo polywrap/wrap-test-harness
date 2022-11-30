@@ -12,6 +12,41 @@
           }
         }
       ]
+    },
+    "invalidIntBoolSent": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "intMethod",
+          "args": {
+            "arg": true
+          }
+        }
+      ]
+    },
+    "invalidBytesFloatSent": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "bytesMethod",
+          "args": {
+            "arg": 10.15
+          }
+        }
+      ]
+    },
+    "invalidArrayMapSent": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "arrayMethod",
+          "args": {
+            "arg": {
+              "prop": "prop"
+            }
+          }
+        }
+      ]
     }
   }
 }

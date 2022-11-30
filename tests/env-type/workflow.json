@@ -6,7 +6,18 @@
       "steps": [
         {
           "uri": "wrap://fs/./build",
-          "method": "methodNoEnv",
+          "method": "methodRequireEnv",
+          "args": {
+            "arg": "string"
+          }
+        }
+      ]
+    },
+    "subinvokeEnvMethod": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "subinvokeEnvMethod",
           "args": {
             "arg": "string"
           }

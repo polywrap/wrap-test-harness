@@ -1,5 +1,6 @@
 {
   "name": "asyncify",
+  "validation": "./validator.cue",
   "jobs": {
     "localVarMethod": {
       "steps": [
@@ -39,7 +40,7 @@
         }
       ]
     },
-    "setDataWithMany": {
+    "setDataWithManyArgs": {
       "steps": [
         {
           "uri": "wrap://fs/./build",
