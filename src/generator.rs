@@ -178,20 +178,21 @@ impl Generate {
     ) -> Result<(), CreateManifestAndCommonFilesError> {
         let root = self.source_path.join(feature);
 
+        // Get the name of the files to copy, excluding the already processed (and expected) files
+        let root_files = fs::read_dir(&root)?.into_iter().filter(
+            |file| !SIMPLE_CASE_EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
+        ).filter(|f| !f.as_ref().unwrap().metadata().unwrap().is_dir()).map(|entry| entry.unwrap()).collect::<Vec<_>>();
+
+        // Copy common files
+        for file in root_files {
+            let dest_file = self.dest_path.join(feature).join(file.file_name());
+            let source_file = self.source_path.join(feature).join(file.file_name());
+            fs::copy(source_file, dest_file)?;
+        };
+
         if !self.build_only {
             // Generate test manifest from workflow
             self.test_manifest(feature)?;
-            // Get the name of the files to copy, excluding the already processed (and expected) files
-            let root_files = fs::read_dir(&root)?.into_iter().filter(
-                |file| !SIMPLE_CASE_EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
-            ).filter(|f| !f.as_ref().unwrap().metadata().unwrap().is_dir()).map(|entry| entry.unwrap()).collect::<Vec<_>>();
-
-            // Copy common files
-            for file in root_files {
-                let dest_file = self.dest_path.join(feature).join(file.file_name());
-                let source_file = self.source_path.join(feature).join(file.file_name());
-                fs::copy(source_file, dest_file)?;
-            };
         }
 
         // Get manifest path

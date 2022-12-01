@@ -213,18 +213,20 @@ impl Engine {
         build.current_dir(&directory);
         build.arg("polywrap").arg("build").arg("-v");
 
-        if let Err(_) = build.output() {
+        if let Ok(output) = build.output() {
+            dbg!(&output);
+            if generate_folder {
+                directory = directory.join("build");
+                fs::create_dir_all(&copy_dest)?;
+                if directory.join("wrap.wasm").exists() {
+                    fs::copy(directory.join("wrap.wasm"), copy_dest.join("wrap.wasm"))?;
+                }
+                fs::copy(directory.join("wrap.info"), copy_dest.join("wrap.info"))?;
+            }
+        } else {
             return Err(BuildError::BuildExecutionError("Error on polywrap cli build command".to_string()));
         }
 
-        if generate_folder {
-            directory = directory.join("build");
-            fs::create_dir_all(&copy_dest)?;
-            if directory.join("wrap.wasm").exists() {
-                fs::copy(directory.join("wrap.wasm"), copy_dest.join("wrap.wasm"))?;
-            }
-            fs::copy(directory.join("wrap.info"), copy_dest.join("wrap.info"))?;
-        }
         Ok(())
     }
 
