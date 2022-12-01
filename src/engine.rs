@@ -213,31 +213,18 @@ impl Engine {
         build.current_dir(&directory);
         build.arg("polywrap").arg("build").arg("-v");
 
-        dbg!(&directory);
-        match build.output() {
-            Ok(output) => {
-                let error = String::from_utf8(output.stderr)?;
-                // if !error.is_empty() {
-                //     dbg!(error);
-                //     return Err(BuildError::BuildExecutionError("Build command has failed".to_string()));
-                // }
+        if let Err(_) = build.output() {
+            return Err(BuildError::BuildExecutionError("Error on polywrap cli build command".to_string()));
+        }
 
-                if generate_folder {
-                    directory = directory.join("build");
-                    fs::create_dir_all(&copy_dest)?;
-                    if directory.join("wrap.wasm").exists() {
-                        fs::copy(directory.join("wrap.wasm"), copy_dest.join("wrap.wasm"))?;
-                    }
-                    fs::copy(directory.join("wrap.info"), copy_dest.join("wrap.info"))?;
-                }
+        if generate_folder {
+            directory = directory.join("build");
+            fs::create_dir_all(&copy_dest)?;
+            if directory.join("wrap.wasm").exists() {
+                fs::copy(directory.join("wrap.wasm"), copy_dest.join("wrap.wasm"))?;
             }
-            Err(e) => {
-                // TODO: Return error
-                dbg!("siu");
-                dbg!(e);
-                return Ok(());
-            }
-        };
+            fs::copy(directory.join("wrap.info"), copy_dest.join("wrap.info"))?;
+        }
         Ok(())
     }
 
@@ -285,53 +272,42 @@ impl Engine {
         test.current_dir(&directory);
         test.arg("-o").arg("./output.json");
 
-        match test.output() {
-            Ok(output) => {
-                let error = String::from_utf8(output.stderr)?;
-                if !error.is_empty() {
-                    return Err(TestError::TestExecutionError(error))
-                }
-                // let message = String::from_utf8(t.stdout)?;
-
-                let impl_name = directory.file_name().unwrap().to_str().unwrap();
-                let results_dir = directory.join("output.json");
-                let summary = Results::process(results_dir)?;
-
-                let info_path = Path::new(self.path.destination.as_os_str())
-                    .join("..")
-                    .join("results.json");
-                match fs::read(&info_path) {
-                    Ok(f) => {
-                        let result_str = String::from_utf8_lossy(&f).parse::<String>().unwrap();
-                        let mut results: Results = serde_json::from_str(result_str.as_str()).unwrap();
-                        results.info.entry(impl_name.to_string()).or_default().insert(feature.to_string(), summary);
-                        let results_file = fs::OpenOptions::new()
-                            .write(true)
-                            .open(&info_path)
-                            .unwrap();
-                        serde_json::to_writer_pretty(results_file, &results).unwrap();
-                    }
-                    Err(_) => {
-                        let mut results = Results::new();
-                        let summaries = HashMap::from([
-                            (feature.to_string(), summary)
-                        ]);
-                        results.info.insert(impl_name.to_string(), summaries);
-                        let results_file = fs::OpenOptions::new()
-                            .write(true)
-                            .create(true)
-                            .open(&info_path)
-                            .unwrap();
-                        serde_json::to_writer_pretty(results_file, &results).unwrap();
-                    }
-                };
-            }
-            Err(e) => {
-                // TODO: Return error
-                dbg!(e);
-                dbg!("q campeon bro");
-            }
+        if let Err(_) = test.output() {
+            return Err(TestError::TestExecutionError("Error on polywrap cli test command".to_string()))
         };
+
+        let impl_name = directory.file_name().unwrap().to_str().unwrap();
+        let results_dir = directory.join("output.json");
+        let summary = Results::process(results_dir)?;
+
+        let info_path = Path::new(self.path.destination.as_os_str())
+            .join("..")
+            .join("results.json");
+        match fs::read(&info_path) {
+            Ok(f) => {
+                let result_str = String::from_utf8_lossy(&f).parse::<String>().unwrap();
+                let mut results: Results = serde_json::from_str(result_str.as_str()).unwrap();
+                results.info.entry(impl_name.to_string()).or_default().insert(feature.to_string(), summary);
+                let results_file = fs::OpenOptions::new()
+                    .write(true)
+                    .open(&info_path)
+                    .unwrap();
+                serde_json::to_writer_pretty(results_file, &results).unwrap();
+            }
+            Err(_) => {
+                let mut results = Results::new();
+                let summaries = HashMap::from([
+                    (feature.to_string(), summary)
+                ]);
+                results.info.insert(impl_name.to_string(), summaries);
+                let results_file = fs::OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .open(&info_path)
+                    .unwrap();
+                serde_json::to_writer_pretty(results_file, &results).unwrap();
+            }
+        }
         Ok(())
     }
 }

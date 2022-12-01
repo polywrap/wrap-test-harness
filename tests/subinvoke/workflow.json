@@ -1,14 +1,15 @@
 {
   "name": "sub-invoke",
+  "validation": "./validator.cue",
   "jobs": {
-    "add": {
+    "addAndIncrement": {
       "steps": [
         {
           "uri": "wrap://fs/./build",
           "method": "addAndIncrement",
           "args": {
             "a": 1,
-            "b": 2
+            "b": 1
           }
         }
       ]
