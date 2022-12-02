@@ -88,9 +88,9 @@ impl Engine {
         Ok(())
     }
 
-    fn handler<'a>(
+    fn handler(
         &self,
-        executor: Box<ExecutionCallback<'a>>,
+        executor: Box<ExecutionCallback<'_>>,
         feature: Option<&str>,
         implementation: Option<&str>
     ) -> Result<(), ExecutionError>  {
@@ -274,7 +274,7 @@ impl Engine {
         test.current_dir(&directory);
         test.arg("-o").arg("./output.json");
 
-        if let Err(_) = test.output() {
+        if test.output().is_err() {
             return Err(TestError::TestExecutionError("Error on polywrap cli test command".to_string()))
         };
 

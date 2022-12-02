@@ -2,7 +2,6 @@ use std::{fs};
 use std::fs::DirEntry;
 use std::io::{BufReader};
 use std::path::{Path, PathBuf};
-use serde_json::Value;
 use crate::constants::{Implementation, IMPLEMENTATIONS};
 use crate::error::{CreateImplementationError, CreateManifestAndCommonFilesError, GenerateError, GenerateImplementationError, GenerateSchemaError, GenerateTestManifestError};
 use crate::manifest::{Manifest, Workflow};
@@ -77,7 +76,7 @@ impl Generate {
         let f = fs::OpenOptions::new()
             .write(true)
             .create(true)
-            .open(&test_manifest_path)?;
+            .open(test_manifest_path)?;
 
         serde_yaml::to_writer(f, &workflow)?;
         Ok(())
@@ -162,8 +161,8 @@ impl Generate {
         // Generate dependency files (i.e: package.json/Cargo.toml)
         let defaults_folder = self.source_path.join("..").join("defaults");
         let implementation_info = IMPLEMENTATIONS.get(implementation).unwrap();
-        let dependencies_source = defaults_folder.join(&implementation_info.dependency);
-        let dependencies_dest = destination_path.join(&implementation_info.dependency);
+        let dependencies_source = defaults_folder.join(implementation_info.dependency);
+        let dependencies_dest = destination_path.join(implementation_info.dependency);
         fs::copy(dependencies_source, dependencies_dest)?;
         self.manifest_and_common_files(feature, Some(implementation_info), destination_path, subpath)?;
         Ok(())

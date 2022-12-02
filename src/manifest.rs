@@ -76,7 +76,7 @@ impl Manifest {
                                 abi_path = abi.to_str().unwrap().to_string();
                             }
 
-                            return ImportAbi {
+                            ImportAbi {
                                 uri: import_abi.clone().uri,
                                 abi: abi_path
                             }
