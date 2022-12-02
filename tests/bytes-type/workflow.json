@@ -1,7 +1,8 @@
 {
   "name": "bytes-type",
+  "validation": "./validator.cue",
   "jobs": {
-    "method": {
+    "bytesMethod": {
       "steps": [
         {
           "uri": "wrap://fs/./build",

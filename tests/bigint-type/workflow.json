@@ -1,5 +1,6 @@
 {
   "name": "bigint-type",
+  "validation": "./validator.cue",
   "jobs": {
     "method": {
       "steps": [

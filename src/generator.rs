@@ -76,7 +76,7 @@ impl Generate {
         let f = fs::OpenOptions::new()
             .write(true)
             .create(true)
-            .open(&test_manifest_path)?;
+            .open(test_manifest_path)?;
 
         serde_yaml::to_writer(f, &workflow)?;
         Ok(())
@@ -161,8 +161,8 @@ impl Generate {
         // Generate dependency files (i.e: package.json/Cargo.toml)
         let defaults_folder = self.source_path.join("..").join("defaults");
         let implementation_info = IMPLEMENTATIONS.get(implementation).unwrap();
-        let dependencies_source = defaults_folder.join(&implementation_info.dependency);
-        let dependencies_dest = destination_path.join(&implementation_info.dependency);
+        let dependencies_source = defaults_folder.join(implementation_info.dependency);
+        let dependencies_dest = destination_path.join(implementation_info.dependency);
         fs::copy(dependencies_source, dependencies_dest)?;
         self.manifest_and_common_files(feature, Some(implementation_info), destination_path, subpath)?;
         Ok(())
@@ -177,20 +177,21 @@ impl Generate {
     ) -> Result<(), CreateManifestAndCommonFilesError> {
         let root = self.source_path.join(feature);
 
+        // Get the name of the files to copy, excluding the already processed (and expected) files
+        let root_files = fs::read_dir(&root)?.into_iter().filter(
+            |file| !SIMPLE_CASE_EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
+        ).filter(|f| !f.as_ref().unwrap().metadata().unwrap().is_dir()).map(|entry| entry.unwrap()).collect::<Vec<_>>();
+
+        // Copy common files
+        for file in root_files {
+            let dest_file = self.dest_path.join(feature).join(file.file_name());
+            let source_file = self.source_path.join(feature).join(file.file_name());
+            fs::copy(source_file, dest_file)?;
+        };
+
         if !self.build_only {
             // Generate test manifest from workflow
             self.test_manifest(feature)?;
-            // Get the name of the files to copy, excluding the already processed (and expected) files
-            let root_files = fs::read_dir(&root)?.into_iter().filter(
-                |file| !SIMPLE_CASE_EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
-            ).filter(|f| !f.as_ref().unwrap().metadata().unwrap().is_dir()).map(|entry| entry.unwrap()).collect::<Vec<_>>();
-
-            // Copy common files
-            for file in root_files {
-                let dest_file = self.dest_path.join(feature).join(file.file_name());
-                let source_file = self.source_path.join(feature).join(file.file_name());
-                fs::copy(source_file, dest_file)?;
-            };
         }
 
         // Get manifest path
@@ -221,9 +222,9 @@ impl Generate {
             let reader = BufReader::new(file);
             let custom_manifest: Manifest = serde_json::from_reader(reader)?;
 
-            let mut  implementation_id: Option<&str> = None;
-            if subpath.is_some() {
-                implementation_id = Some(implementation_info.unwrap().id)
+            let mut implementation_id: Option<&str> = None;
+            if let Some(i) = implementation_info {
+                implementation_id = Some(i.id);
             };
             // TODO: Validate manifest
             manifest = manifest.merge(custom_manifest, implementation_id)?;

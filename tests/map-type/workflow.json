@@ -1,7 +1,30 @@
 {
   "name": "map-type",
   "jobs": {
-    "parse": {
+    "getKey": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "getKey",
+          "args": {
+            "key": "Hello",
+            "foo": {
+              "map": {
+                "Hello": 1,
+                "Heyo": 50
+              },
+              "nestedMap": {
+                "nested": {
+                  "Hello": 1,
+                  "Heyo": 50
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "returnMap": {
       "steps": [
         {
           "uri": "wrap://fs/./build",
@@ -10,6 +33,44 @@
             "map": {
               "Hello": 1,
               "Heyo": 50
+            }
+          }
+        }
+      ]
+    },
+    "returnCustomMap": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "returnCustomMap",
+          "args": {
+            "foo": {
+              "map": {
+                "Hello": 1,
+                "Heyo": 50
+              },
+              "nestedMap": {
+                "nested": {
+                  "Hello": 1,
+                  "Heyo": 50
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "returnNestedMap": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "returnNestedMap",
+          "args": {
+            "foo": {
+              "nested": {
+                "Hello": 1,
+                "Heyo": 50
+              }
             }
           }
         }

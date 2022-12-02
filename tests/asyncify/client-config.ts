@@ -1,19 +1,31 @@
-import { ClientConfig } from "@polywrap/client-config-builder-js";
+import { IClientConfigBuilder } from "@polywrap/client-config-builder-js";
+import { PluginModule, PluginPackage } from "@polywrap/plugin-js";
+import { latestWrapManifestVersion } from "@polywrap/wrap-manifest-types-js";
+import { parseSchema } from "@polywrap/schema-parse";
 
-export const getCustomConfig = async (): Promise<Partial<ClientConfig>> => {
-  const memoryStoragePackage = {
-    factory: () => new MemoryStoragePlugin(),
-    manifest: {}
+export function configure(builder: IClientConfigBuilder): IClientConfigBuilder {
+  const memoryStoragePlugin = () => {
+    return PluginPackage.from(new MemoryStoragePlugin(), {
+      name: "memoryStorage",
+      type: "plugin",
+      version: latestWrapManifestVersion,
+      abi: parseSchema(`
+        type Module {
+          getData: Int32!
+          setData(value: Int32!): Boolean!
+        }
+      `)
+    })
   }
-  return {
-    packages: [{
-      uri: "wrap://ens/memory-storage.polywrap.eth",
-      package: memoryStoragePackage
-    }]
-  }
+  return builder.addPackage({
+    uri: "wrap://ens/memory-storage.polywrap.eth",
+    package: memoryStoragePlugin()
+  })
 }
 
-class MemoryStoragePlugin {
+class MemoryStoragePlugin extends PluginModule<
+    Record<string, unknown>
+> {
   private _value: number;
 
   async getData(_: {}): Promise<number> {

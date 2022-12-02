@@ -1,0 +1,13 @@
+- features
+    - asyncify
+    - bigint-type
+    - bytes-type
+    - enum-types
+    - json-type
+    - map-type
+    - object-type
+    - invalid-type
+- client
+    - subinvoke
+    - interface-invoke
+    - env-types

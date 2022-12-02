@@ -81,7 +81,7 @@ impl Results {
         let summary = result.iter().fold(default_summary, |mut acc, r| {
             acc.stats.total += 1;
             match (r.status, r.validation.status) {
-                ("SUCCEED", "SKIPPED") | (_, "SUCCEED") => acc.stats.succeeded += 1,
+                (_, "SUCCEED") => acc.stats.succeeded += 1,
                 _ => {
                     acc.stats.failed += 1;
                     acc.passed = false;

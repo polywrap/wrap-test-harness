@@ -2,13 +2,73 @@
   "name": "numbers-type",
   "validation": "./validator.cue",
   "jobs": {
-    "numbersMethod": {
+    "i8Method": {
       "steps": [
         {
           "uri": "wrap://fs/./build",
           "method": "i8Method",
           "args": {
             "first": -129,
+            "second": 10
+          }
+        }
+      ]
+    },
+    "u8Method": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "u8Method",
+          "args": {
+            "first": 256,
+            "second": 10
+          }
+        }
+      ]
+    },
+    "i16Method": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "i16Method",
+          "args": {
+            "first": -32769,
+            "second": 10
+          }
+        }
+      ]
+    },
+    "u16Method": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "u16Method",
+          "args": {
+            "first": 65536,
+            "second": 10
+          }
+        }
+      ]
+    },
+    "i32Method": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "i32Method",
+          "args": {
+            "first": -2147483649,
+            "second": 10
+          }
+        }
+      ]
+    },
+    "u32Method": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "u32Method",
+          "args": {
+            "first": 4294967296,
             "second": 10
           }
         }

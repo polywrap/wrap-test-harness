@@ -1,7 +1,8 @@
 {
   "name": "objectType",
+  "validation": "validator.cue",
   "jobs": {
-    "parse": {
+    "method1": {
       "steps": [
         {
           "uri": "wrap://fs/./build",
@@ -12,6 +13,89 @@
               "nested": {
                 "prop": "arg1 nested prop"
               }
+            }
+          }
+        }
+      ]
+    },
+    "method1b": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "method1",
+          "args": {
+            "arg1": {
+              "prop": "arg1 prop",
+              "nested": {
+                "prop": "arg1 nested prop"
+              }
+            },
+            "arg2": {
+              "prop": "arg2 prop",
+              "circular": {
+                "prop": "arg2 circular prop"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "method2": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "method2",
+          "args": {
+            "arg": {
+              "prop": "arg prop",
+              "nested": {
+                "prop": "arg nested prop"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "method2b": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "method2",
+          "args": {
+            "arg": {
+              "prop": "null",
+              "nested": {
+                "prop": "arg nested prop"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "method3": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "method3",
+          "args": {
+            "arg": {
+              "prop": "arg prop",
+              "nested": {
+                "prop": "arg nested prop"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "method5": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "method5",
+          "args": {
+            "arg": {
+              "prop":  [49, 50, 51, 52]
             }
           }
         }

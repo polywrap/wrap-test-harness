@@ -9,7 +9,7 @@ pub struct Workflow {
     pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     validation: Option<String>,
-    jobs: serde_json::Value,
+    pub jobs: serde_json::Value,
 }
 
 pub type ImportAbis = Vec<ImportAbi>;
@@ -60,31 +60,35 @@ impl Manifest {
 
         let source = match custom.source {
             Some(s) => {
-                let mut import_abis = default_source.import_abis;
-                if let Some(imports) = s.import_abis {
+                let mut abis = default_source.import_abis;
+                if let Some(import_abis) = s.import_abis {
                     if let Some(i) = implementation {
-                        let imports = imports.iter().map(|import_abi| {
-                            let abi_path = Path::new(&import_abi.abi);
-                            if !abi_path.ends_with("build/wrap.info") {
-                                let abi = abi_path.join("implementations")
+                        let imports = import_abis.iter().map(|import_abi| {
+                            let mut abi_path: String = import_abi.clone().abi;
+                            if abi_path.contains("${implementation}") {
+                                abi_path = abi_path.replace("${implementation}", i);
+                            } else if !(
+                                abi_path.ends_with("wrap.info") || abi_path.ends_with(".graphql")
+                            ) {
+                                let abi = Path::new(&abi_path).join("implementations")
                                     .join(i)
                                     .join("build/wrap.info");
-                                return ImportAbi {
-                                    uri: import_abi.clone().uri,
-                                    abi: abi.to_str().unwrap().to_string()
-                                }
+                                abi_path = abi.to_str().unwrap().to_string();
                             }
 
-                            import_abi.clone()
+                            ImportAbi {
+                                uri: import_abi.clone().uri,
+                                abi: abi_path
+                            }
                         }).collect::<ImportAbis>();
-                        import_abis = Some(imports);
+                        abis = Some(imports);
                     }
                 }
 
                 let source = Source {
                     schema: s.schema.or(default_source.schema),
                     module: s.module.or(default_source.module),
-                    import_abis
+                    import_abis: abis
                 };
                 Some(source)
             },

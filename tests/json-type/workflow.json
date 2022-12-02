@@ -1,5 +1,6 @@
 {
   "name": "json-type",
+  "validation": "./validator.cue",
   "jobs": {
     "parse": {
       "steps": [
@@ -7,19 +8,27 @@
           "uri": "wrap://fs/./build",
           "method": "parse",
           "args": {
-            "value": "{\"arg\": { \"foo\": \"foo\", \"bar\": \"bar\" } }"
+            "value": "{\"arg\":{\"foo\":\"foo\",\"bar\":\"bar\"}}"
           }
-        },
+        }
+      ]
+    },
+    "stringify": {
+      "steps": [
         {
           "uri": "wrap://fs/./build",
           "method": "stringify",
           "args": {
             "values": [
-              "{\"foo\": \"foo\"}",
-              "{\"bar\": \"bar\"}"
+              "{\"bar\":\"foo\"}",
+              "{\"baz\":\"fuz\"}"
             ]
           }
-        },
+        }
+      ]
+    },
+    "stringifyObject": {
+      "steps": [
         {
           "uri": "wrap://fs/./build",
           "method": "stringifyObject",
@@ -29,7 +38,11 @@
               "jsonB": "{\"bar\": \"bar\"}"
             }
           }
-        },
+        }
+      ]
+    },
+    "methodJSON": {
+      "steps": [
         {
           "uri": "wrap://fs/./build",
           "method": "methodJSON",

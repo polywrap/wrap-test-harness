@@ -1,0 +1,8 @@
+{
+  "name": "wasm-test-harness",
+  "version": "1.0.0",
+  "dependencies": {
+    "polywrap": "0.10.0-pre.5",
+    "@polywrap/plugin-js": "0.10.0-pre.5"
+  }
+}
