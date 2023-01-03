@@ -7,7 +7,7 @@
     - map-type
     - object-type
     - invalid-type
-- client
+- client/wrap features
     - subinvoke
     - interface-invoke
     - env-types

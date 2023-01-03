@@ -1,10 +1,10 @@
-use std::{fs};
-use std::fs::DirEntry;
+use std::fs;
+use std::env;
 use std::io::{BufReader};
 use std::path::{Path, PathBuf};
 use crate::constants::{Implementation, IMPLEMENTATIONS};
 use crate::error::{CreateImplementationError, CreateManifestAndCommonFilesError, GenerateError, GenerateImplementationError, GenerateSchemaError, GenerateTestManifestError};
-use crate::manifest::{Manifest, Workflow};
+use crate::manifest::{BuildManifest, Manifest, Workflow};
 
 const CUSTOM_MANIFEST: &str = "polywrap.json";
 const TEST_SCRIPT: &str = "workflow.json";
@@ -197,7 +197,7 @@ impl Generate {
         // Get manifest path
         let mut manifest_path = destination_path;
 
-        let get_manifest = |file: &Result<DirEntry, std::io::Error>| {
+        let get_manifest = |file: &Result<fs::DirEntry, std::io::Error>| {
             let file = file.as_ref().unwrap().file_name();
             file.to_str().unwrap().eq(CUSTOM_MANIFEST)
         };
@@ -215,17 +215,20 @@ impl Generate {
         };
 
         // Generate polywrap manifest (i.e: polywrap.yaml)
-        manifest_path = manifest_path.join("polywrap.yaml");
+        let polywrap_manifest_path = manifest_path.join("polywrap.yaml");
         let mut manifest = Manifest::default(feature, &implementation_info);
+
+        let implementation_id = if let Some(i) = implementation_info {
+            Some(i.id)
+        } else {
+            None
+        };
+
         if let Some(custom_path) = custom_manifest_path {
             let file = fs::File::open(custom_path?.path())?;
             let reader = BufReader::new(file);
             let custom_manifest: Manifest = serde_json::from_reader(reader)?;
 
-            let mut implementation_id: Option<&str> = None;
-            if let Some(i) = implementation_info {
-                implementation_id = Some(i.id);
-            };
             // TODO: Validate manifest
             manifest = manifest.merge(custom_manifest, implementation_id)?;
         }
@@ -233,8 +236,16 @@ impl Generate {
         let f = fs::OpenOptions::new()
             .write(true)
             .create(true)
-            .open(&manifest_path)?;
+            .open(&polywrap_manifest_path)?;
         serde_yaml::to_writer(f, &manifest)?;
+
+        let local_wasm_package = env::var("POLYWRAP_WASM_PATH");
+
+        if let Ok(package_path) = local_wasm_package {
+           if let Some(i) = implementation_id {
+               BuildManifest::generate(manifest_path, package_path, i.to_string());
+           }
+        }
 
         Ok(())
     }
