@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::fs;
-use std::fs::read_dir;
+use std::env;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use serde::{Deserialize, Serialize};
@@ -22,7 +22,7 @@ pub struct EnginePath {
 }
 
 type ComplexCase = HashMap<String, Option<Vec<String>>>;
-type ExecutionCallback<'a> = dyn Fn(&str, Option<&str>, Option<&str>) -> Result<(), ExecutionError> + 'a;
+type ExecutionCallback<'a> = Box<dyn Fn(&str, Option<&str>, Option<&str>) -> Result<(), ExecutionError> + 'a>;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 enum CaseType {
@@ -90,7 +90,7 @@ impl Engine {
 
     fn handler(
         &self,
-        executor: Box<ExecutionCallback<'_>>,
+        executor: ExecutionCallback<'_>,
         feature: Option<&str>,
         implementation: Option<&str>
     ) -> Result<(), ExecutionError>  {
@@ -98,7 +98,7 @@ impl Engine {
         let mut feature_map : FeatureImplMap = HashMap::new();
         match feature {
             None => {
-                feature_map = read_dir(&self.path.source)?.fold(feature_map, |mut current, f| {
+                feature_map = fs::read_dir(&self.path.source)?.fold(feature_map, |mut current, f| {
                     current.insert(String::from(f.unwrap().file_name().to_str().unwrap()), CaseType::Simple(vec![]));
                     current
                 });
@@ -120,20 +120,20 @@ impl Engine {
             match implementation {
                 None => {
                     if implementation_folder.exists() {
-                        let implementations = read_dir(implementation_folder)?.map(|i| {
+                        let implementations = fs::read_dir(implementation_folder)?.map(|i| {
                             i.unwrap().file_name().into_string().unwrap()
                         }).collect::<Vec<String>>();
                         feature_map.insert(feature.to_string(), CaseType::Simple(implementations));
                     } else {
                         let mut complex_case_map: ComplexCase = HashMap::new();
-                        read_dir(feature_folder)?.into_iter().filter(|i| {
+                        fs::read_dir(feature_folder)?.into_iter().filter(|i| {
                             i.as_ref().unwrap().metadata().unwrap().is_dir()
                         }).for_each(|entry| {
                             let dir = entry.unwrap();
                             let step_name = dir.file_name().into_string().unwrap();
                             let step_implementations = dir.path().join("implementations");
                             if step_implementations.exists() {
-                                let implementations = read_dir(step_implementations).unwrap().map(|i| {
+                                let implementations = fs::read_dir(step_implementations).unwrap().map(|i| {
                                     i.unwrap().file_name().into_string().unwrap()
                                 }).collect::<Vec<String>>();
                                 complex_case_map.insert(step_name, Some(implementations));
@@ -149,7 +149,7 @@ impl Engine {
                         feature_map.insert(feature.to_string(), CaseType::Simple(vec![i.to_string()]));
                     } else {
                         let mut complex_case_map: ComplexCase = HashMap::new();
-                        read_dir(feature_folder)?.into_iter().filter(|i| {
+                        fs::read_dir(feature_folder)?.into_iter().filter(|i| {
                             i.as_ref().unwrap().metadata().unwrap().is_dir()
                         }).for_each(|entry| {
                             let dir = entry.unwrap();
@@ -195,9 +195,7 @@ impl Engine {
     }
 
     fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>, generate_folder: bool) -> Result<(), BuildError> {
-        let mut build = Command::new("npx");
         let mut directory = self.path.destination.join(feature);
-
         let mut copy_dest = self.path.source.join("..").join("wrappers").join(feature);
         if let Some(p) = subpath {
             directory = directory.join(p);
@@ -210,10 +208,22 @@ impl Engine {
                 .join("implementations")
                 .join(i);
         };
-        build.current_dir(&directory);
-        build.arg("polywrap").arg("build").arg("-v");
 
-        if let Ok(output) = build.output() {
+        let mut build: Option<Command> = None;
+        if let Ok(path) = env::var("POLYWRAP_CLI_PATH") {
+            let mut local_build = Command::new("node");
+            local_build.current_dir(&directory);
+            let executable_path = Path::new(path.as_str()).join("bin/polywrap");
+            local_build.arg(executable_path).arg("build").arg("-v");
+            build = Some(local_build);
+        } else {
+            let mut npx_build = Command::new("npx");
+            npx_build.current_dir(&directory);
+            npx_build.arg("polywrap").arg("build").arg("-v");
+            build = Some(npx_build);
+        }
+
+        if let Ok(output) = build.unwrap().output() {
             dbg!(&output);
             if generate_folder {
                 directory = directory.join("build");
@@ -237,7 +247,7 @@ impl Engine {
         test.arg("polywrap").arg("test");
 
         if let Some(p) = subpath {
-             let mut folders = read_dir(&directory)?
+             let mut folders = fs::read_dir(&directory)?
                  .filter_map(|f| {
                      let file = f.unwrap();
                      if file.metadata().unwrap().is_dir() {
@@ -285,30 +295,27 @@ impl Engine {
         let info_path = Path::new(self.path.destination.as_os_str())
             .join("..")
             .join("results.json");
-        match fs::read(&info_path) {
-            Ok(f) => {
-                let result_str = String::from_utf8_lossy(&f).parse::<String>().unwrap();
-                let mut results: Results = serde_json::from_str(result_str.as_str()).unwrap();
-                results.info.entry(impl_name.to_string()).or_default().insert(feature.to_string(), summary);
-                let results_file = fs::OpenOptions::new()
-                    .write(true)
-                    .open(&info_path)
-                    .unwrap();
-                serde_json::to_writer_pretty(results_file, &results).unwrap();
-            }
-            Err(_) => {
-                let mut results = Results::new();
-                let summaries = HashMap::from([
-                    (feature.to_string(), summary)
-                ]);
-                results.info.insert(impl_name.to_string(), summaries);
-                let results_file = fs::OpenOptions::new()
-                    .write(true)
-                    .create(true)
-                    .open(&info_path)
-                    .unwrap();
-                serde_json::to_writer_pretty(results_file, &results).unwrap();
-            }
+        if let Ok(f) = fs::read(&info_path) {
+            let result_str = String::from_utf8_lossy(&f).parse::<String>().unwrap();
+            let mut results: Results = serde_json::from_str(result_str.as_str()).unwrap();
+            results.info.entry(impl_name.to_string()).or_default().insert(feature.to_string(), summary);
+            let results_file = fs::OpenOptions::new()
+                .write(true)
+                .open(&info_path)
+                .unwrap();
+            serde_json::to_writer_pretty(results_file, &results).unwrap();
+        } else {
+            let mut results = Results::new();
+            let summaries = HashMap::from([
+                (feature.to_string(), summary)
+            ]);
+            results.info.insert(impl_name.to_string(), summaries);
+            let results_file = fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .open(&info_path)
+                .unwrap();
+            serde_json::to_writer_pretty(results_file, &results).unwrap();
         }
         Ok(())
     }

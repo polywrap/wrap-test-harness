@@ -1,4 +1,6 @@
-use std::path::Path;
+use std::collections::HashMap;
+use std::{env, fs};
+use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use crate::constants::Implementation;
 use crate::error::{MergeManifestError};
@@ -41,6 +43,88 @@ pub struct Manifest {
     pub format: Option<String>,
     pub project: Option<Project>,
     pub source: Option<Source>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub extensions: Option<HashMap<String, String>>
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct RsImage {
+    pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct AsImage {
+    pub include: Vec<String>,
+    pub node_version: String
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(untagged)]
+pub enum Image {
+    Rs(RsImage),
+    As(AsImage)
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct Strategies {
+    image: Image
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct BuildManifest {
+    pub format: String,
+    pub strategies: Strategies,
+    pub linked_packages: Vec<HashMap<String, String>>
+}
+
+impl Strategies {
+    pub fn rs() -> Self {
+        Strategies {
+            image: Image::Rs(RsImage {
+                name: "test".to_string()
+            })
+        }
+    }
+
+    pub fn assemblyscript() -> Self {
+        Strategies {
+            image: Image::As(AsImage {
+                node_version: "16.13.0".to_string(),
+                include: vec!["./package.json".to_string()]
+            })
+        }
+    }
+}
+
+impl BuildManifest {
+    pub fn generate(manifest_path: PathBuf, dependency_path: String, implementation: String) {
+        let path = manifest_path.join("polywrap.build.yaml");
+        let (strategies, name) = match implementation.as_str() {
+            "as" => (Strategies::assemblyscript(), "@polywrap/wasm-as"),
+            "rs" => (Strategies::rs(), "polywrap-wasm-rs"),
+            _ => {
+                panic!("unknown implementation")
+            }
+        };
+
+        let mut wasm_package: HashMap<String, String> = HashMap::new();
+        wasm_package.insert("name".to_string(), name.to_string());
+        wasm_package.insert("path".to_string(), format!("{dependency_path}/{implementation}"));
+        let linked_packages: Vec<HashMap<String, String>> = vec![wasm_package];
+
+        let build_manifest = BuildManifest {
+            format: "0.2.0".to_string(),
+            strategies,
+            linked_packages
+        };
+
+        let f = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(path).unwrap();
+
+        serde_yaml::to_writer(f, &build_manifest).unwrap();
+    }
 }
 
 impl Manifest {
@@ -54,7 +138,6 @@ impl Manifest {
             }),
             _ => Some(default_project)
         };
-
 
         let default_source = self.source.ok_or(MergeManifestError::SourceNotFound)?;
 
@@ -95,10 +178,20 @@ impl Manifest {
             _ => Some(default_source)
         };
 
+
+        let extensions = if let Ok(_) = env::var("POLYWRAP_WASM_PATH") {
+            let mut h = HashMap::new();
+            h.insert("build".to_string(), "./polywrap.build.yaml".to_string());
+            Some(h)
+        } else {
+            None
+        };
+
         Ok(Self {
             format: self.format,
             project,
-            source
+            source,
+            extensions
         })
     }
 
@@ -117,7 +210,7 @@ impl Manifest {
             None => (None, Some("./schema.graphql".to_string()), Some("interface".to_string()))
         };
         Manifest {
-            format: Some("0.2.0".to_string()),
+            format: Some("0.3.0".to_string()),
             project: Some(Project {
                 name: Some(feature.to_string()),
                 _type,
@@ -126,7 +219,8 @@ impl Manifest {
                 schema,
                 module,
                 import_abis: None,
-            })
+            }),
+            extensions: None
         }
     }
 }
