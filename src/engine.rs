@@ -4,6 +4,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use serde::{Deserialize, Serialize};
+use futures::{Future,future::ready};
 use crate::error::{ExecutionError, TestError, BuildError};
 use crate::Results;
 use crate::generator::{Generate};
@@ -22,7 +23,9 @@ pub struct EnginePath {
 }
 
 type ComplexCase = HashMap<String, Option<Vec<String>>>;
-type ExecutionCallback<'a> = Box<dyn Fn(&str, Option<&str>, Option<&str>) -> Result<(), ExecutionError> + 'a>;
+type ExecutionCallback<'a> = Box<dyn Future<Output=Result<(), ExecutionError>> + 'a>;
+
+type Executor<'a> = Box<dyn Fn(&str, Option<&str>, Option<&str>) -> Box<dyn Future<Output=Result<(), ExecutionError>> + 'a>>;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 enum CaseType {
@@ -45,7 +48,7 @@ impl Engine {
         }
     }
 
-    pub fn execute(&self, feature: Option<&str>, implementation: Option<&str>, build_only: bool) -> Result<(), ExecutionError> {
+    pub async fn execute(&self, feature: Option<&str>, implementation: Option<&str>, build_only: bool) -> Result<(), ExecutionError> {
         let generator = Generate::new(
             self.path.destination.to_path_buf(),
             self.path.source.to_path_buf(),
@@ -55,40 +58,47 @@ impl Engine {
             fs::create_dir("./wrappers")?;
         }
 
-        self.handler(
-            Box::new(
-                |feature, implementation, subpath|
-                    generator.project(feature, implementation, subpath).map_err(ExecutionError::GenerateError)
-            ),
-            feature,
-            implementation
-        )?;
-        self.handler(
-            Box::new(
-                |feature, implementation, subpath|
-                    self.build(feature, implementation, subpath, build_only).map_err(ExecutionError::BuildError)
-            ),
-            feature,
-            implementation
-        )?;
+        let project_generator_executor=  async move {
+                generator.project("asyncify", implementation, None).await
+        };
 
-        if !build_only {
-            self.handler(
-                Box::new(
-                    |feature, implementation, subpath| {
-                        if let Some(i) = implementation {
-                            return self.test(feature, i, subpath).map_err(ExecutionError::TestError);
-                        }
-                        Ok(())
-                    }),
-                feature,
-                implementation
-            )?;
-        }
+        self.handler(
+            Box::new(project_generator_executor),
+            feature,
+            implementation
+        );
+
+
+
+
+
+
+        // self.handler(
+        //     Box::new(
+        //         |feature, implementation, subpath|
+        //             self.build(feature, implementation, subpath, build_only).map_err(ExecutionError::BuildError)
+        //     ),
+        //     feature,
+        //     implementation
+        // )?;
+
+        // if !build_only {
+        //     self.handler(
+        //         Box::new(
+        //             |feature, implementation, subpath| {
+        //                 if let Some(i) = implementation {
+        //                     return self.test(feature, i, subpath).map_err(ExecutionError::TestError);
+        //                 }
+        //                 Ok(())
+        //             }),
+        //         feature,
+        //         implementation
+        //     )?;
+        // }
         Ok(())
     }
 
-    fn handler(
+    async fn handler(
         &self,
         executor: ExecutionCallback<'_>,
         feature: Option<&str>,
@@ -209,21 +219,21 @@ impl Engine {
                 .join(i);
         };
 
-        let mut build: Option<Command> = None;
+        let mut build: Command;
         if let Ok(path) = env::var("POLYWRAP_CLI_PATH") {
             let mut local_build = Command::new("node");
             local_build.current_dir(&directory);
             let executable_path = Path::new(path.as_str()).join("bin/polywrap");
             local_build.arg(executable_path).arg("build").arg("-v");
-            build = Some(local_build);
+            build = local_build;
         } else {
             let mut npx_build = Command::new("npx");
             npx_build.current_dir(&directory);
             npx_build.arg("polywrap").arg("build").arg("-v");
-            build = Some(npx_build);
+            build = npx_build;
         }
 
-        if let Ok(output) = build.unwrap().output() {
+        if let Ok(output) = build.output() {
             dbg!(&output);
             if generate_folder {
                 directory = directory.join("build");

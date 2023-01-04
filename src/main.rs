@@ -1,3 +1,4 @@
+#![feature(async_closure)]
 extern crate core;
 
 mod generator;
@@ -15,7 +16,8 @@ use crate::result::{Results};
 use crate::input::{BUILD_FOLDER, TEST_FOLDER};
 use crate::error::HarnessError;
 
-fn main() -> Result<(), HarnessError> {
+#[tokio::main]
+async fn main() -> Result<(), HarnessError> {
     let destination_path = Path::new(BUILD_FOLDER);
     let source_path = Path::new(TEST_FOLDER);
 
@@ -26,7 +28,7 @@ fn main() -> Result<(), HarnessError> {
     Engine::start(
         destination_path,
         source_path
-    ).execute(feature, implementation, sanitized_args.build)?;
+    ).execute(feature, implementation, sanitized_args.build).await?;
 
     if !sanitized_args.build {
         Results::show()?;

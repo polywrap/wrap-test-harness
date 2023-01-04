@@ -3,6 +3,7 @@ use std::env;
 use std::io::{BufReader};
 use std::path::{Path, PathBuf};
 use crate::constants::{Implementation, IMPLEMENTATIONS};
+use crate::error::ExecutionError;
 use crate::error::{CreateImplementationError, CreateManifestAndCommonFilesError, GenerateError, GenerateImplementationError, GenerateSchemaError, GenerateTestManifestError};
 use crate::manifest::{BuildManifest, Manifest, Workflow};
 
@@ -32,26 +33,26 @@ impl Generate {
             build_only
         }
     }
-    pub fn project(
+    pub async fn project(
         &self,
         feature: &str,
         implementation: Option<&str>,
         subpath: Option<&str>,
-    ) -> Result<(), GenerateError> {
+    ) -> Result<(), ExecutionError> {
         let feature_path = self.dest_path.join(feature);
         if !feature_path.exists() && fs::create_dir(
             feature_path
         ).is_err() {
-            return Err(GenerateError::CreateFeatureDirErr);
+            // return Err(GenerateError::CreateFeatureDirErr);
         }
 
         // Copy schema to implementation folder
-        self.schema(feature, subpath)?;
+        self.schema(feature, subpath).unwrap();
         // Create implementation folder & respective files
         if let Some(i) = implementation {
-            self.implementation_files(feature, i, subpath)?;
+            self.implementation_files(feature, i, subpath).unwrap();
         } else {
-            self.manifest_and_common_files(feature, None, self.dest_path.join(feature), subpath)?;
+            self.manifest_and_common_files(feature, None, self.dest_path.join(feature), subpath).unwrap();
         }
         Ok(())
     }

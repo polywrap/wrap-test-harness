@@ -9,7 +9,7 @@ with the WRAP Protocol.
 
 ### How
 Test lives in `tests` folder, organized by features/use-cases (i.e: `json-type`, `union-type`),
-inside each feature folder, we have every supported implementation (i.e: `rust`, `assemblyscript`) inside an`implementations`
+inside each feature folder, we have every supported implementation (i.e: `rust`, `assemblyscript`) inside an `implementations`
 folder, along with the [common files](#common-files) between implementations.
 
 The problem this architecture solves is that for every case, we need to give opinionated
@@ -46,10 +46,10 @@ Implementation agnostic files. It allows to add different behavior to build & te
 
 #### Accepted arguments:
 
-- implementation (-i)
-- feature (-f)
-- build only (-b)
-- reset (-r)
+- implementation (-i | --implementation)
+- feature (-f | --feature)
+- build only (-b | --build)
+- reset (-r | --reset)
 
 #### Environment Variables
 
