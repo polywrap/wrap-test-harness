@@ -32,7 +32,7 @@ impl Generate {
             build_only
         }
     }
-    pub fn project(
+    pub async fn project(
         &self,
         feature: &str,
         implementation: Option<&str>,
@@ -218,11 +218,7 @@ impl Generate {
         let polywrap_manifest_path = manifest_path.join("polywrap.yaml");
         let mut manifest = Manifest::default(feature, &implementation_info);
 
-        let implementation_id = if let Some(i) = implementation_info {
-            Some(i.id)
-        } else {
-            None
-        };
+        let implementation_id = implementation_info.map(|i| i.id);
 
         if let Some(custom_path) = custom_manifest_path {
             let file = fs::File::open(custom_path?.path())?;
@@ -236,7 +232,7 @@ impl Generate {
         let f = fs::OpenOptions::new()
             .write(true)
             .create(true)
-            .open(&polywrap_manifest_path)?;
+            .open(polywrap_manifest_path)?;
         serde_yaml::to_writer(f, &manifest)?;
 
         let local_wasm_package = env::var("POLYWRAP_WASM_PATH");

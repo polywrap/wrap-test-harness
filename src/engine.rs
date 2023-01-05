@@ -2,8 +2,12 @@ use std::collections::HashMap;
 use std::fs;
 use std::env;
 use std::path::{Path, PathBuf};
+use std::pin::Pin;
 use std::process::Command;
+use std::sync::Arc;
+use futures::future::join_all;
 use serde::{Deserialize, Serialize};
+use futures::{Future};
 use crate::error::{ExecutionError, TestError, BuildError};
 use crate::Results;
 use crate::generator::{Generate};
@@ -22,7 +26,7 @@ pub struct EnginePath {
 }
 
 type ComplexCase = HashMap<String, Option<Vec<String>>>;
-type ExecutionCallback<'a> = Box<dyn Fn(&str, Option<&str>, Option<&str>) -> Result<(), ExecutionError> + 'a>;
+type Executor = Box<dyn Fn(String, Option<String>, Option<String>) -> Pin<Box<dyn Future<Output=Result<(), ExecutionError>>>>>;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 enum CaseType {
@@ -45,55 +49,92 @@ impl Engine {
         }
     }
 
-    pub fn execute(&self, feature: Option<&str>, implementation: Option<&str>, build_only: bool) -> Result<(), ExecutionError> {
+    pub async fn execute(&self, feature: Option<&str>, implementation: Option<&str>, build_only: bool) -> Result<(), ExecutionError> {
         let generator = Generate::new(
             self.path.destination.to_path_buf(),
             self.path.source.to_path_buf(),
             build_only
         );
+        let generator = Arc::new(generator);
+        let engine = Arc::new(self.clone());
+
         if build_only {
             fs::create_dir("./wrappers")?;
         }
 
+        let project_generator_executor: Executor = Box::new(
+            move |feature, implementation, subpath| {
+                let generator = generator.clone();
+                Box::pin(async move {
+                    generator.project(
+                        feature.as_str(), 
+                        implementation.as_deref(), 
+                        subpath.as_deref()
+                    ).await.map_err(ExecutionError::GenerateError)
+                })
+            }
+        );
+
         self.handler(
-            Box::new(
-                |feature, implementation, subpath|
-                    generator.project(feature, implementation, subpath).map_err(ExecutionError::GenerateError)
-            ),
-            feature,
-            implementation
-        )?;
+            project_generator_executor,
+            feature.map(|f| f.to_string()),
+            implementation.map(|i| i.to_string()),
+        ).await?;
+
+        let build_executor: Executor = Box::new(
+            move |feature, implementation, subpath| {
+                let e = engine.clone();
+                Box::pin(async move {
+                    e.build(
+                        feature.as_str(), 
+                        implementation.as_deref(), 
+                        subpath.as_deref(),
+                        build_only
+                    ).await.map_err(ExecutionError::BuildError)
+                })
+            }
+        );
+
         self.handler(
-            Box::new(
-                |feature, implementation, subpath|
-                    self.build(feature, implementation, subpath, build_only).map_err(ExecutionError::BuildError)
-            ),
-            feature,
-            implementation
-        )?;
+            build_executor,
+            feature.map(|f| f.to_string()),
+            implementation.map(|i| i.to_string()),
+        ).await?;
+
+        let engine = Arc::new(self.clone());
+        let test_executor: Executor = Box::new(
+            move |feature, implementation, subpath| {
+                let e = engine.clone();
+                Box::pin(async move {
+                    if let Some(i) = implementation {
+                        e.test(
+                            feature.as_str(), 
+                            &i, 
+                            subpath.as_deref(),
+                        ).await.map_err(ExecutionError::TestError)
+                    } else {
+                        Ok(())
+                    }
+                })
+            }
+        );
 
         if !build_only {
             self.handler(
-                Box::new(
-                    |feature, implementation, subpath| {
-                        if let Some(i) = implementation {
-                            return self.test(feature, i, subpath).map_err(ExecutionError::TestError);
-                        }
-                        Ok(())
-                    }),
-                feature,
-                implementation
-            )?;
+                test_executor,
+                feature.map(|f| f.to_string()),
+                implementation.map(|i| i.to_string()),
+            ).await?;
         }
         Ok(())
     }
 
-    fn handler(
+    async fn handler(
         &self,
-        executor: ExecutionCallback<'_>,
-        feature: Option<&str>,
-        implementation: Option<&str>
-    ) -> Result<(), ExecutionError>  {
+        executor: Executor,
+        feature: Option<String>,
+        implementation: Option<String>
+    ) -> Result<(), ExecutionError> {
         type FeatureImplMap = HashMap<String, CaseType>;
         let mut feature_map : FeatureImplMap = HashMap::new();
         match feature {
@@ -117,7 +158,7 @@ impl Engine {
         for feature in feature_map.clone().into_keys() {
             let feature_folder = self.path.source.join(&feature);
             let implementation_folder = feature_folder.join("implementations");
-            match implementation {
+            match implementation.clone() {
                 None => {
                     if implementation_folder.exists() {
                         let implementations = fs::read_dir(implementation_folder)?.map(|i| {
@@ -167,12 +208,15 @@ impl Engine {
             }
         }
 
+        let mut execution_futures = Vec::new();
         for feature in feature_map.clone().into_keys() {
             let f = feature_map.get(feature.as_str());
             match f.unwrap() {
                 CaseType::Simple(implementations) => {
                     for implementation in implementations {
-                        executor(feature.as_str(), Some(implementation.as_str()), None)?;
+                        execution_futures.push(
+                            executor(feature.clone(), Some(implementation.to_string()), None)
+                        );
                     }
                 }
                 CaseType::Complex(cases) => {
@@ -182,19 +226,24 @@ impl Engine {
                         let implementations = cases.get(step.as_str()).unwrap();
                         if let Some(implementation) = implementations {
                             for i in implementation {
-                                executor(feature.as_str(), Some(i.as_str()), Some(step.as_str()))?;
+                                execution_futures.push(
+                                    executor(feature.clone(), Some(i.to_string()), Some(step.to_string()))
+                                );
                             }
                         } else {
-                            executor(feature.as_str(), None, Some(step.as_str()))?;
+                            execution_futures.push(
+                                executor(feature.clone(), None, Some(step.to_string()))
+                            );
                         }
                     }
                 }
             }
         }
+        join_all(execution_futures).await;
         Ok(())
     }
 
-    fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>, generate_folder: bool) -> Result<(), BuildError> {
+    async fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>, generate_folder: bool) -> Result<(), BuildError> {
         let mut directory = self.path.destination.join(feature);
         let mut copy_dest = self.path.source.join("..").join("wrappers").join(feature);
         if let Some(p) = subpath {
@@ -209,21 +258,21 @@ impl Engine {
                 .join(i);
         };
 
-        let mut build: Option<Command> = None;
+        let mut build: Command;
         if let Ok(path) = env::var("POLYWRAP_CLI_PATH") {
             let mut local_build = Command::new("node");
             local_build.current_dir(&directory);
             let executable_path = Path::new(path.as_str()).join("bin/polywrap");
             local_build.arg(executable_path).arg("build").arg("-v");
-            build = Some(local_build);
+            build = local_build;
         } else {
             let mut npx_build = Command::new("npx");
             npx_build.current_dir(&directory);
             npx_build.arg("polywrap").arg("build").arg("-v");
-            build = Some(npx_build);
+            build = npx_build;
         }
 
-        if let Ok(output) = build.unwrap().output() {
+        if let Ok(output) = build.output() {
             dbg!(&output);
             if generate_folder {
                 directory = directory.join("build");
@@ -240,7 +289,7 @@ impl Engine {
         Ok(())
     }
 
-    fn test(&self, feature: &str, implementation: &str, subpath: Option<&str>) -> Result<(), TestError> {
+    async fn test(&self, feature: &str, implementation: &str, subpath: Option<&str>) -> Result<(), TestError> {
         let mut test = Command::new("npx");
         let mut directory = self.path.destination.join(feature);
 
