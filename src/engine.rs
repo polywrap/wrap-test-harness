@@ -5,7 +5,6 @@ use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::process::Command;
 use std::sync::Arc;
-use futures::TryFutureExt;
 use futures::future::join_all;
 use serde::{Deserialize, Serialize};
 use futures::{Future};
@@ -28,8 +27,6 @@ pub struct EnginePath {
 
 type ComplexCase = HashMap<String, Option<Vec<String>>>;
 type Executor = Box<dyn Fn(String, Option<String>, Option<String>) -> Pin<Box<dyn Future<Output=Result<(), ExecutionError>>>>>;
-
-
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 enum CaseType {
@@ -71,8 +68,8 @@ impl Engine {
                 Box::pin(async move {
                     generator.project(
                         feature.as_str(), 
-                        implementation.as_ref().map(|i| i.as_str()), 
-                        subpath.as_ref().map(|s| s.as_str())
+                        implementation.as_deref(), 
+                        subpath.as_deref()
                     ).await.map_err(ExecutionError::GenerateError)
                 })
             }
@@ -84,15 +81,14 @@ impl Engine {
             implementation.map(|i| i.to_string()),
         ).await?;
 
-
         let build_executor: Executor = Box::new(
             move |feature, implementation, subpath| {
                 let e = engine.clone();
                 Box::pin(async move {
                     e.build(
                         feature.as_str(), 
-                        implementation.as_ref().map(|i| i.as_str()), 
-                        subpath.as_ref().map(|s| s.as_str()),
+                        implementation.as_deref(), 
+                        subpath.as_deref(),
                         build_only
                     ).await.map_err(ExecutionError::BuildError)
                 })
@@ -114,7 +110,7 @@ impl Engine {
                         e.test(
                             feature.as_str(), 
                             &i, 
-                            subpath.as_ref().map(|s| s.as_str()),
+                            subpath.as_deref(),
                         ).await.map_err(ExecutionError::TestError)
                     } else {
                         Ok(())

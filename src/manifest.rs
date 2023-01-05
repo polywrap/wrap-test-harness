@@ -179,13 +179,13 @@ impl Manifest {
         };
 
 
-        let extensions = if let Ok(_) = env::var("POLYWRAP_WASM_PATH") {
+        let mut extensions = None;
+        
+        if env::var("POLYWRAP_WASM_PATH").is_ok() {
             let mut h = HashMap::new();
             h.insert("build".to_string(), "./polywrap.build.yaml".to_string());
-            Some(h)
-        } else {
-            None
-        };
+            extensions = Some(h)
+        }
 
         Ok(Self {
             format: self.format,
