@@ -2,9 +2,13 @@ use std::collections::HashMap;
 use std::fs;
 use std::env;
 use std::path::{Path, PathBuf};
+use std::pin::Pin;
 use std::process::Command;
+use std::sync::Arc;
+use futures::TryFutureExt;
+use futures::future::join_all;
 use serde::{Deserialize, Serialize};
-use futures::{Future,future::ready};
+use futures::{Future};
 use crate::error::{ExecutionError, TestError, BuildError};
 use crate::Results;
 use crate::generator::{Generate};
@@ -23,9 +27,9 @@ pub struct EnginePath {
 }
 
 type ComplexCase = HashMap<String, Option<Vec<String>>>;
-type ExecutionCallback<'a> = Box<dyn Future<Output=Result<(), ExecutionError>> + 'a>;
+type Executor = Box<dyn Fn(String, Option<String>, Option<String>) -> Pin<Box<dyn Future<Output=Result<(), ExecutionError>>>>>;
 
-type Executor<'a> = Box<dyn Fn(&str, Option<&str>, Option<&str>) -> Box<dyn Future<Output=Result<(), ExecutionError>> + 'a>>;
+
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 enum CaseType {
@@ -54,56 +58,87 @@ impl Engine {
             self.path.source.to_path_buf(),
             build_only
         );
+        let generator = Arc::new(generator);
+        let engine = Arc::new(self.clone());
+
         if build_only {
             fs::create_dir("./wrappers")?;
         }
 
-        let project_generator_executor=  async move {
-                generator.project("asyncify", implementation, None).await
-        };
-
-        self.handler(
-            Box::new(project_generator_executor),
-            feature,
-            implementation
+        let project_generator_executor: Executor = Box::new(
+            move |feature, implementation, subpath| {
+                let generator = generator.clone();
+                Box::pin(async move {
+                    generator.project(
+                        feature.as_str(), 
+                        implementation.as_ref().map(|i| i.as_str()), 
+                        subpath.as_ref().map(|s| s.as_str())
+                    ).await.map_err(ExecutionError::GenerateError)
+                })
+            }
         );
 
+        self.handler(
+            project_generator_executor,
+            feature.map(|f| f.to_string()),
+            implementation.map(|i| i.to_string()),
+        ).await?;
 
 
+        let build_executor: Executor = Box::new(
+            move |feature, implementation, subpath| {
+                let e = engine.clone();
+                Box::pin(async move {
+                    e.build(
+                        feature.as_str(), 
+                        implementation.as_ref().map(|i| i.as_str()), 
+                        subpath.as_ref().map(|s| s.as_str()),
+                        build_only
+                    ).await.map_err(ExecutionError::BuildError)
+                })
+            }
+        );
 
+        self.handler(
+            build_executor,
+            feature.map(|f| f.to_string()),
+            implementation.map(|i| i.to_string()),
+        ).await?;
 
+        let engine = Arc::new(self.clone());
+        let test_executor: Executor = Box::new(
+            move |feature, implementation, subpath| {
+                let e = engine.clone();
+                Box::pin(async move {
+                    if let Some(i) = implementation {
+                        e.test(
+                            feature.as_str(), 
+                            &i, 
+                            subpath.as_ref().map(|s| s.as_str()),
+                        ).await.map_err(ExecutionError::TestError)
+                    } else {
+                        Ok(())
+                    }
+                })
+            }
+        );
 
-        // self.handler(
-        //     Box::new(
-        //         |feature, implementation, subpath|
-        //             self.build(feature, implementation, subpath, build_only).map_err(ExecutionError::BuildError)
-        //     ),
-        //     feature,
-        //     implementation
-        // )?;
-
-        // if !build_only {
-        //     self.handler(
-        //         Box::new(
-        //             |feature, implementation, subpath| {
-        //                 if let Some(i) = implementation {
-        //                     return self.test(feature, i, subpath).map_err(ExecutionError::TestError);
-        //                 }
-        //                 Ok(())
-        //             }),
-        //         feature,
-        //         implementation
-        //     )?;
-        // }
+        if !build_only {
+            self.handler(
+                test_executor,
+                feature.map(|f| f.to_string()),
+                implementation.map(|i| i.to_string()),
+            ).await?;
+        }
         Ok(())
     }
 
     async fn handler(
         &self,
-        executor: ExecutionCallback<'_>,
-        feature: Option<&str>,
-        implementation: Option<&str>
-    ) -> Result<(), ExecutionError>  {
+        executor: Executor,
+        feature: Option<String>,
+        implementation: Option<String>
+    ) -> Result<(), ExecutionError> {
         type FeatureImplMap = HashMap<String, CaseType>;
         let mut feature_map : FeatureImplMap = HashMap::new();
         match feature {
@@ -127,7 +162,7 @@ impl Engine {
         for feature in feature_map.clone().into_keys() {
             let feature_folder = self.path.source.join(&feature);
             let implementation_folder = feature_folder.join("implementations");
-            match implementation {
+            match implementation.clone() {
                 None => {
                     if implementation_folder.exists() {
                         let implementations = fs::read_dir(implementation_folder)?.map(|i| {
@@ -177,12 +212,15 @@ impl Engine {
             }
         }
 
+        let mut execution_futures = Vec::new();
         for feature in feature_map.clone().into_keys() {
             let f = feature_map.get(feature.as_str());
             match f.unwrap() {
                 CaseType::Simple(implementations) => {
                     for implementation in implementations {
-                        executor(feature.as_str(), Some(implementation.as_str()), None)?;
+                        execution_futures.push(
+                            executor(feature.clone(), Some(implementation.to_string()), None)
+                        );
                     }
                 }
                 CaseType::Complex(cases) => {
@@ -192,19 +230,24 @@ impl Engine {
                         let implementations = cases.get(step.as_str()).unwrap();
                         if let Some(implementation) = implementations {
                             for i in implementation {
-                                executor(feature.as_str(), Some(i.as_str()), Some(step.as_str()))?;
+                                execution_futures.push(
+                                    executor(feature.clone(), Some(i.to_string()), Some(step.to_string()))
+                                );
                             }
                         } else {
-                            executor(feature.as_str(), None, Some(step.as_str()))?;
+                            execution_futures.push(
+                                executor(feature.clone(), None, Some(step.to_string()))
+                            );
                         }
                     }
                 }
             }
         }
+        join_all(execution_futures).await;
         Ok(())
     }
 
-    fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>, generate_folder: bool) -> Result<(), BuildError> {
+    async fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>, generate_folder: bool) -> Result<(), BuildError> {
         let mut directory = self.path.destination.join(feature);
         let mut copy_dest = self.path.source.join("..").join("wrappers").join(feature);
         if let Some(p) = subpath {
@@ -250,7 +293,7 @@ impl Engine {
         Ok(())
     }
 
-    fn test(&self, feature: &str, implementation: &str, subpath: Option<&str>) -> Result<(), TestError> {
+    async fn test(&self, feature: &str, implementation: &str, subpath: Option<&str>) -> Result<(), TestError> {
         let mut test = Command::new("npx");
         let mut directory = self.path.destination.join(feature);
 

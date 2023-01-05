@@ -1,4 +1,5 @@
 #![feature(async_closure)]
+#![feature(let_chains)]
 extern crate core;
 
 mod generator;
