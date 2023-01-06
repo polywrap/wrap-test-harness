@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-clap = { version = "4.0.29", features = ["derive"] }
+clap = { version = "4.0.32", features = ["derive"] }
 cli-table = "0.4"
 colored = "2.0.0"
 lazy_static = "1.4"
@@ -14,3 +14,5 @@ serde_yaml = "0.9"
 thiserror = "1.0"
 tokio = { version = "1.23.0", features = ["full"] }
 futures = "0.3"
+log = "0.4.17"
+env_logger = "0.7.1"
