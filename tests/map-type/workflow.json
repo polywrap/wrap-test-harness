@@ -1,5 +1,6 @@
 {
   "name": "map-type",
+  "validation": "./validator.cue",
   "jobs": {
     "getKey": {
       "steps": [
