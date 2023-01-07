@@ -1,13 +1,16 @@
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::fs;
 use std::env;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::process::Command;
 use std::sync::Arc;
-use futures::future::join_all;
+use std::sync::Mutex;
+use log::debug;
 use serde::{Deserialize, Serialize};
-use futures::{Future};
+use futures::{Future,future::join_all,StreamExt};
+use log::{info};
 use crate::error::{ExecutionError, TestError, BuildError};
 use crate::Results;
 use crate::generator::{Generate};
@@ -26,7 +29,9 @@ pub struct EnginePath {
 }
 
 type ComplexCase = HashMap<String, Option<Vec<String>>>;
-type Executor = Box<dyn Fn(String, Option<String>, Option<String>) -> Pin<Box<dyn Future<Output=Result<(), ExecutionError>>>>>;
+
+type ExecutorFuture = Pin<Box<dyn Future<Output=Result<(), ExecutionError>> + Send>>;
+type Executor = Box<dyn Fn(String, Option<String>, Option<String>) -> ExecutorFuture + Send>;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 enum CaseType {
@@ -75,6 +80,7 @@ impl Engine {
             }
         );
 
+        info!("Running generator executor");
         self.handler(
             project_generator_executor,
             feature.map(|f| f.to_string()),
@@ -95,6 +101,8 @@ impl Engine {
             }
         );
 
+
+        info!("Running build executor");
         self.handler(
             build_executor,
             feature.map(|f| f.to_string()),
@@ -120,11 +128,12 @@ impl Engine {
         );
 
         if !build_only {
+            info!("Running test executor");
             self.handler(
                 test_executor,
                 feature.map(|f| f.to_string()),
                 implementation.map(|i| i.to_string()),
-            ).await?;
+            ).await?
         }
         Ok(())
     }
@@ -208,13 +217,14 @@ impl Engine {
             }
         }
 
-        let mut execution_futures = Vec::new();
+        let mut features_execution_futures: HashMap<String, Vec<ExecutorFuture>> = HashMap::new();
         for feature in feature_map.clone().into_keys() {
             let f = feature_map.get(feature.as_str());
+            let mut current_executions = vec![];
             match f.unwrap() {
                 CaseType::Simple(implementations) => {
                     for implementation in implementations {
-                        execution_futures.push(
+                        current_executions.push(
                             executor(feature.clone(), Some(implementation.to_string()), None)
                         );
                     }
@@ -226,37 +236,54 @@ impl Engine {
                         let implementations = cases.get(step.as_str()).unwrap();
                         if let Some(implementation) = implementations {
                             for i in implementation {
-                                execution_futures.push(
+                                current_executions.push(
                                     executor(feature.clone(), Some(i.to_string()), Some(step.to_string()))
                                 );
                             }
                         } else {
-                            execution_futures.push(
+                            current_executions.push(
                                 executor(feature.clone(), None, Some(step.to_string()))
                             );
                         }
                     }
                 }
             }
+            features_execution_futures.insert(feature, current_executions);
         }
-        join_all(execution_futures).await;
+
+        let execution_futures = features_execution_futures
+            .into_values()
+            .map(|feature_future| {
+                tokio::spawn(join_all(feature_future))
+            }
+        );
+        join_all(futures::stream::iter(execution_futures).collect::<Vec<_>>().await).await;
         Ok(())
     }
 
     async fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>, generate_folder: bool) -> Result<(), BuildError> {
         let mut directory = self.path.destination.join(feature);
         let mut copy_dest = self.path.source.join("..").join("wrappers").join(feature);
-        if let Some(p) = subpath {
-            directory = directory.join(p);
-            copy_dest = copy_dest.join(p);
-        };
-
+        
         if let Some(i) = implementation {
+            match subpath {
+                Some(s) => {
+                    directory = directory.join(s);
+                    copy_dest = copy_dest.join(s);
+                    debug!("From {} building implementation: {} with path: {}", feature, i, s);
+                },
+                None => {
+                    debug!("From {} building implementation: {}", feature, i)
+                }
+            }
             copy_dest = copy_dest.join("implementations").join(i);
             directory = directory
-                .join("implementations")
-                .join(i);
+            .join("implementations")
+            .join(i);
+        } else {
+            debug!("From {} building interface", feature);
         };
+
 
         let mut build: Command;
         if let Ok(path) = env::var("POLYWRAP_CLI_PATH") {
@@ -273,7 +300,18 @@ impl Engine {
         }
 
         if let Ok(output) = build.output() {
-            dbg!(&output);
+            if output.status.code() == Some(0) {
+                let message = if let Some(i) = implementation {
+                    if let Some(s) = subpath {
+                        format!("Build of feature: {}, with implementation: {} and subpath: {} succeed", feature, i, s)
+                    } else {
+                        format!("Build of feature: {}, with implementation: {} succeed", feature, i)
+                    }
+                } else {
+                    format!("Build of interface from feature: {} succeed", feature)
+                };
+                debug!("{}", message);
+            }
             if generate_folder {
                 directory = directory.join("build");
                 fs::create_dir_all(&copy_dest)?;
@@ -344,6 +382,10 @@ impl Engine {
         let info_path = Path::new(self.path.destination.as_os_str())
             .join("..")
             .join("results.json");
+
+        let mutex = Mutex::new(());
+        let _guard = mutex.lock().unwrap();
+
         if let Ok(f) = fs::read(&info_path) {
             let result_str = String::from_utf8_lossy(&f).parse::<String>().unwrap();
             let mut results: Results = serde_json::from_str(result_str.as_str()).unwrap();

@@ -1,4 +1,0 @@
-- [x] modify polywrap cli locally and use it in build process
-- [x] modify polywrap wasm locally and use it in build process
-- [ ] build wrappers async
--

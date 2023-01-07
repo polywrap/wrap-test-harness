@@ -14,41 +14,47 @@ struct Args {
     feature: Option<String>,
     #[arg(short, long)]
     reset: bool,
-    #[arg(short, long, action = clap::ArgAction::Count)]
-    verbose: u8,
     #[arg(short, long)]
     build: bool,
+    #[arg(short, long)]
+    verbose: Option<u8>,
 }
 
 pub struct SanitizedArgs {
     pub implementation: Option<String>,
     pub feature: Option<String>,
-    pub build: bool
+    pub build: bool,
+    pub verbose: String
 }
 
 pub fn handle_args() -> SanitizedArgs {
     let args = Args::parse();
 
     if fs::create_dir(BUILD_FOLDER).is_err() && args.reset {
-        fs::remove_dir_all(BUILD_FOLDER).unwrap();
-        fs::create_dir(BUILD_FOLDER).unwrap();
+        fs::remove_dir_all(BUILD_FOLDER).unwrap_or_default();
+        fs::create_dir(BUILD_FOLDER).unwrap_or_default();
         fs::remove_file("results.json").unwrap_or_default();
         fs::remove_dir_all("./wrappers").unwrap_or_default()
     }
 
     // You can see how many times a particular flag or argument occurred
     // Note, only flags can have multiple occurrences
-    // match args.verbose {
-    //     0 => println!("Debug mode is off"),
-    //     1 => println!("Debug mode is kind of on"),
-    //     2 => println!("Debug mode is on"),
-    //     _ => println!("Don't be crazy"),
-    // }
+    let verbose = if let Some(v) = args.verbose {
+        match v {
+            0 => String::from("off"),
+            1 => String::from("debug"),
+            _ => panic!("Verbose level not accept")
+        }
+    } else {
+        String::from("info")
+    };
+    
 
     SanitizedArgs {
         implementation: args.implementation,
         feature: args.feature,
-        build: args.build
+        build: args.build,
+        verbose
     }
 
 }
