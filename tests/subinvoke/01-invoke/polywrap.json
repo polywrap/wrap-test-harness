@@ -2,7 +2,7 @@
   "source": {
     "import_abis": [
       {
-        "uri": "wrap://ens/add.eth",
+        "uri": "wrap://ens/imported.eth",
         "abi": "../../../00-subinvoke/implementations/${implementation}/build/wrap.info"
       }
     ]

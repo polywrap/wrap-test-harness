@@ -1,5 +1,6 @@
-#import * into Add from "ens/add.eth"
+#import * into Imported from "ens/imported.eth"
 
 type Module {
   addAndIncrement(a: Int!, b: Int!): Int!
+  throwFromSubinvoke: Int!
 }

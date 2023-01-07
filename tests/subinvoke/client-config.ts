@@ -9,5 +9,5 @@ export function configure(builder: IClientConfigBuilder): IClientConfigBuilder {
 
 
 
-    return builder.addRedirect("ens/add.eth", asImplementationUri)
+    return builder.addRedirect("ens/imported.eth", asImplementationUri)
 }

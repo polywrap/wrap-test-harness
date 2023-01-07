@@ -6,5 +6,5 @@ pub fn add(args: ArgsAdd) -> i32 {
 }
 
 pub fn throw_error(args: ArgsThrowError) -> i32 {
-    panic!(args.message)
+    panic!("{}", args.message);
 }
