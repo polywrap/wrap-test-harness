@@ -1,6 +1,7 @@
 use std::fs;
 
 use clap::{Parser};
+use log::Level;
 
 pub static BUILD_FOLDER: &str = "build";
 pub static TEST_FOLDER: &str = "tests";
@@ -24,7 +25,7 @@ pub struct SanitizedArgs {
     pub implementation: Option<String>,
     pub feature: Option<String>,
     pub build: bool,
-    pub verbose: String
+    pub verbose: Level
 }
 
 pub fn handle_args() -> SanitizedArgs {
@@ -37,18 +38,16 @@ pub fn handle_args() -> SanitizedArgs {
         fs::remove_dir_all("./wrappers").unwrap_or_default()
     }
 
-    // You can see how many times a particular flag or argument occurred
-    // Note, only flags can have multiple occurrences
     let verbose = if let Some(v) = args.verbose {
         match v {
-            0 => String::from("off"),
-            1 => String::from("debug"),
+            0 => Level::Info,
+            1 => Level::Debug,
+            2 => Level::Error,
             _ => panic!("Verbose level not accept")
         }
     } else {
-        String::from("info")
+        Level::Info
     };
-    
 
     SanitizedArgs {
         implementation: args.implementation,

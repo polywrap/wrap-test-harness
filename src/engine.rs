@@ -8,7 +8,7 @@ use std::process::Command;
 use std::sync::Arc;
 use std::sync::Mutex;
 use futures::future::try_join_all;
-use log::debug;
+use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use futures::{Future,future::join_all,StreamExt};
 use log::{info};
@@ -273,24 +273,20 @@ impl Engine {
     async fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>, generate_folder: bool) -> Result<(), BuildError> {
         let mut directory = self.path.destination.join(feature);
         let mut copy_dest = self.path.source.join("..").join("wrappers").join(feature);
-        
+
+        if let Some(s) = subpath {
+            directory = directory.join(s);
+            copy_dest = copy_dest.join(s);
+        };
+
         if let Some(i) = implementation {
-            match subpath {
-                Some(s) => {
-                    directory = directory.join(s);
-                    copy_dest = copy_dest.join(s);
-                    debug!("From {} building implementation: {} with path: {}", feature, i, s);
-                },
-                None => {
-                    debug!("From {} building implementation: {}", feature, i)
-                }
-            }
             copy_dest = copy_dest.join("implementations").join(i);
             directory = directory
             .join("implementations")
             .join(i);
+            debug!("Building wrapper in path: {}", directory.to_str().unwrap());
         } else {
-            debug!("From {} building interface", feature);
+            debug!("Building interface in path: {}", directory.to_str().unwrap());
         };
 
 
@@ -304,14 +300,18 @@ impl Engine {
                 let message = format!("Path: {} not found. Make sure to use absolute path. i.e: /home/user/toolchain/packages/cli", path);
                 return Err(BuildError::CliLocalPathNotFound(message));
             }
-            local_build.arg(executable_path).arg("build").arg("-v").arg("--codegen");
+            local_build.arg(executable_path);
             build = local_build;
         } else {
             let mut npx_build = Command::new("npx");
-            npx_build.current_dir(&directory);
-            npx_build.arg("polywrap").arg("build").arg("--codegen").arg("-v");
+            npx_build.arg("polywrap");
             build = npx_build;
         }
+        build.current_dir(&directory);
+        build.arg("build").arg("-v").arg("-l").arg("./log.txt");
+        if implementation.is_some() {
+            build.arg("--codegen");
+        };
 
         if let Ok(output) = build.output() {
             let message = if let Some(i) = implementation {
@@ -327,7 +327,7 @@ impl Engine {
             if output.status.code() == Some(0) {
                 debug!("{} succeed", message);
             } else {
-                debug!("{} failed", message)
+                error!("{} failed with error: {}", message, String::from_utf8(output.stderr).unwrap());
             }
 
             if generate_folder {
