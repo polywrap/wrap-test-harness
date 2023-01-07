@@ -304,12 +304,12 @@ impl Engine {
                 let message = format!("Path: {} not found. Make sure to use absolute path. i.e: /home/user/toolchain/packages/cli", path);
                 return Err(BuildError::CliLocalPathNotFound(message));
             }
-            local_build.arg(executable_path).arg("build").arg("-v");
+            local_build.arg(executable_path).arg("build").arg("-v").arg("--codegen");
             build = local_build;
         } else {
             let mut npx_build = Command::new("npx");
             npx_build.current_dir(&directory);
-            npx_build.arg("polywrap").arg("build").arg("-v");
+            npx_build.arg("polywrap").arg("build").arg("--codegen").arg("-v");
             build = npx_build;
         }
 
@@ -342,10 +342,26 @@ impl Engine {
     }
 
     async fn test(&self, feature: &str, implementation: &str, subpath: Option<&str>) -> Result<(), TestError> {
-        let mut test = Command::new("npx");
+        let mut test: Command;
         let mut directory = self.path.destination.join(feature);
-
-        test.arg("polywrap").arg("test");
+        if let Ok(path) = env::var("POLYWRAP_CLI_PATH") {
+            let mut local_test = Command::new("node");
+            let executable_path = Path::new(path.as_str()).join("bin/polywrap");
+            
+            if !executable_path.exists() {
+                let message = format!("Path: {} not found. Make sure to use absolute path. i.e: /home/user/toolchain/packages/cli", path);
+                return Err(TestError::CliLocalPathNotFound(message));
+            }
+            local_test.arg(executable_path);
+            test = local_test;
+        } else {
+            let mut npx_test = Command::new("npx"); 
+            npx_test.arg("polywrap");
+            test = npx_test;
+        }
+        
+        test.current_dir(&directory);
+        test.arg("test");
 
         if let Some(p) = subpath {
              let mut folders = fs::read_dir(&directory)?

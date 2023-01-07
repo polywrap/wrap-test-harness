@@ -131,6 +131,8 @@ pub enum TestError {
     TestExecutionError(String),
     #[error("Show results error error")]
     ShowResultsError(#[from] ShowResultsError),
+    #[error("CLI local path not found")]
+    CliLocalPathNotFound(String),
 }
 
 #[derive(Error, Debug)]
