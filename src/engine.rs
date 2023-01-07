@@ -314,18 +314,22 @@ impl Engine {
         }
 
         if let Ok(output) = build.output() {
-            if output.status.code() == Some(0) {
-                let message = if let Some(i) = implementation {
-                    if let Some(s) = subpath {
-                        format!("Build of feature: {}, with implementation: {} and subpath: {} succeed", feature, i, s)
-                    } else {
-                        format!("Build of feature: {}, with implementation: {} succeed", feature, i)
-                    }
+            let message = if let Some(i) = implementation {
+                if let Some(s) = subpath {
+                    format!("Build of feature: {}, with implementation: {} and subpath: {}", feature, i, s)
                 } else {
-                    format!("Build of interface from feature: {} succeed", feature)
-                };
-                debug!("{}", message);
+                    format!("Build of feature: {}, with implementation: {}", feature, i)
+                }
+            } else {
+                format!("Build of interface from feature: {}", feature)
+            };
+
+            if output.status.code() == Some(0) {
+                debug!("{} succeed", message);
+            } else {
+                debug!("{} failed", message)
             }
+
             if generate_folder {
                 directory = directory.join("build");
                 fs::create_dir_all(&copy_dest)?;
