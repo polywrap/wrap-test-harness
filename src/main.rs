@@ -28,7 +28,7 @@ async fn main() -> Result<(), HarnessError> {
     let feature = sanitized_args.feature.as_deref();
     let implementation = sanitized_args.implementation.as_deref();
 
-    Builder::from_env(Env::default().default_filter_or("debug")).init();
+    Builder::from_env(Env::default().default_filter_or(sanitized_args.verbose.as_str())).init();
 
     Engine::start(
         destination_path,

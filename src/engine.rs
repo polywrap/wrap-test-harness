@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::process::Command;
 use std::sync::Arc;
+use std::sync::Mutex;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use futures::{Future,future::join_all,StreamExt};
@@ -381,6 +382,10 @@ impl Engine {
         let info_path = Path::new(self.path.destination.as_os_str())
             .join("..")
             .join("results.json");
+
+        let mutex = Mutex::new(());
+        let _guard = mutex.lock().unwrap();
+
         if let Ok(f) = fs::read(&info_path) {
             let result_str = String::from_utf8_lossy(&f).parse::<String>().unwrap();
             let mut results: Results = serde_json::from_str(result_str.as_str()).unwrap();
