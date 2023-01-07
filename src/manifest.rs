@@ -180,7 +180,7 @@ impl Manifest {
 
         let mut extensions = None;
         if env::var("POLYWRAP_WASM_PATH").is_ok() {
-            let mut e = HashMap::new();
+             let mut e = HashMap::new();
             e.insert("build".to_string(), "./polywrap.build.yaml".to_string());
             extensions = Some(e)
         }

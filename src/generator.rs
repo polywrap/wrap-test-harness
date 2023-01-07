@@ -236,9 +236,13 @@ impl Generate {
         serde_yaml::to_writer(f, &manifest)?;
 
         let local_wasm_package = env::var("POLYWRAP_WASM_PATH");
-
         if let Ok(package_path) = local_wasm_package {
-           if let Some(i) = implementation_id {
+            if let Some(i) = implementation_id {
+                let path = Path::new(package_path.as_str()).join(i);
+                if !path.exists() {
+                   let message = format!("Path: {} not found. Make sure to use absolute path. i.e: /home/user/toolchain/packages/wasm", package_path);
+                   return Err(CreateManifestAndCommonFilesError::WasmPackagesLocalPathNotFound(message));
+               }
                BuildManifest::generate(manifest_path, package_path, i.to_string());
            }
         }

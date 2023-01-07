@@ -1,6 +1,3 @@
-#![feature(async_closure)]
-#![feature(let_chains)]
-#![feature(map_try_insert)]
 extern crate core;
 
 mod generator;

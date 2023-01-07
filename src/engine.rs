@@ -7,6 +7,7 @@ use std::pin::Pin;
 use std::process::Command;
 use std::sync::Arc;
 use std::sync::Mutex;
+use futures::future::try_join_all;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use futures::{Future,future::join_all,StreamExt};
@@ -253,11 +254,19 @@ impl Engine {
 
         let execution_futures = features_execution_futures
             .into_values()
-            .map(|feature_future| {
-                tokio::spawn(join_all(feature_future))
+            .map(|f| {
+                tokio::spawn(join_all(f))
             }
         );
-        join_all(futures::stream::iter(execution_futures).collect::<Vec<_>>().await).await;
+        let futures = try_join_all(futures::stream::iter(execution_futures).collect::<Vec<_>>().await).await.unwrap();
+
+        for feature in futures {
+            for result in feature {
+                if result.is_err() {
+                    return Err(result.err().unwrap());
+                }
+            }
+        }
         Ok(())
     }
 
@@ -290,6 +299,11 @@ impl Engine {
             let mut local_build = Command::new("node");
             local_build.current_dir(&directory);
             let executable_path = Path::new(path.as_str()).join("bin/polywrap");
+
+            if !executable_path.exists() {
+                let message = format!("Path: {} not found. Make sure to use absolute path. i.e: /home/user/toolchain/packages/cli", path);
+                return Err(BuildError::CliLocalPathNotFound(message));
+            }
             local_build.arg(executable_path).arg("build").arg("-v");
             build = local_build;
         } else {
@@ -383,6 +397,10 @@ impl Engine {
             .join("..")
             .join("results.json");
 
+        // Since this function is async (which means that is called from different threads)
+        // we create a mutex object and lock it so we make sure that only one thread at a time
+        // can manipulate the results file. After the context of this function is over, the lock
+        // will be dropped automatically
         let mutex = Mutex::new(());
         let _guard = mutex.lock().unwrap();
 

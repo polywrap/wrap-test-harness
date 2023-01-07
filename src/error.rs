@@ -88,6 +88,8 @@ pub enum CreateManifestAndCommonFilesError {
     MergeManifestError(#[from] MergeManifestError),
     #[error(transparent)]
     GenerateTestManifestError(#[from] GenerateTestManifestError),
+    #[error("WASM packages local path not found")]
+    WasmPackagesLocalPathNotFound(String),
 }
 
 
@@ -102,7 +104,7 @@ pub enum MergeManifestError {
     #[error("Source in manifest not found")]
     SourceNotFound,
     #[error("Project in manifest not found")]
-    ProjectNotFound,
+    ProjectNotFound
 }
 
 #[derive(Error, Debug)]
@@ -113,6 +115,8 @@ pub enum BuildError {
     FileNotFound(#[from] io::Error),
     #[error("Build execution error")]
     BuildExecutionError(String),
+    #[error("CLI local path not found")]
+    CliLocalPathNotFound(String),
 }
 
 #[derive(Error, Debug)]
