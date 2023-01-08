@@ -10,6 +10,6 @@ export function addAndIncrement(args: Args_addAndIncrement): i32 {
 }
 
 export function throwFromSubinvoke(args: Args_throwFromSubinvoke): i32 {
-    Imported_Module.throwError({ message: "Error from invoke" });
+    Imported_Module.throwError({ message: args.message }).unwrap();
     return 0;
 }

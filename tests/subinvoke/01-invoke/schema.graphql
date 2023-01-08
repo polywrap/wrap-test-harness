@@ -2,5 +2,5 @@
 
 type Module {
   addAndIncrement(a: Int!, b: Int!): Int!
-  throwFromSubinvoke: Int!
+  throwFromSubinvoke(message: String!): Int!
 }

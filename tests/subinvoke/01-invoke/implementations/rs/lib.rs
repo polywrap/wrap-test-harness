@@ -8,5 +8,5 @@ pub fn add_and_increment(args: ArgsAddAndIncrement) -> i32 {
 }
 
 pub fn throw_from_subinvoke(args: ArgsThrowFromSubinvoke) -> i32 {
-    ImportedModule::throw_error(&ArgsThrowError { message: "Error from invoke".to_string() }).unwrap()
+    ImportedModule::throw_error(&ArgsThrowError { message: args.message }).unwrap()
 }
