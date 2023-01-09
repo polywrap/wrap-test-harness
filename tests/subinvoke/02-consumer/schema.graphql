@@ -1,0 +1,6 @@
+#import * into ImportedInvoke from "ens/imported-invoke.eth"
+
+type Module {
+  addAndIncrement(a: Int!, b: Int!): Int!
+  throwError(a: String!): Boolean!
+}

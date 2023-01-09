@@ -5,6 +5,6 @@ pub fn add(args: ArgsAdd) -> i32 {
     args.a + args.b
 }
 
-pub fn throw_error(args: ArgsThrowError) -> i32 {
-    panic!("{}", args.message);
+pub fn subinvoke_throw_error(args: ArgsSubinvokeThrowError) -> bool {
+    panic!("{}", args.a);
 }
