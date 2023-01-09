@@ -55,16 +55,16 @@ impl Engine {
         }
     }
 
-    pub async fn execute(&self, feature: Option<&str>, implementation: Option<&str>, build_only: bool) -> Result<(), ExecutionError> {
+    pub async fn execute(&self, feature: Option<&str>, implementation: Option<&str>, generate_built_cases: bool) -> Result<(), ExecutionError> {
         let generator = Generate::new(
             self.path.destination.to_path_buf(),
             self.path.source.to_path_buf(),
-            build_only
+            generate_built_cases
         );
         let generator = Arc::new(generator);
         let engine = Arc::new(self.clone());
 
-        if build_only {
+        if generate_built_cases {
             fs::create_dir("./wrappers")?;
         }
 
@@ -96,12 +96,11 @@ impl Engine {
                         feature.as_str(), 
                         implementation.as_deref(), 
                         subpath.as_deref(),
-                        build_only
+                        generate_built_cases
                     ).await.map_err(ExecutionError::BuildError)
                 })
             }
         );
-
 
         info!("Running build executor");
         self.handler(
@@ -128,7 +127,7 @@ impl Engine {
             }
         );
 
-        if !build_only {
+        if !generate_built_cases {
             info!("Running test executor");
             self.handler(
                 test_executor,
@@ -270,7 +269,7 @@ impl Engine {
         Ok(())
     }
 
-    async fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>, generate_folder: bool) -> Result<(), BuildError> {
+    async fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>, generate_built_cases: bool) -> Result<(), BuildError> {
         let mut directory = self.path.destination.join(feature);
         let mut copy_dest = self.path.source.join("..").join("wrappers").join(feature);
 
@@ -330,7 +329,7 @@ impl Engine {
                 error!("{} failed with error: {}", message, String::from_utf8(output.stderr).unwrap());
             }
 
-            if generate_folder {
+            if generate_built_cases {
                 directory = directory.join("build");
                 fs::create_dir_all(&copy_dest)?;
                 if directory.join("wrap.wasm").exists() {

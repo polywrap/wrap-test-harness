@@ -17,19 +17,19 @@ const SIMPLE_CASE_EXPECTED_FILES: [&str; 4] = [TEST_SCRIPT, SCHEMA, IMPLEMENTATI
 pub struct Generate {
     pub dest_path: PathBuf,
     pub source_path: PathBuf,
-    pub build_only: bool
+    pub generate_built_cases: bool
 }
 
 impl Generate {
     pub fn new(
         dest_path: PathBuf,
         source_path: PathBuf,
-        build_only: bool
+        generate_built_cases: bool
     ) -> Self {
         Generate {
             dest_path,
             source_path,
-            build_only
+            generate_built_cases
         }
     }
     pub async fn project(
@@ -189,7 +189,7 @@ impl Generate {
             fs::copy(source_file, dest_file)?;
         };
 
-        if !self.build_only {
+        if !self.generate_built_cases {
             // Generate test manifest from workflow
             self.test_manifest(feature)?;
         }

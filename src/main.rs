@@ -9,6 +9,7 @@ mod engine;
 mod error;
 
 use std::path::Path;
+use std::process::Command;
 use env_logger::{Builder, Env};
 
 use crate::engine::{Engine};
@@ -30,9 +31,26 @@ async fn main() -> Result<(), HarnessError> {
     Engine::start(
         destination_path,
         source_path
-    ).execute(feature, implementation, sanitized_args.build).await?;
+    ).execute(feature, implementation, sanitized_args.wrappers_path.is_some()).await?;
 
-    if !sanitized_args.build {
+    if let Some(p) = sanitized_args.wrappers_path.as_deref() {
+        if !p.eq("./wrappers") {
+            let path = Path::new(p);
+            if path.exists() {
+                if path.join("wrappers").exists() {
+                    let mut remove_wrappers_folder = Command::new("rm");
+                    remove_wrappers_folder.current_dir(path);
+                    if let Err(e) = remove_wrappers_folder.arg("-rf").arg("wrappers").output() {
+                        dbg!(e);
+                    }
+                };
+                let mut move_build_folder = Command::new("mv");
+                move_build_folder.arg("-f").arg("wrappers").arg(path).output()?;
+            } else {
+                return Err(HarnessError::BuildPathNotFound(format!("{} does not exists", path.display())))
+            }
+        };
+    } else {
         Results::show()?;
     }
     Ok(())
