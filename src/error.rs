@@ -12,6 +12,8 @@ pub enum HarnessError {
     FileNotFound(#[from] io::Error),
     #[error(transparent)]
     ShowResultsError(#[from] ShowResultsError),
+    #[error("Build path not found")]
+    BuildPathNotFound(String)
 }
 
 #[derive(Error, Debug)]
