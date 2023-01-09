@@ -116,10 +116,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.POLYWRAP_BUILD_BOT_PAT }}
 
-      - name: Apply Node Version & Commit
-        run: |
-          yarn
-          yarn run version:apply
       - name: Create Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@v3
