@@ -1,6 +1,9 @@
 {
-  "name": "wasm-test-harness",
+  "name": "wrap-test-harness",
   "version": "1.0.0",
+  "scripts": {
+    "version:apply": "yarn version --new-version $(cat VERSION) --no-git-tag-version"
+  },
   "dependencies": {
     "polywrap": "0.10.0-pre.5",
     "@polywrap/plugin-js": "0.10.0-pre.5"
