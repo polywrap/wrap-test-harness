@@ -2,7 +2,10 @@ import {
     Args_parse,
     Args_stringify,
     Args_stringifyObject,
-    Args_methodJSON
+    Args_methodJSON,
+    Args_parseReserved,
+    Args_stringifyReserved,
+    Reserved
 } from "./wrap";
 import { JSON } from "@polywrap/wasm-as";
 
@@ -33,4 +36,12 @@ export function methodJSON(args: Args_methodJSON): JSON.Value {
     result.set("valueC", JSON.from(args.valueC));
 
     return result;
+}
+
+export function parseReserved(_: Args_parseReserved): Reserved {
+    throw new Error("Not implemented yet!")
+}
+
+export function stringifyReserved(_: Args_stringifyReserved): String {
+    throw new Error("Not implemented yet!")
 }

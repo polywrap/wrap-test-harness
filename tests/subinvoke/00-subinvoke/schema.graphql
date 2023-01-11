@@ -1,4 +1,4 @@
 type Module {
   add(a: Int!, b: Int!): Int!
-  throwError(message: String!): Int!
+  subinvokeThrowError(a: String!): Boolean!
 }

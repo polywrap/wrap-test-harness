@@ -1,9 +1,9 @@
-import { Args_add, Args_throwError } from "./wrap";
+import { Args_add, Args_subinvokeThrowError } from "./wrap";
 
 export function add(args: Args_add): i32 {
     return args.a + args.b
 }
 
-export function throwError(args: Args_throwError): i32 {
-    throw new Error(args.message)
+export function subinvokeThrowError(args: Args_subinvokeThrowError): bool {
+    throw new Error(args.a)
 }
