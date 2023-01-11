@@ -1,0 +1,10 @@
+{
+  "source": {
+    "import_abis": [
+      {
+        "uri": "wrap://ens/uri-resolver.core.polywrap.eth",
+        "abi": "../../../00-interface/build/wrap.info"
+      }
+    ]
+  }
+}
