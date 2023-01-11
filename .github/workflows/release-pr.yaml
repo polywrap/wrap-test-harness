@@ -116,13 +116,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.POLYWRAP_BUILD_BOT_PAT }}
 
+      - name: Apply Rust Version & Commit
+        run: |
+          cargo install cargo-edit
+          cargo set-version $(cat ./VERSION)
+
+      - name: Apply Node Version & Commit
+        run: |
+          yarn
+          yarn run version:apply
+
       - name: Create Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ secrets.POLYWRAP_BUILD_BOT_PAT }}
           push-to-fork: ${{env.BOT}}/${{github.event.pull_request.base.repo.name}}
-          branch: release/${{env.RELEASE_VERSION}}
+          branch: prep/${{env.RELEASE_VERSION}}
           base: ${{github.event.pull_request.base.ref}}
           committer: GitHub <noreply@github.com>
           author: ${{env.BOT}} <${{env.BOT}}@users.noreply.github.com>
