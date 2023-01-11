@@ -1,5 +1,5 @@
 "addAndIncrement": {
 	$0: {
-		data: 3
+		data: 4
 	}
 }

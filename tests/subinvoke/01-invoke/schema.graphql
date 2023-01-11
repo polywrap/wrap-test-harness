@@ -1,5 +1,6 @@
-#import * into Add from "ens/add.eth"
+#import * into ImportedSubinvoke from "ens/imported-subinvoke.eth"
 
 type Module {
   addAndIncrement(a: Int!, b: Int!): Int!
+  invokeThrowError(a: String!): Boolean!
 }
