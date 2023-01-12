@@ -1,6 +1,6 @@
 [package]
 name = "wrap-test-harness"
-version = "0.0.1-pre.1"
+version = "0.0.1-pre.4"
 edition = "2021"
 
 [dependencies]
