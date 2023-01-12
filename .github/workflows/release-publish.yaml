@@ -46,6 +46,12 @@ jobs:
       - name: Generate wrappers
         run: cargo run -- -w
 
+      - name: Upload wrappers
+        uses: actions/upload-artifact@v2
+        with:
+          name: wrappers
+          path: ./wrappers
+
       - name: Remove ./wrappers from .gitignore
         run: sed -i '/\/wrappers/d' .gitignore
 
@@ -72,6 +78,16 @@ jobs:
             ${{ github.event.pull_request.body }}
           draft: false
           prerelease: false
+
+      - name: Upload wrappers
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./wrappers
+          asset_name: wrappers
+          asset_content_type: application/zip
 
       - uses: actions/github-script@0.8.0
         if: env.TAG_EXISTS == 'false'
