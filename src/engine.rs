@@ -303,7 +303,8 @@ impl Engine {
             build = local_build;
         } else {
             let mut npx_build = Command::new("npx");
-            npx_build.arg("polywrap");
+            // @TODO(cbrzn): Remove specific version once .10 has been released
+            npx_build.arg("polywrap@0.10.0-pre.7");
             build = npx_build;
         }
         build.current_dir(&directory);
