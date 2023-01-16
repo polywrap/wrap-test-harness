@@ -4,6 +4,7 @@ use std::io::{BufReader};
 use std::path::{Path, PathBuf};
 use crate::constants::{Implementation, IMPLEMENTATIONS};
 use crate::error::{CreateImplementationError, CreateManifestAndCommonFilesError, GenerateError, GenerateImplementationError, GenerateSchemaError, GenerateTestManifestError};
+use crate::input::{TEST_FOLDER,BUILD_FOLDER};
 use crate::manifest::{BuildManifest, Manifest, Workflow};
 
 const CUSTOM_MANIFEST: &str = "polywrap.json";
@@ -204,7 +205,7 @@ impl Generate {
         let custom_manifest_path = if let Some(path) = subpath {
             let mut complex_path = root.join(path);
             if implementation_info.is_some() {
-                let test_path = manifest_path.clone().into_os_string().to_str().unwrap().replace("build", "tests");
+                let test_path = manifest_path.clone().into_os_string().to_str().unwrap().replace(BUILD_FOLDER, TEST_FOLDER);
                 complex_path = Path::new(test_path.as_str()).to_path_buf().join("../..");
             } else {
                 manifest_path = manifest_path.join(path);

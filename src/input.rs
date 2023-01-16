@@ -4,7 +4,7 @@ use clap::{Parser,Arg,Command,arg,value_parser, ArgAction};
 use log::Level;
 
 pub static BUILD_FOLDER: &str = "build";
-pub static TEST_FOLDER: &str = "tests";
+pub static TEST_FOLDER: &str = "cases";
 
 #[derive(Parser,Debug,Default)]
 struct Args {
