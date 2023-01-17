@@ -1,0 +1,54 @@
+name: wrap-harness
+
+on:
+  workflow_call:
+    inputs:
+      cli-path:
+        required: false
+        type: string
+      wasm-path:
+        required: false
+        type: string
+
+jobs:
+  generated_wrappers:
+    name: Generate wrappers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/
+            ./target/
+          key: cargo-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-${{ runner.os }}-${{ github.job }}
+
+      - name: Set environment variable
+        if: ${{ inputs.cli-path }}
+        run: echo "POLYWRAP_CLI_PATH=${{ inputs.cli-path }}" >> $GITHUB_ENV
+
+      - name: Set environment variable
+        if: ${{ inputs.wasm-path }}
+        run: echo "POLYWRAP_WASM_PATH=${{ inputs.wasm-path }}" >> $GITHUB_ENV
+
+      - name: Run wrappers build
+        run: cargo run -- -w
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: wrappers
+          path: ./wrappers
