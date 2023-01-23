@@ -16,15 +16,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: polywrap/wasm-test-harness
           ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 0
 
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
+          repository: polywrap/toolchain
           ref: ${{ github.event.pull_request.base.ref }}
           path: toolchain
           fetch-depth: 0
