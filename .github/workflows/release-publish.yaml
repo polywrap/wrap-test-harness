@@ -46,9 +46,6 @@ jobs:
       - name: Generate wrappers
         run: cargo run -- -w
 
-      - name: Remove ./wrappers from .gitignore
-        run: sed -i '/\/wrappers/d' .gitignore
-
       - name: Create Git Tag
         if: env.TAG_EXISTS == 'false'
         uses: azu/action-package-version-to-git-tag@v1
