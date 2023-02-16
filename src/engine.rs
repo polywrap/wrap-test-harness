@@ -288,7 +288,6 @@ impl Engine {
             debug!("Building interface in path: {}", directory.to_str().unwrap());
         };
 
-
         let mut build: Command;
         if let Ok(path) = env::var("POLYWRAP_CLI_PATH") {
             let mut local_build = Command::new("node");
@@ -304,7 +303,7 @@ impl Engine {
         } else {
             let mut npx_build = Command::new("npx");
             // @TODO(cbrzn): Remove specific version once .10 has been released
-            npx_build.arg("polywrap@0.10.0-pre.7");
+            npx_build.arg("polywrap@0.10.0-pre.8");
             build = npx_build;
         }
         build.current_dir(&directory);
