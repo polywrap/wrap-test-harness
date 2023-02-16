@@ -14,7 +14,7 @@ impl PolywrapCli {
                 Ok(path) => {
                     let mut command = Command::new("node");
                     let executable_path = Path::new(path.as_str()).join("bin/polywrap");
-            
+
                     if !executable_path.exists() {
                         let message = format!("Path: {} not found. Make sure to use absolute path. i.e: /home/user/toolchain/packages/cli", path);
                         Err(CliError::CliLocalPathNotFound(message))
