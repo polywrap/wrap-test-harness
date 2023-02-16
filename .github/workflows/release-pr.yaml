@@ -147,6 +147,9 @@ jobs:
         with:
           node-version: '${{env.NVMRC}}'
 
+      - name: Install Polywrap CLI
+        run: yarn
+
       - name: Set Git Identity
         run: |
           git config --global user.name '${{env.BOT}}'

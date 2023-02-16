@@ -57,6 +57,9 @@ jobs:
         with:
           node-version: '${{env.NVMRC}}'
 
+      - name: Install Polywrap CLI
+        run: yarn
+
       - name: Generate wrappers
         run: cargo run -- -w
 

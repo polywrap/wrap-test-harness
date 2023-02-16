@@ -12,8 +12,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 1
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -43,8 +41,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 1
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -70,6 +66,9 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: '${{env.NVMRC}}'
+
+      - name: Install Polywrap CLI
+        run: yarn
 
       - name: Build
         run: cargo build
