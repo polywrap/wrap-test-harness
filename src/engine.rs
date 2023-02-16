@@ -1,10 +1,8 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::fs;
-use std::env;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
-use std::process::Command;
 use std::sync::Arc;
 use std::sync::Mutex;
 use futures::future::try_join_all;
@@ -15,6 +13,7 @@ use log::{info};
 use crate::error::{ExecutionError, TestError, BuildError};
 use crate::Results;
 use crate::generator::{Generate};
+use crate::polywrap_cli::PolywrapCli;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Engine {
@@ -288,29 +287,13 @@ impl Engine {
             debug!("Building interface in path: {}", directory.to_str().unwrap());
         };
 
-        let mut build: Command;
-        if let Ok(path) = env::var("POLYWRAP_CLI_PATH") {
-            let mut local_build = Command::new("node");
-            local_build.current_dir(&directory);
-            let executable_path = Path::new(path.as_str()).join("bin/polywrap");
-
-            if !executable_path.exists() {
-                let message = format!("Path: {} not found. Make sure to use absolute path. i.e: /home/user/toolchain/packages/cli", path);
-                return Err(BuildError::CliLocalPathNotFound(message));
-            }
-            local_build.arg(executable_path);
-            build = local_build;
-        } else {
-            let mut npx_build = Command::new("npx");
-            // @TODO(cbrzn): Remove specific version once .10 has been released
-            npx_build.arg("polywrap@0.10.0-pre.8");
-            build = npx_build;
-        }
-        build.current_dir(&directory);
-        build.arg("build").arg("-v").arg("-l").arg("./log.txt");
-        if implementation.is_some() {
-            build.arg("--codegen");
-        };
+        let cli = PolywrapCli::new();
+        let mut command = cli.command.unwrap();
+        let build = command.arg("build")
+            .arg("-v")
+            .arg("-l")
+            .arg("./log.txt")
+            .current_dir(&directory);
 
         if let Ok(output) = build.output() {
             let message = if let Some(i) = implementation {
@@ -345,26 +328,13 @@ impl Engine {
     }
 
     async fn test(&self, feature: &str, implementation: &str, subpath: Option<&str>) -> Result<(), TestError> {
-        let mut test: Command;
         let mut directory = self.path.destination.join(feature);
-        if let Ok(path) = env::var("POLYWRAP_CLI_PATH") {
-            let mut local_test = Command::new("node");
-            let executable_path = Path::new(path.as_str()).join("bin/polywrap");
-            
-            if !executable_path.exists() {
-                let message = format!("Path: {} not found. Make sure to use absolute path. i.e: /home/user/toolchain/packages/cli", path);
-                return Err(TestError::CliLocalPathNotFound(message));
-            }
-            local_test.arg(executable_path);
-            test = local_test;
-        } else {
-            let mut npx_test = Command::new("npx"); 
-            npx_test.arg("polywrap");
-            test = npx_test;
-        }
-        
-        test.current_dir(&directory);
-        test.arg("test");
+        let cli = PolywrapCli::new();
+        let mut command = cli.command.unwrap();
+        let test = command.arg("test")
+            .arg("-o")
+            .arg("./output.json")
+            .current_dir(&directory);
 
         if let Some(p) = subpath {
              let mut folders = fs::read_dir(&directory)?
@@ -400,9 +370,6 @@ impl Engine {
                 test.arg("-c").arg("../../client-config.ts");
             };
         }
-
-        test.current_dir(&directory);
-        test.arg("-o").arg("./output.json");
 
         if test.output().is_err() {
             return Err(TestError::TestExecutionError("Error on polywrap cli test command".to_string()))

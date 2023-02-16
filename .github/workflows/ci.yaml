@@ -1,4 +1,4 @@
-name: wrap-harness
+name: CI
 
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
             cargo-${{ runner.os }}-${{ github.job }}
       - name: Lint
         run: cargo clippy 
-  Build:
+  Build-And-Run:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -57,5 +57,7 @@ jobs:
             cargo-${{ runner.os }}-${{ github.job }}
       - name: Build
         run: cargo build
+      - name: Run
+        run: cargo run -- -w
       - name: List Artifacts
         run: ls target/debug
