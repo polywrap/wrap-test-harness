@@ -17,6 +17,12 @@ pub enum HarnessError {
 }
 
 #[derive(Error, Debug)]
+pub enum CliError {
+    #[error("CLI local path not found")]
+    CliLocalPathNotFound(String),
+}
+
+#[derive(Error, Debug)]
 pub enum ExecutionError {
     #[error(transparent)]
     GenerateError(#[from] GenerateError),
@@ -116,9 +122,7 @@ pub enum BuildError {
     #[error(transparent)]
     FileNotFound(#[from] io::Error),
     #[error("Build execution error")]
-    BuildExecutionError(String),
-    #[error("CLI local path not found")]
-    CliLocalPathNotFound(String),
+    BuildExecutionError(String)
 }
 
 #[derive(Error, Debug)]
@@ -132,9 +136,7 @@ pub enum TestError {
     #[error("Test execution error")]
     TestExecutionError(String),
     #[error("Show results error error")]
-    ShowResultsError(#[from] ShowResultsError),
-    #[error("CLI local path not found")]
-    CliLocalPathNotFound(String),
+    ShowResultsError(#[from] ShowResultsError)
 }
 
 #[derive(Error, Debug)]

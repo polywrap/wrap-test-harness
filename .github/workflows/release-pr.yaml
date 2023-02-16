@@ -16,7 +16,21 @@ jobs:
         with:
           ref: ${{github.event.pull_request.base.ref}}
 
+      - name: Read VERSION into env.RELEASE_VERSION
+        run: echo RELEASE_VERSION=$(cat VERSION) >> $GITHUB_ENV
+
+      - name: Is Pre-Release
+        run: |
+          STR="${RELEASE_VERSION}"
+          SUB='pre.'
+          if [[ "$STR" == *"$SUB"* ]]; then
+            echo PRE_RELEASE=true >> $GITHUB_ENV
+          else
+            echo PRE_RELEASE=false >> $GITHUB_ENV
+          fi
+
       - name: Pull-Request Creator Is Publisher?
+        if: env.PRE_RELEASE == 'false'
         run: |
           exists=$(echo $(grep -Fxcs ${CREATOR} .github/PUBLISHERS))
           if [ "$exists" == "1" ] ; then
@@ -27,8 +41,20 @@ jobs:
         env:
           CREATOR: ${{github.event.pull_request.user.login}}
 
+      - name: Pull-Request Creator Is Pre-Publisher?
+        if: env.PRE_RELEASE == 'true'
+        run: |
+          exists=$(echo $(grep -Fxcs ${CREATOR} .github/PRE_PUBLISHERS))
+          if [ "$exists" == "1" ] ; then
+            echo IS_PUBLISHER=true >> $GITHUB_ENV
+          else
+            echo IS_PUBLISHER=false >> $GITHUB_ENV
+          fi
+        env:
+          CREATOR: ${{github.event.pull_request.user.login}}
+
       - name: Creator Is Not Publisher...
-        if: env.IS_PUBLISHER == 'false'
+        if: env.PRE_RELEASE == 'false' && env.IS_PUBLISHER == 'false'
         uses: actions/github-script@0.8.0
         with:
           github-token: ${{secrets.POLYWRAP_BUILD_BOT_PAT}}
@@ -39,8 +65,19 @@ jobs:
               repo: context.repo.repo,
               body: '${{github.event.pull_request.user.login}} is not a PUBLISHER. Please see the .github/PUBLISHERS file...'
             })
-      - name: Read VERSION into env.RELEASE_VERSION
-        run: echo RELEASE_VERSION=$(cat VERSION) >> $GITHUB_ENV
+
+      - name: Creator Is Not Pre-Publisher...
+        if: env.PRE_RELEASE == 'true' && env.IS_PUBLISHER == 'false'
+        uses: actions/github-script@0.8.0
+        with:
+          github-token: ${{secrets.POLYWRAP_BUILD_BOT_PAT}}
+          script: |
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '${{github.event.pull_request.user.login}} is not a PRE-PUBLISHER. Please see the .github/PRE_PUBLISHERS file...'
+            })
 
       - name: Tag Exists?
         id: tag_check

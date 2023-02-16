@@ -7,6 +7,7 @@ mod input;
 mod manifest;
 mod engine;
 mod error;
+mod polywrap_cli;
 
 use std::path::Path;
 use std::process::Command;
