@@ -12,15 +12,16 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 1
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
           override: true
+
       - name: Install Clippy
         run:  rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
+
       - uses: actions/cache@v2
         with:
           path: |
@@ -31,20 +32,22 @@ jobs:
           key: cargo-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             cargo-${{ runner.os }}-${{ github.job }}
+
       - name: Lint
-        run: cargo clippy 
+        run: cargo clippy
+
   Build-And-Run:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 1
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
           override: true
+
       - uses: actions/cache@v2
         with:
           path: |
@@ -55,9 +58,23 @@ jobs:
           key: cargo-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             cargo-${{ runner.os }}-${{ github.job }}
+
+      - name: Read .nvmrc into env.NVMRC
+        run: echo NVMRC=$(cat .nvmrc) >> $GITHUB_ENV
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '${{env.NVMRC}}'
+
+      - name: Install Polywrap CLI
+        run: yarn
+
       - name: Build
         run: cargo build
+
       - name: Run
         run: cargo run -- -w
+
       - name: List Artifacts
         run: ls target/debug

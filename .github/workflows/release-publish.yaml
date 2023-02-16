@@ -43,6 +43,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+
+      - name: Read .nvmrc into env.NVMRC
+        run: echo NVMRC=$(cat .nvmrc) >> $GITHUB_ENV
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '${{env.NVMRC}}'
+
+      - name: Install Polywrap CLI
+        run: yarn
+
       - name: Generate wrappers
         run: cargo run -- -w
 
