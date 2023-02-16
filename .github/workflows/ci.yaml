@@ -22,17 +22,6 @@ jobs:
       - name: Install Clippy
         run:  rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/
-            ./target/
-          key: cargo-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            cargo-${{ runner.os }}-${{ github.job }}
-
       - name: Lint
         run: cargo clippy
 
@@ -48,17 +37,6 @@ jobs:
           toolchain: nightly
           override: true
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/
-            ./target/
-          key: cargo-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            cargo-${{ runner.os }}-${{ github.job }}
-
       - name: Read .nvmrc into env.NVMRC
         run: echo NVMRC=$(cat .nvmrc) >> $GITHUB_ENV
 
@@ -68,12 +46,16 @@ jobs:
           node-version: '${{env.NVMRC}}'
 
       - name: Install Polywrap CLI
-        run: yarn
+        run: |
+          yarn
+          echo POLYWRAP_CLI_PATH=$(echo $(pwd)/node_modules/polywrap/) >> $GITHUB_ENV
 
       - name: Build
         run: cargo build
 
       - name: Run
+        env:
+          POLYWRAP_CLI_PATH: ${{ env.POLYWRAP_CLI_PATH }}
         run: cargo run -- -w
 
       - name: List Artifacts

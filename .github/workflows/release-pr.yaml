@@ -139,6 +139,7 @@ jobs:
               repo: context.repo.repo,
               body: '[Building Release PR](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}) (`${{env.RELEASE_VERSION}}`)'
             })
+
       - name: Read .nvmrc into env.NVMRC
         run: echo NVMRC=$(cat .nvmrc) >> $GITHUB_ENV
 
@@ -146,9 +147,6 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: '${{env.NVMRC}}'
-
-      - name: Install Polywrap CLI
-        run: yarn
 
       - name: Set Git Identity
         run: |

@@ -58,9 +58,13 @@ jobs:
           node-version: '${{env.NVMRC}}'
 
       - name: Install Polywrap CLI
-        run: yarn
+        run: |
+          yarn
+          echo POLYWRAP_CLI_PATH=$(echo $(pwd)/node_modules/polywrap/) >> $GITHUB_ENV
 
       - name: Generate wrappers
+        env:
+          POLYWRAP_CLI_PATH: ${{ env.POLYWRAP_CLI_PATH }}
         run: cargo run -- -w
 
       - name: Create Git Tag
