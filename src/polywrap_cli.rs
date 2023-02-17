@@ -13,7 +13,8 @@ impl PolywrapCli {
             command: match env::var("POLYWRAP_CLI_PATH") {
                 Ok(path) => {
                     let mut command = Command::new("node");
-                    let executable_path = Path::new(path.as_str()).join("bin/polywrap");
+                    let executable_path = Path::new(path.as_str())
+                        .join("bin/polywrap");
 
                     if !executable_path.exists() {
                         let message = format!("Path: {} not found. Make sure to use absolute path. i.e: /home/user/toolchain/packages/cli", path);
@@ -25,8 +26,7 @@ impl PolywrapCli {
                 },
                 Err(_) => {
                     let mut command = Command::new("npx");
-                    // @TODO(cbrzn): Remove specific version once .10 has been released
-                    command.arg("polywrap@0.10.0-pre.8");
+                    command.arg("polywrap");
                     Ok(command)
                 }
             }
