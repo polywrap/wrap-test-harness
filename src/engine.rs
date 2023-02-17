@@ -6,7 +6,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::sync::Mutex;
 use futures::future::try_join_all;
-use log::{debug, error};
+use log::{debug};
 use serde::{Deserialize, Serialize};
 use futures::{Future,future::join_all,StreamExt};
 use log::{info};
@@ -309,7 +309,7 @@ impl Engine {
             if output.status.code() == Some(0) {
                 debug!("{} succeed", message);
             } else {
-                error!("{} failed with error: {}", message, String::from_utf8(output.stderr).unwrap());
+                return Err(BuildError::BuildExecutionError(format!("{} failed with error: {}", message, String::from_utf8(output.stderr).unwrap())));
             }
 
             if generate_built_cases {
