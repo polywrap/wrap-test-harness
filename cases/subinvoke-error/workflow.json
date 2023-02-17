@@ -1,0 +1,30 @@
+{
+  "name": "sub-invoke-error",
+  "validation": "./validator.cue",
+  "jobs": {
+    "throwsInTwoSubinvokeLayers": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "throwsInTwoSubinvokeLayers",
+          "args": {
+            "a": 1,
+            "b": 1
+          }
+        }
+      ]
+    },
+    "subWrapperNotFound": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "subWrapperNotFound",
+          "args": {
+            "a": 1,
+            "b": 1
+          }
+        }
+      ]
+    }
+  }
+}

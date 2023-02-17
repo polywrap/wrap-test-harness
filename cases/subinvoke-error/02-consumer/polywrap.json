@@ -1,0 +1,14 @@
+{
+  "source": {
+    "import_abis": [
+      {
+        "uri": "wrap://ens/01-invoke.eth",
+        "abi": "../../../01-invoke/implementations/${implementation}/build/wrap.info"
+      },
+      {
+        "uri": "wrap://ens/not-found.eth",
+        "abi": "../../../01-invoke/implementations/${implementation}/build/wrap.info"
+      }
+    ]
+  }
+}

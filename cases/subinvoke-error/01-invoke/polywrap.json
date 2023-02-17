@@ -1,0 +1,10 @@
+{
+  "source": {
+    "import_abis": [
+      {
+        "uri": "wrap://ens/00-subinvoke-error.eth",
+        "abi": "../../../00-subinvoke-error/implementations/${implementation}/build/wrap.info"
+      }
+    ]
+  }
+}

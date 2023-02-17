@@ -1,0 +1,5 @@
+#import * into SubInvokeError from "ens/00-subinvoke-error.eth"
+
+type Module {
+  subInvokeWillThrow(a: Int!, b: Int!): Int!
+}
