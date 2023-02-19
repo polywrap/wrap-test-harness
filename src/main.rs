@@ -18,7 +18,7 @@ use crate::result::{Results};
 use crate::input::{BUILD_FOLDER, TEST_FOLDER};
 use crate::error::HarnessError;
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 10)]
+#[tokio::main(flavor = "multi_thread", worker_threads = 5)]
 async fn main() -> Result<(), HarnessError> {
     let destination_path = Path::new(BUILD_FOLDER);
     let source_path = Path::new(TEST_FOLDER);
