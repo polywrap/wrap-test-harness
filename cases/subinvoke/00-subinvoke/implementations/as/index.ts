@@ -1,9 +1,15 @@
-import { Args_add, Args_subinvokeThrowError } from "./wrap";
+import {
+  Args_add,
+  Args_subinvokeThrowError,
+  ModuleBase
+} from "./wrap";
 
-export function add(args: Args_add): i32 {
+export class Module extends ModuleBase {
+  add(args: Args_add): i32 {
     return args.a + args.b
-}
+  }
 
-export function subinvokeThrowError(args: Args_subinvokeThrowError): bool {
+  subinvokeThrowError(args: Args_subinvokeThrowError): bool {
     throw new Error(args.a)
+  }
 }
