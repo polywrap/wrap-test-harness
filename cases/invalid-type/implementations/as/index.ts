@@ -24,7 +24,7 @@ export class Module extends ModuleBase {
     return args.arg;
   }
 
-  arrayMethod(args: Args_arrayMethod): string[] {
+  arrayMethod(args: Args_arrayMethod): Array<string> | null {
     return args.arg;
   }
 }
