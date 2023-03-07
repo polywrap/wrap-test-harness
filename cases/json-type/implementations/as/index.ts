@@ -3,6 +3,9 @@ import {
   Args_stringify,
   Args_stringifyObject,
   Args_methodJSON,
+  Args_parseReserved,
+  Args_stringifyReserved,
+  Reserved,
   ModuleBase
 } from "./wrap";
 import { JSON } from "@polywrap/wasm-as";
@@ -35,5 +38,13 @@ export class Module extends ModuleBase {
     result.set("valueC", JSON.from(args.valueC));
 
     return result;
+  }
+
+  parseReserved(_: Args_parseReserved): Reserved {
+    throw new Error("Not implemented yet!")
+  }
+
+  stringifyReserved(_: Args_stringifyReserved): String {
+    throw new Error("Not implemented yet!")
   }
 }
