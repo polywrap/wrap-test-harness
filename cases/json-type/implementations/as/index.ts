@@ -1,47 +1,50 @@
 import {
-    Args_parse,
-    Args_stringify,
-    Args_stringifyObject,
-    Args_methodJSON,
-    Args_parseReserved,
-    Args_stringifyReserved,
-    Reserved
+  Args_parse,
+  Args_stringify,
+  Args_stringifyObject,
+  Args_methodJSON,
+  Args_parseReserved,
+  Args_stringifyReserved,
+  Reserved,
+  ModuleBase
 } from "./wrap";
 import { JSON } from "@polywrap/wasm-as";
 
-export function parse(args: Args_parse): JSON.Value {
+export class Module extends ModuleBase {
+  parse(args: Args_parse): JSON.Value {
     return JSON.parse(args.value);
-}
+  }
 
-export function stringify(args: Args_stringify): string {
+  stringify(args: Args_stringify): string {
     let str = "";
     for (let i = 0; i < args.values.length; ++i) {
-        const value = args.values[i];
-        str += value.stringify();
+      const value = args.values[i];
+      str += value.stringify();
     }
     return str;
-}
+  }
 
-export function stringifyObject(args: Args_stringifyObject): string {
+  stringifyObject(args: Args_stringifyObject): string {
     let str = "";
     str += args.object.jsonA.stringify();
     str += args.object.jsonB.stringify();
     return str;
-}
+  }
 
-export function methodJSON(args: Args_methodJSON): JSON.Value {
+  methodJSON(args: Args_methodJSON): JSON.Value {
     const result = JSON.Value.Object();
     result.set("valueA", JSON.from(args.valueA));
     result.set("valueB", JSON.from(args.valueB));
     result.set("valueC", JSON.from(args.valueC));
 
     return result;
-}
+  }
 
-export function parseReserved(_: Args_parseReserved): Reserved {
+  parseReserved(_: Args_parseReserved): Reserved {
     throw new Error("Not implemented yet!")
-}
+  }
 
-export function stringifyReserved(_: Args_stringifyReserved): String {
+  stringifyReserved(_: Args_stringifyReserved): String {
     throw new Error("Not implemented yet!")
+  }
 }

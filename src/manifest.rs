@@ -124,6 +124,23 @@ impl BuildManifest {
             .open(path).unwrap();
 
         serde_yaml::to_writer(f, &build_manifest).unwrap();
+
+        // Add the polywrap.build.yaml manifest to the polywrap.yaml's extensions.build property
+        let mp = manifest_path.join("polywrap.yaml");
+        let mf = fs::OpenOptions::new()
+            .read(true)
+            .open(mp.clone()).unwrap();
+
+        let mut manifest: Manifest = serde_yaml::from_reader(mf).unwrap();
+        let mut extensions = HashMap::new();
+        extensions.insert("build".to_string(), "./polywrap.build.yaml".to_string());
+        manifest.extensions = Some(extensions);
+
+        let mf = fs::OpenOptions::new()
+            .write(true)
+            .open(mp).unwrap();
+
+        serde_yaml::to_writer(mf, &manifest).unwrap();
     }
 }
 

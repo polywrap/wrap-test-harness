@@ -1,13 +1,16 @@
 import {
-    SanityEnum,
-    Args_method1,
-    Args_method2,
+  SanityEnum,
+  Args_method1,
+  Args_method2,
+  ModuleBase
 } from "./wrap";
 
-export function method1(args: Args_method1): SanityEnum {
+export class Module extends ModuleBase {
+  method1(args: Args_method1): SanityEnum {
     return args.en;
-}
+  }
 
-export function method2(args: Args_method2): SanityEnum[] {
+  method2(args: Args_method2): SanityEnum[] {
     return args.enumArray;
+  }
 }
