@@ -2,7 +2,7 @@ import {
   Args_method1,
   Args_method2,
   Args_method3,
-  Args_method5,
+  Args_method4,
   Output,
   Arg2,
   ModuleBase
@@ -51,7 +51,7 @@ export class Module extends ModuleBase {
     ]
   }
 
-  method5(args: Args_method5): Output {
+  method4(args: Args_method4): Output {
     return {
       prop: String.UTF8.decode(args.arg.prop),
       nested: {
