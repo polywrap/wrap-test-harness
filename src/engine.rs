@@ -333,8 +333,7 @@ impl Engine {
         let mut command = cli.command.unwrap();
         let test = command.arg("test")
             .arg("-o")
-            .arg("./output.json")
-            .current_dir(&directory);
+            .arg("./output.json");
 
         if let Some(p) = subpath {
              let mut folders = fs::read_dir(&directory)?
@@ -371,9 +370,22 @@ impl Engine {
             };
         }
 
+        test.current_dir(&directory);
+
+        let mut message_error = String::new();
         if test.output().is_err() {
-            return Err(TestError::TestExecutionError("Error on polywrap cli test command".to_string()))
+            message_error = test.output().unwrap_err().to_string();
         };
+
+        let stderr = test.output().unwrap().stderr; 
+        if !stderr.is_empty() {
+            message_error = String::from_utf8(stderr).unwrap();
+        }
+
+        if !message_error.is_empty() {
+            let message = format!("Error on polywrap CLI Test command: {}", message_error);
+            return Err(TestError::TestExecutionError(message))
+        }
 
         let impl_name = directory.file_name().unwrap().to_str().unwrap();
         let results_dir = directory.join("output.json");

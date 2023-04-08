@@ -69,7 +69,7 @@ impl Generate {
         let workflow_str = fs::read_to_string(&workflow_path)?;
         let mut workflow = serde_json::from_str::<Workflow>(workflow_str.as_str())?;
 
-        workflow.format = Some(String::from("0.1.0"));
+        workflow.format = Some(String::from("0.2.0"));
         workflow.name = Some(String::from(feature));
 
         // TODO: Add validation to test manifest from JS
