@@ -3,8 +3,8 @@ use wrap::module::{Module, ModuleTrait};
 pub use wrap::*;
 
 impl ModuleTrait for Module {
-    fn method1(args: ArgsMethod1) -> Vec<Output> {
-        vec![
+    fn method1(args: ArgsMethod1) -> Result<Vec<Output>, String> {
+        Ok(vec![
             Output {
                 prop: args.arg1.prop,
                 nested: Nested {
@@ -23,23 +23,23 @@ impl ModuleTrait for Module {
                     },
                 },
             },
-        ]
+        ])
     }
 
-    fn method2(args: ArgsMethod2) -> Option<Output> {
+    fn method2(args: ArgsMethod2) -> Result<Option<Output>, String> {
         if args.arg.prop == "null".to_string() {
-            return None;
+            return Ok(None);
         }
-        Some(Output {
+        Ok(Some(Output {
             prop: args.arg.prop,
             nested: Nested {
                 prop: args.arg.nested.prop,
             },
-        })
+        }))
     }
 
-    fn method3(args: ArgsMethod3) -> Vec<Option<Output>> {
-        vec![
+    fn method3(args: ArgsMethod3) -> Result<Vec<Option<Output>>, String> {
+        Ok(vec![
             None,
             Some(Output {
                 prop: args.arg.prop,
@@ -47,11 +47,11 @@ impl ModuleTrait for Module {
                     prop: args.arg.nested.prop,
                 },
             }),
-        ]
+        ])
     }
 
-    fn method5(args: ArgsMethod5) -> Output {
-        Output {
+    fn method4(args: ArgsMethod4) -> Result<Output, String> {
+        Ok(Output {
             prop: match String::from_utf8(args.arg.prop) {
                 Ok(v) => v,
                 Err(e) => panic!("{}", e),
@@ -59,6 +59,6 @@ impl ModuleTrait for Module {
             nested: Nested {
                 prop: "nested prop".to_string(),
             },
-        }
+        })
     }
 }

@@ -5,7 +5,7 @@ import { parseSchema } from "@polywrap/schema-parse";
 
 export function configure(builder: IClientConfigBuilder): IClientConfigBuilder {
   const memoryStoragePlugin = () => {
-    return PluginPackage.from(new MemoryStoragePlugin(), {
+    return PluginPackage.from(new MemoryStoragePlugin({}), {
       name: "memoryStorage",
       type: "plugin",
       version: latestWrapManifestVersion,
@@ -14,18 +14,16 @@ export function configure(builder: IClientConfigBuilder): IClientConfigBuilder {
           getData: Int32!
           setData(value: Int32!): Boolean!
         }
-      `)
-    })
-  }
-  return builder.addPackage({
-    uri: "wrap://ens/memory-storage.polywrap.eth",
-    package: memoryStoragePlugin()
-  })
+      `),
+    });
+  };
+  return builder.addPackage(
+    "wrap://ens/memory-storage.polywrap.eth",
+    memoryStoragePlugin()
+  );
 }
 
-class MemoryStoragePlugin extends PluginModule<
-    Record<string, unknown>
-> {
+class MemoryStoragePlugin extends PluginModule<Record<string, unknown>> {
   private _value: number;
 
   async getData(_: {}): Promise<number> {

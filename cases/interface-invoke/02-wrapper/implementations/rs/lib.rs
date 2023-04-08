@@ -5,11 +5,11 @@ pub use wrap::imported::interface_argument;
 use wrap::module::{ModuleTrait, Module};
 
 impl ModuleTrait for Module {
-    fn module_method(args: ArgsModuleMethod) -> ImplementationType {
-        args.arg
+    fn module_method(args: ArgsModuleMethod) -> Result<ImplementationType, String> {
+        Ok(args.arg)
     }
     
-    fn abstract_module_method(args: ArgsAbstractModuleMethod) -> String {
+    fn abstract_module_method(args: ArgsAbstractModuleMethod) -> Result<String, String> {
         let impls = Interface::get_implementations();
         let uri: String = impls[1].to_owned();
         let module = InterfaceModule::new(uri);
@@ -18,6 +18,6 @@ impl ModuleTrait for Module {
                 str: args.arg.str
             }
         };
-        module.abstract_module_method(&method_args).unwrap()
+        Ok(module.abstract_module_method(&method_args).unwrap())
     }
 }

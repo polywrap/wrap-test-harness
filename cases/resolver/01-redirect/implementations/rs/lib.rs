@@ -5,21 +5,21 @@ use wrap::module::{Module, ModuleTrait};
 pub use wrap::*;
 
 impl ModuleTrait for Module {
-    fn try_resolve_uri(args: ArgsTryResolveUri) -> Option<UriResolverMaybeUriOrManifest> {
+    fn try_resolve_uri(args: ArgsTryResolveUri) -> Result<Option<UriResolverMaybeUriOrManifest>, String> {
         if !args.authority.as_str().eq("custom-authority") {
-            Some(UriResolverMaybeUriOrManifest {
+            Ok(Some(UriResolverMaybeUriOrManifest {
                 uri: Some(format!("wrap://{}/{}", args.authority, args.path)),
                 manifest: None,
-            })
+            }))
         } else {
-            Some(UriResolverMaybeUriOrManifest {
+            Ok(Some(UriResolverMaybeUriOrManifest {
                 uri: Some(format!("wrap://custom-fs/{}", args.path)),
                 manifest: None,
-            })
+            }))
         }
     }
 
-    fn get_file(args: ArgsGetFile) -> Option<Vec<u8>> {
-        return None;
+    fn get_file(args: ArgsGetFile) -> Result<Option<Vec<u8>>, String> {
+        return Ok(None);
     }
 }

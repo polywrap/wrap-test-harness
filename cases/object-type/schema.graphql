@@ -12,7 +12,7 @@ type Module {
         arg: Arg1!
     ): [Output]!
 
-    method5(
+    method4(
         arg: Arg3!
     ): Output!
 }

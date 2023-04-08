@@ -1,13 +1,13 @@
 pub mod wrap;
+use wrap::module::{Module, ModuleTrait};
 pub use wrap::*;
-use wrap::module::{ModuleTrait, Module};
 
 impl ModuleTrait for Module {
-    fn method1(args: ArgsMethod1) -> SanityEnum {
-        args.en
+    fn method1(args: ArgsMethod1) -> Result<SanityEnum, String> {
+        Ok(args.en)
     }
-    
-    fn method2(args: ArgsMethod2) -> Vec<SanityEnum> {
-        args.enum_array
+
+    fn method2(args: ArgsMethod2) -> Result<Vec<SanityEnum>, String> {
+        Ok(args.enum_array)
     }
 }

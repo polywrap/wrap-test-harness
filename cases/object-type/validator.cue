@@ -62,7 +62,7 @@
     ]
 	}
 }
-"method5": {
+"method4": {
 	$0: {
 		data: {
       "prop": "1234",
