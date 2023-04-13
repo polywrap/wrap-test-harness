@@ -1,6 +1,10 @@
 pub mod wrap;
 pub use wrap::*;
+use wrap::env::{Env};
+use wrap::module::{ModuleTrait, Module};
 
-pub fn external_env_method(_: ArgsExternalEnvMethod, env: Env) -> Env {
-    env
+impl ModuleTrait for Module {
+    fn external_env_method(_: ArgsExternalEnvMethod, env: Env) -> Result<Env, String> {
+        Ok(env)
+    }
 }

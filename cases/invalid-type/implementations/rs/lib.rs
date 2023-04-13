@@ -1,22 +1,25 @@
 pub mod wrap;
 pub use wrap::*;
+use wrap::module::{ModuleTrait, Module};
 
-pub fn bool_method(args: ArgsBoolMethod) -> bool {
-    args.arg
-}
+impl ModuleTrait for Module {
+    fn bool_method(args: ArgsBoolMethod) -> Result<bool, String> {
+        Ok(args.arg)
+    }
 
-pub fn int_method(args: ArgsIntMethod) -> i32 {
-    args.arg
-}
+    fn int_method(args: ArgsIntMethod) -> Result<i32, String> {
+        Ok(args.arg)
+    }
 
-pub fn u_int_method(args: ArgsUIntMethod) -> u32 {
-    args.arg
-}
+    fn u_int_method(args: ArgsUIntMethod) -> Result<u32, String> {
+        Ok(args.arg)
+    }
 
-pub fn bytes_method(args: ArgsBytesMethod) -> Vec<u8> {
-    args.arg
-}
+    fn bytes_method(args: ArgsBytesMethod) -> Result<Vec<u8>, String> {
+        Ok(args.arg)
+    }
 
-pub fn array_method(args: ArgsArrayMethod) -> Option<Vec<String>> {
-    Some(args.arg)
+    fn array_method(args: ArgsArrayMethod) -> Result<Option<Vec<String>>, String> {
+        Ok(Some(args.arg))
+    }
 }

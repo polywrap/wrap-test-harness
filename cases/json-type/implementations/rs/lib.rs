@@ -1,36 +1,41 @@
 pub mod wrap;
-pub use wrap::*;
 use polywrap_wasm_rs::JSON;
-use serde_json::*;
+use serde_json::json;
+use wrap::module::{Module, ModuleTrait};
+pub use wrap::*;
 
-pub fn stringify(args: ArgsStringify) -> String {
-    let mut new_string = String::from("");
-    for object in &args.values {
-        new_string.push_str(&object.to_string());
+impl ModuleTrait for Module {
+    fn stringify(args: ArgsStringify) -> Result<String, String> {
+        let mut new_string = String::from("");
+        for object in &args.values {
+            new_string.push_str(&object.to_string());
+        }
+        Ok(new_string)
     }
-    new_string
-}
 
-pub fn parse(args: ArgsParse) -> JSON::Value { JSON::from_str(&args.value).unwrap() }
+    fn parse(args: ArgsParse) -> Result<JSON::Value, String> {
+        Ok(JSON::from_str(&args.value).unwrap())
+    }
 
-pub fn stringify_object(args: ArgsStringifyObject) -> String {
-    let mut new_string = String::from(&args.object.json_a.to_string());
-    new_string.push_str(&args.object.json_b.to_string());
-    new_string
-}
+    fn stringify_object(args: ArgsStringifyObject) -> Result<String, String> {
+        let mut new_string = String::from(&args.object.json_a.to_string());
+        new_string.push_str(&args.object.json_b.to_string());
+        Ok(new_string)
+    }
 
-pub fn method_j_s_o_n(args: ArgsMethodJSON) -> JSON::Value {
-    json!({
-        "valueA": args.value_a,
-        "valueB": args.value_b,
-        "valueC": args.value_c
-    })
-}
+    fn method_j_s_o_n(args: ArgsMethodJSON) -> Result<JSON::Value, String> {
+        Ok(json!({
+            "valueA": args.value_a,
+            "valueB": args.value_b,
+            "valueC": args.value_c
+        }))
+    }
 
-pub fn parse_reserved(args: ArgsParseReserved) -> Reserved {
-    JSON::from_str::<Reserved>(&args.json).unwrap()
-}
+    fn parse_reserved(args: ArgsParseReserved) -> Result<Reserved, String> {
+        Ok(JSON::from_str::<Reserved>(&args.json).unwrap())
+    }
 
-pub fn stringify_reserved(args: ArgsStringifyReserved) -> String {
-    JSON::to_string(&args.reserved).unwrap()
+    fn stringify_reserved(args: ArgsStringifyReserved) -> Result<String, String> {
+        Ok(JSON::to_string(&args.reserved).unwrap())
+    }
 }

@@ -1,5 +1,7 @@
 pub mod wrap;
 pub use wrap::*;
+use wrap::env::{Env};
+use wrap::module::{ModuleTrait, Module};
 
 fn create_env(env: Env) -> Env {
     Env {
@@ -18,26 +20,28 @@ fn create_env(env: Env) -> Env {
     }
 }
 
-pub fn method_no_env(args: ArgsMethodNoEnv) -> String {
-    args.arg
-}
-
-pub fn method_require_env(_: ArgsMethodRequireEnv, env: Env) -> Env {
-    create_env(env)
-}
-
-pub fn method_optional_env(args: ArgsMethodOptionalEnv, env: Option<Env>) -> Option<Env> {
-    match env {
-        Some(e) => Some(create_env(e)),
-        None => None
+impl ModuleTrait for Module {
+    fn method_no_env(args: ArgsMethodNoEnv) -> Result<String, String> {
+        Ok(args.arg)
     }
-}
+    
+    fn method_require_env(_: ArgsMethodRequireEnv, env: Env) -> Result<Env, String> {
+        Ok(create_env(env))
+    }
 
-pub fn subinvoke_env_method(args: ArgsSubinvokeEnvMethod, env: Env) -> CompoundEnv {
-    let external_env: ExternalEnvApiEnv = ExternalEnvApiModule::external_env_method(&(imported::ArgsExternalEnvMethod {})).unwrap();
+    fn method_optional_env(args: ArgsMethodOptionalEnv, env: Option<Env>) -> Result<Option<Env>, String> {
+        Ok(match env {
+            Some(e) => Some(create_env(e)),
+            None => None
+        })
+    }
 
-    return CompoundEnv {
-        local: env,
-        external: external_env
-    };
+    fn subinvoke_env_method(args: ArgsSubinvokeEnvMethod, env: Env) -> Result<CompoundEnv, String> {
+        let external_env: ExternalEnvApiEnv = ExternalEnvApiModule::external_env_method(&(imported::ArgsExternalEnvMethod {})).unwrap();
+        
+        return Ok(CompoundEnv {
+            local: env,
+            external: external_env
+        });
+    }
 }
