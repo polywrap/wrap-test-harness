@@ -25,8 +25,7 @@ impl PolywrapCli {
                 },
                 Err(_) => {
                     let mut command = Command::new("npx");
-                    // @TODO(cbrzn): Remove specific version once .10 has been released
-                    command.arg("polywrap@0.10.0-pre.8");
+                    command.arg("polywrap@pre");
                     Ok(command)
                 }
             }
