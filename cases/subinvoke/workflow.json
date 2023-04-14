@@ -13,6 +13,18 @@
           }
         }
       ]
+    },
+    "addFromPluginAndIncrement": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "addFromPluginAndIncrement",
+          "args": {
+            "a": 1,
+            "b": 1
+          }
+        }
+      ]
     }
   }
 }

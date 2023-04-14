@@ -1,0 +1,10 @@
+{
+  "source": {
+    "import_abis": [
+      {
+        "uri": "plugin/adder",
+        "abi": "../../../adder.graphql"
+      }
+    ]
+  }
+}

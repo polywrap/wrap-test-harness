@@ -1,4 +1,7 @@
+#import * into Adder from "plugin/adder"
+
 type Module {
   add(a: Int!, b: Int!): Int!
+  addFromPlugin(a: Int!, b: Int!): Int!
   subinvokeThrowError(a: String!): Boolean!
 }

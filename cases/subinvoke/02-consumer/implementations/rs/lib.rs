@@ -1,6 +1,5 @@
 pub mod wrap;
 use imported::imported_invoke_module::ImportedInvokeModule;
-use wrap::module::{Module, ModuleTrait};
 pub use wrap::*;
 
 impl ModuleTrait for Module {
@@ -20,5 +19,16 @@ impl ModuleTrait for Module {
             &imported::imported_invoke_module::ArgsInvokeThrowError { a: args.a },
         )
         .unwrap())
+    }
+
+    fn add_from_plugin_and_increment(args: ArgsAddFromPluginAndIncrement) -> Result<i32, String> {
+        Ok(ImportedInvokeModule::add_from_plugin_and_increment(
+            &imported::imported_invoke_module::ArgsAddFromPluginAndIncrement {
+                a: args.a,
+                b: args.b,
+            },
+        )
+        .unwrap()
+            + 1)
     }
 }
