@@ -1,6 +1,6 @@
 {
   "name": "wrap-test-harness",
-  "version": "0.1.0",
+  "version": "0.0.1-pre.9",
   "scripts": {
     "version:apply": "yarn version --new-version $(cat VERSION) --no-git-tag-version"
   },
