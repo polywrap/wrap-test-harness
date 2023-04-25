@@ -21,4 +21,13 @@ impl ModuleTrait for Module {
         )
         .unwrap())
     }
+
+    fn rethrow_error(args: ArgsRethrowError) -> Result<bool, String> {
+        let result = ImportedInvokeModule::invoke_throw_error(
+            &imported::imported_invoke_module::ArgsInvokeThrowError { a: args.a },
+        );
+        if let Err(err) = result {
+            return Err(err.to_string());
+        }
+    }
 }
