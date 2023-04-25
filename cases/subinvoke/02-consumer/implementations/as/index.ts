@@ -22,10 +22,10 @@ export class Module extends ModuleBase {
     return ImportedInvoke_Module.invokeThrowError({ a: args.a }).unwrap();
   }
 
-  rethrowError(args: Args_rethrowError): boolean {
+  rethrowError(args: Args_rethrowError): bool {
     let result = ImportedInvoke_Module.invokeThrowError({ a: args.a });
-    if (result.isErr()) {
-      throw Error(result.unwrapErr().toString())
+    if (result.isErr) {
+      throw Error(result.unwrapErr().toString());
     }
     return result.unwrap();
   }

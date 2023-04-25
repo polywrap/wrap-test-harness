@@ -29,5 +29,6 @@ impl ModuleTrait for Module {
         if let Err(err) = result {
             return Err(err.to_string());
         }
+        result
     }
 }
