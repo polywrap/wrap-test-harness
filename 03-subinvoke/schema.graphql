@@ -1,0 +1,5 @@
+#import { Module } into Subinvoked from "ens/subinvoked-env.polywrap.eth"
+
+type Module {
+  subinvokeEnvMethod: String!
+}

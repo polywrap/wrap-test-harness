@@ -1,0 +1,10 @@
+{
+  "source": {
+    "import_abis": [
+      {
+        "uri": "ens/subinvoked-env.polywrap.eth",
+        "abi": "../../../02-subinvoked"
+      }
+    ]
+  }
+}

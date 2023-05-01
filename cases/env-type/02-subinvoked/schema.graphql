@@ -1,0 +1,7 @@
+type Env {
+  str: String!
+}
+
+type Module {
+  envMethod: String! @env(required: true)
+}
