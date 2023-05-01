@@ -321,7 +321,9 @@ impl Engine {
                 fs::copy(directory.join("wrap.info"), copy_dest.join("wrap.info"))?;
             }
         } else {
-            return Err(BuildError::BuildExecutionError("Error on polywrap cli build command".to_string()));
+            let error = build.output().unwrap_err();
+
+            return Err(BuildError::BuildExecutionError(format!("Error on polywrap cli build command: {:?}", error)));
         }
 
         Ok(())
