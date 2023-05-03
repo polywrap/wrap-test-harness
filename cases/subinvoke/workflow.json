@@ -13,6 +13,28 @@
           }
         }
       ]
+    },
+    "throwError": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "throwError",
+          "args": {
+            "a": "Hi"
+          }
+        }
+      ]
+    },
+    "rethrowError": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "rethrowError",
+          "args": {
+            "a": "Hi"
+          }
+        }
+      ]
     }
   }
 }

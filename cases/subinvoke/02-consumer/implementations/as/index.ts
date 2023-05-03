@@ -1,6 +1,7 @@
 import {
   Args_throwError,
   Args_addAndIncrement,
+  Args_rethrowError,
   ImportedInvoke_Module,
   ModuleBase
 } from "./wrap";
@@ -19,5 +20,13 @@ export class Module extends ModuleBase {
 
   throwError(args: Args_throwError): bool {
     return ImportedInvoke_Module.invokeThrowError({ a: args.a }).unwrap();
+  }
+
+  rethrowError(args: Args_rethrowError): bool {
+    let result = ImportedInvoke_Module.invokeThrowError({ a: args.a });
+    if (result.isErr) {
+      throw Error(result.unwrapErr().toString());
+    }
+    return result.unwrap();
   }
 }

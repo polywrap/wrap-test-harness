@@ -3,4 +3,5 @@
 type Module {
   addAndIncrement(a: Int!, b: Int!): Int!
   throwError(a: String!): Boolean!
+  rethrowError(a: String!): Boolean!
 }
