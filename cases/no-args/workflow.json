@@ -1,0 +1,14 @@
+{
+  "name": "no-args",
+  "validation": "./validator.cue",
+  "jobs": {
+    "noArgsMethod": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "noArgsMethod"
+        }
+      ]
+    }
+  }
+}

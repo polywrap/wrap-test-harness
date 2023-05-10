@@ -1,5 +1,6 @@
 - features
     - asyncify
+    - no-args
     - bigint-type
     - bytes-type
     - enum-types
