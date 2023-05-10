@@ -25,7 +25,7 @@ impl PolywrapCli {
                 },
                 Err(_) => {
                     let mut command = Command::new("npx");
-                    command.arg("polywrap@pre");
+                    command.arg("polywrap");
                     Ok(command)
                 }
             }

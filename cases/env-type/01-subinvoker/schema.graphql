@@ -1,0 +1,11 @@
+#import { Module, Env } into Subinvoked from "mock/main"
+
+type Module {
+  subinvokeMethodNoEnv(
+    arg: String!
+  ): String!
+
+  subinvokeMethodRequireEnv: Subinvoked_Env!
+
+  subinvokeMethodOptionalEnv: Subinvoked_Env
+}

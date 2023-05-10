@@ -1,5 +1,3 @@
-#import { Module } into ExternalEnvApi from "ens/external-env.polywrap.eth"
-
 type EnvObject {
   prop: String!
 }
@@ -24,25 +22,12 @@ type Env {
   array: [UInt32!]!
 }
 
-type CompoundEnv {
-  local: Env!
-  external: ExternalEnvApi_Env!
-}
-
 type Module {
   methodNoEnv(
     arg: String!
   ): String!
 
-  methodRequireEnv(
-    arg: String!
-  ): Env! @env(required: true)
+  methodRequireEnv: Env! @env(required: true)
 
-  methodOptionalEnv(
-    arg: String!
-  ): Env @env(required: false)
-
-  subinvokeEnvMethod(
-    arg: String!
-  ): CompoundEnv! @env(required: true)
+  methodOptionalEnv: Env @env(required: false)
 }

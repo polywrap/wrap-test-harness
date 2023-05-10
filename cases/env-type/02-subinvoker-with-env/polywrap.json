@@ -1,0 +1,10 @@
+{
+  "source": {
+    "import_abis": [
+      {
+        "uri": "mock/main",
+        "abi": "../../../00-main"
+      }
+    ]
+  }
+}
