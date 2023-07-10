@@ -1,13 +1,12 @@
 package module
 
 import (
-	"errors"
 	"github.com/polywrap/wrap-test-harness/go/module/wrap/types"
-	"github.com/polywrap/wasm-as"
+	big "github.com/polywrap/go-wrap/polywrap/msgpack/big"
 )
 
-func Method(args *types.ArgsMethod) (*wasm.BigInt, error) {
-	result := new(wasm.BigInt).Mul(args.Arg1, args.Obj.Prop1)
+func Method(args *types.MethodArgsMethod) (*big.Int) {
+	result := new(big.Int).Mul(args.Arg1, args.Obj.Prop1)
 
 	if args.Arg2 != nil {
 		result.Mul(result, args.Arg2)
@@ -16,5 +15,5 @@ func Method(args *types.ArgsMethod) (*wasm.BigInt, error) {
 		result.Mul(result, args.Obj.Prop2)
 	}
 
-	return result, nil
+	return result
 }

@@ -2,22 +2,22 @@ package module
 
 import "github.com/polywrap/wrap-test-harness/go/module/wrap/types"
 
-func BoolMethod(args *types.ArgsBoolMethod) (bool, error) {
-	return args.Arg, nil
+func BoolMethod(args *types.MethodArgsBoolMethod) (bool) {
+	return args.Arg
 }
 
-func IntMethod(args *types.ArgsIntMethod) (int32, error) {
-	return args.Arg, nil
+func IntMethod(args *types.MethodArgsIntMethod) (int32) {
+	return args.Arg
 }
 
-func UIntMethod(args *types.ArgsUIntMethod) (uint32, error) {
-	return args.Arg, nil
+func UIntMethod(args *types.MethodArgsUIntMethod) (uint32) {
+	return args.Arg
 }
 
-func BytesMethod(args *types.ArgsBytesMethod) ([]uint8, error) {
-	return args.Arg, nil
+func BytesMethod(args *types.MethodArgsBytesMethod) ([]uint8) {
+	return args.Arg
 }
 
-func ArrayMethod(args *types.ArgsArrayMethod) ([]string, error) {
-	return args.Arg, nil
+func ArrayMethod(args *types.MethodArgsArrayMethod) ([]string) {
+	return args.Arg
 }

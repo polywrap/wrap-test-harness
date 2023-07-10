@@ -14,44 +14,44 @@ func Stringify(args *types.ArgsStringify) (string, error) {
 	return newString, nil
 }
 
-func Parse(args *types.ArgsParse) (interface{}, error) {
+func Parse(args *types.ArgsParse) (interface{}) {
 	var value interface{}
 	err := json.Unmarshal([]byte(args.Value), &value)
 	if err != nil {
 		return nil, err
 	}
-	return value, nil
+	return value
 }
 
-func StringifyObject(args *types.ArgsStringifyObject) (string, error) {
+func StringifyObject(args *types.ArgsStringifyObject) (string) {
 	var newString string
 	newString += args.Object.JSONA.String()
 	newString += args.Object.JSONB.String()
-	return newString, nil
+	return newString
 }
 
-func MethodJSON(args *types.ArgsMethodJSON) (interface{}, error) {
+func MethodJSON(args *types.ArgsMethodJSON) (interface{}) {
 	value := map[string]interface{}{
 		"valueA": args.ValueA,
 		"valueB": args.ValueB,
 		"valueC": args.ValueC,
 	}
-	return value, nil
+	return value
 }
 
-func ParseReserved(args *types.ArgsParseReserved) (interface{}, error) {
+func ParseReserved(args *types.ArgsParseReserved) (interface{}) {
 	var reserved interface{}
 	err := json.Unmarshal([]byte(args.JSON), &reserved)
 	if err != nil {
-		return nil, err
+		return nil
 	}
-	return reserved, nil
+	return reserved
 }
 
-func StringifyReserved(args *types.ArgsStringifyReserved) (string, error) {
+func StringifyReserved(args *types.ArgsStringifyReserved) (string) {
 	jsonString, err := json.Marshal(args.Reserved)
 	if err != nil {
-		return "", err
+		return ""
 	}
-	return string(jsonString), nil
+	return string(jsonString)
 }
