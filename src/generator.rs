@@ -156,7 +156,7 @@ impl Generate {
             if implementation == "go" {
                 subpath = "module";
             } else {
-                subpath = "src;"
+                subpath = "src";
             }
             let destination_source_folder = &destination_path.join(subpath);
             fs::create_dir(destination_source_folder)?;

@@ -317,18 +317,12 @@ impl Engine {
 
         let cli = PolywrapCli::new();
         let mut command = cli.command.unwrap();
-        let mut build = command
+        let build = command
             .arg("build")
             .arg("-v")
             .arg("-l")
             .arg("./log.txt")
             .current_dir(&directory);
-
-        if let Some(i) = implementation {
-            if i == "go" {
-                build = build.arg("-s").arg("local")
-            }
-        }
 
         if let Ok(output) = build.output() {
             let message = if let Some(i) = implementation {
