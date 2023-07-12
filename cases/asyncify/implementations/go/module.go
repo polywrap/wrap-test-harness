@@ -1,67 +1,66 @@
 package module
 
 import (
-	"errors"
 	"github.com/polywrap/wrap-test-harness/go/module/wrap/types"
 	storage_module "github.com/polywrap/wrap-test-harness/go/module/wrap/imported/storage"
 	"strconv"
 )
 
-func GetData(args *types.MethodArgsGetData) (uint32, error) {
+func GetData() uint32 {
 	v, err := storage_module.MethodGetData(&storage_module.ArgsGetData{})
 	if err != nil {
-		return 0, errors.New(err.Error())
+		panic(err)
 	}
-	return uint32(v), nil
+	return uint32(v)
 }
 
-func SetDataWithLargeArgs(args *types.MethodArgsSetDataWithLargeArgs) (string, error) {
+func SetDataWithLargeArgs(args *types.MethodArgsSetDataWithLargeArgs) string {
 	largeString := args.Value
 	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 66})
 	if err != nil {
-		return "", errors.New(err.Error())
+		panic(err)
 	}
-	return largeString, nil
+	return largeString
 }
 
-func SetDataWithManyArgs(args *types.MethodArgsSetDataWithManyArgs) (string, error) {
+func SetDataWithManyArgs(args *types.MethodArgsSetDataWithManyArgs) string {
 	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 55})
 	if err != nil {
-		return "", errors.New(err.Error())
+		panic(err)
 	}
-	return args.ValueA + args.ValueB + args.ValueC + args.ValueD + args.ValueE + args.ValueF + args.ValueG + args.ValueH + args.ValueI + args.ValueJ + args.ValueK + args.ValueL, nil
+	return args.ValueA + args.ValueB + args.ValueC + args.ValueD + args.ValueE + args.ValueF + args.ValueG + args.ValueH + args.ValueI + args.ValueJ + args.ValueK + args.ValueL
 }
 
-func SetDataWithManyStructuredArgs(args *types.MethodArgsSetDataWithManyStructuredArgs) (bool, error) {
+func SetDataWithManyStructuredArgs(args *types.MethodArgsSetDataWithManyStructuredArgs) bool {
 	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 44})
 	if err != nil {
-		return false, errors.New(err.Error())
+		panic(err)
 	}
-	return true, nil
+	return true
 }
 
-func LocalVarMethod(args *types.MethodArgsLocalVarMethod) (bool, error) {
+func LocalVarMethod() bool {
 	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 88})
 	if err != nil {
-		return false, errors.New(err.Error())
+		panic(err)
 	}
-	return true, nil
+	return true
 }
 
-func GlobalVarMethod(args *types.MethodArgsGlobalVarMethod) (bool, error) {
+func GlobalVarMethod() bool {
 	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 77})
 	if err != nil {
-		return false, errors.New(err.Error())
+		panic(err)
 	}
-	return true, nil
+	return true
 }
 
-func SubsequentInvokes(args *types.MethodArgsSubsequentInvokes) ([]string, error) {
+func SubsequentInvokes(args *types.MethodArgsSubsequentInvokes) []string {
 	var result []string
 	var err error
 
 	for i := 0; i < int(args.NumberOfTimes); i++ {
-		_, errSet := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: i})
+		_, errSet := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: int32(i)})
 		if errSet != nil {
 			err = errSet
 			break
@@ -71,10 +70,10 @@ func SubsequentInvokes(args *types.MethodArgsSubsequentInvokes) ([]string, error
 			err = errGet
 			break
 		}
-		result = append(result, strconv.Itoa(data))
+		result = append(result, strconv.Itoa(int(data)))
 	}
 	if err != nil {
-		return nil, errors.New(err.Error())
+		panic(err)
 	}
-	return result, nil
+	return result
 }
