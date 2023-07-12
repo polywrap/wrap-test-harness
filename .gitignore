@@ -7,3 +7,6 @@ wrap
 results.json
 /wrappers
 yarn.lock
+.env
+venv/
+pyexpr/

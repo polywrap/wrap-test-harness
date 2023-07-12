@@ -2,56 +2,59 @@ package module
 
 import (
 	"encoding/json"
-	"errors"
+	"github.com/valyala/fastjson"
 	"github.com/polywrap/wrap-test-harness/go/module/wrap/types"
 )
 
-func Stringify(args *types.ArgsStringify) (string, error) {
+func Stringify(args *types.MethodArgsStringify) (string) {
 	var newString string
 	for _, object := range args.Values {
 		newString += object.String()
 	}
-	return newString, nil
-}
-
-func Parse(args *types.ArgsParse) (interface{}) {
-	var value interface{}
-	err := json.Unmarshal([]byte(args.Value), &value)
-	if err != nil {
-		return nil, err
-	}
-	return value
-}
-
-func StringifyObject(args *types.ArgsStringifyObject) (string) {
-	var newString string
-	newString += args.Object.JSONA.String()
-	newString += args.Object.JSONB.String()
 	return newString
 }
 
-func MethodJSON(args *types.ArgsMethodJSON) (interface{}) {
-	value := map[string]interface{}{
-		"valueA": args.ValueA,
-		"valueB": args.ValueB,
-		"valueC": args.ValueC,
+func Parse(args *types.MethodArgsParse) *fastjson.Value {
+	var value fastjson.Value
+	err := json.Unmarshal([]byte(args.Value), &value)
+	if err != nil {
+		panic(err)
+	}
+	return &value
+}
+
+func StringifyObject(args *types.MethodArgsStringifyObject) (string) {
+	var newString string
+	newString += args.Object.JsonA.String()
+	newString += args.Object.JsonB.String()
+	return newString
+}
+
+func MethodJSON(args *types.MethodArgsMethodJSON) *fastjson.Value {
+	jsonValue, jsonErr := json.Marshal(args)
+	if jsonErr != nil {
+		panic(jsonErr)
+	}
+	value, err := fastjson.ParseBytes(jsonValue)
+	if err != nil {
+		panic(err)
 	}
 	return value
 }
 
-func ParseReserved(args *types.ArgsParseReserved) (interface{}) {
-	var reserved interface{}
-	err := json.Unmarshal([]byte(args.JSON), &reserved)
+func ParseReserved(args *types.MethodArgsParseReserved) types.Reserved {
+	var reserved types.Reserved
+	err := json.Unmarshal([]byte(args.Json), &reserved)
 	if err != nil {
-		return nil
+		panic(err)
 	}
 	return reserved
 }
 
-func StringifyReserved(args *types.ArgsStringifyReserved) (string) {
+func StringifyReserved(args *types.MethodArgsStringifyReserved) (string) {
 	jsonString, err := json.Marshal(args.Reserved)
 	if err != nil {
-		return ""
+		panic(err)
 	}
 	return string(jsonString)
 }
