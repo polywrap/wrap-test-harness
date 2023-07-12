@@ -32,7 +32,11 @@ async fn main() -> Result<(), HarnessError> {
     Engine::start(
         destination_path,
         source_path
-    ).execute(feature, implementation, sanitized_args.wrappers_path.is_some()).await?;
+    ).execute(
+        feature,
+        implementation,
+        sanitized_args.wrappers_path.is_some()
+    ).await?;
 
     if let Some(p) = sanitized_args.wrappers_path.as_deref() {
         if !p.eq("./wrappers") {

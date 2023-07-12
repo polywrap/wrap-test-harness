@@ -2,7 +2,7 @@ package module
 
 import (
 	"github.com/polywrap/wrap-test-harness/go/module/wrap/types"
-	big "github.com/polywrap/go-wrap/polywrap/msgpack/big"
+	big "github.com/polywrap/go-wrap/msgpack/big"
 )
 
 func Method(args *types.MethodArgsMethod) (*big.Int) {

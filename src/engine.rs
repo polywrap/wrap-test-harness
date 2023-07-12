@@ -415,18 +415,19 @@ impl Engine {
 
         test.current_dir(&directory);
 
-        let mut message_error = String::new();
-        if test.output().is_err() {
-            message_error = test.output().unwrap_err().to_string();
-        };
+        let test_result = test.output();
 
-        let stderr = test.output().unwrap().stderr;
-        if !stderr.is_empty() {
-            message_error = String::from_utf8(stderr).unwrap();
+        if test_result.is_err() {
+            return Err(TestError::TestExecutionError(test_result.unwrap_err().to_string()));
         }
 
-        if !message_error.is_empty() {
-            let message = format!("Error on polywrap CLI Test command: {}", message_error);
+        let test_output = test.output().unwrap();
+
+        let stderr = test_output.stderr;
+        if !stderr.is_empty() {
+            let stdout_str = String::from_utf8(test_output.stdout).unwrap();
+            let stderr_str = String::from_utf8(stderr).unwrap();
+            let message = format!("Error on polywrap CLI Test command. STDOUT:\n{}\n\nSTDERR:\n{}", stdout_str, stderr_str);
             return Err(TestError::TestExecutionError(message));
         }
 

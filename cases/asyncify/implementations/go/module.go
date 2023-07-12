@@ -9,7 +9,7 @@ import (
 func GetData() uint32 {
 	v, err := storage_module.MethodGetData(&storage_module.ArgsGetData{})
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	return uint32(v)
 }
@@ -18,7 +18,7 @@ func SetDataWithLargeArgs(args *types.MethodArgsSetDataWithLargeArgs) string {
 	largeString := args.Value
 	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 66})
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	return largeString
 }
@@ -26,7 +26,7 @@ func SetDataWithLargeArgs(args *types.MethodArgsSetDataWithLargeArgs) string {
 func SetDataWithManyArgs(args *types.MethodArgsSetDataWithManyArgs) string {
 	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 55})
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	return args.ValueA + args.ValueB + args.ValueC + args.ValueD + args.ValueE + args.ValueF + args.ValueG + args.ValueH + args.ValueI + args.ValueJ + args.ValueK + args.ValueL
 }
@@ -34,7 +34,7 @@ func SetDataWithManyArgs(args *types.MethodArgsSetDataWithManyArgs) string {
 func SetDataWithManyStructuredArgs(args *types.MethodArgsSetDataWithManyStructuredArgs) bool {
 	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 44})
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	return true
 }
@@ -42,7 +42,7 @@ func SetDataWithManyStructuredArgs(args *types.MethodArgsSetDataWithManyStructur
 func LocalVarMethod() bool {
 	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 88})
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	return true
 }
@@ -50,7 +50,7 @@ func LocalVarMethod() bool {
 func GlobalVarMethod() bool {
 	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 77})
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	return true
 }
@@ -70,10 +70,11 @@ func SubsequentInvokes(args *types.MethodArgsSubsequentInvokes) []string {
 			err = errGet
 			break
 		}
-		result = append(result, strconv.Itoa(int(data)))
+		str := strconv.Itoa(int(data))
+		result = append(result, str)
 	}
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	return result
 }
