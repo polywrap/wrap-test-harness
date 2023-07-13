@@ -1,7 +1,7 @@
 package module
 
 import (
-	"github.com/polywrap/wrap-test-harness/go/module/wrap/imported/subinvoked"
+	subinvoked "github.com/polywrap/wrap-test-harness/go/module/wrap/imported/subinvoked"
 	"github.com/polywrap/wrap-test-harness/go/module/wrap/types"
 )
 
