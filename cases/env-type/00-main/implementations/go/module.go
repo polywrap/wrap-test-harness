@@ -4,7 +4,7 @@ import (
 	"github.com/polywrap/wrap-test-harness/go/module/wrap/types"
 )
 
-func MethodNoEnv(args *types.MethodArgsMethodNoEnv) string {
+func MethodNoEnv(args *types.ArgsMethodNoEnv) string {
 	return args.Arg
 }
 

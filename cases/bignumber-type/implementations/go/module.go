@@ -5,7 +5,7 @@ import (
 	big "github.com/polywrap/go-wrap/msgpack/big"
 )
 
-func Method(args *types.MethodArgsMethod) (*big.Int) {
+func Method(args *types.ArgsMethod) (*big.Int) {
 	result := big.NewInt(0).Mul(args.Arg1, args.Obj.Prop1)
 
 	if args.Arg2 != nil {

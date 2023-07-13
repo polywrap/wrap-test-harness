@@ -5,6 +5,6 @@ import (
 	"github.com/polywrap/wrap-test-harness/go/module/wrap/types"
 )
 
-func SubinvokeMethodRequireEnv(_ *types.MethodArgsSubinvokeMethodRequireEnv, _ types.Env) subinvoked_module.SubinvokedEnv {
-	return subinvoked_module.MethodRequireEnv(&subinvoked_module.ArgsMethodRequireEnv{})
+func SubinvokeMethodRequireEnv(_ *types.ArgsSubinvokeMethodRequireEnv, _ types.Env) subinvoked_module.SubinvokedEnv {
+	return subinvoked_module.RequireEnv(&subinvoked_module.ArgsMethodRequireEnv{})
 }

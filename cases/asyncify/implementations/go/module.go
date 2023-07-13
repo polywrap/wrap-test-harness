@@ -7,32 +7,32 @@ import (
 )
 
 func GetData() uint32 {
-	v, err := storage_module.MethodGetData(&storage_module.ArgsGetData{})
+	v, err := storage_module.GetData(&storage_module.ArgsGetData{})
 	if err != nil {
 		panic(err.Error())
 	}
 	return uint32(v)
 }
 
-func SetDataWithLargeArgs(args *types.MethodArgsSetDataWithLargeArgs) string {
+func SetDataWithLargeArgs(args *types.ArgsSetDataWithLargeArgs) string {
 	largeString := args.Value
-	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 66})
+	_, err := storage_module.SetData(&storage_module.ArgsSetData{Value: 66})
 	if err != nil {
 		panic(err.Error())
 	}
 	return largeString
 }
 
-func SetDataWithManyArgs(args *types.MethodArgsSetDataWithManyArgs) string {
-	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 55})
+func SetDataWithManyArgs(args *types.ArgsSetDataWithManyArgs) string {
+	_, err := storage_module.SetData(&storage_module.ArgsSetData{Value: 55})
 	if err != nil {
 		panic(err.Error())
 	}
 	return args.ValueA + args.ValueB + args.ValueC + args.ValueD + args.ValueE + args.ValueF + args.ValueG + args.ValueH + args.ValueI + args.ValueJ + args.ValueK + args.ValueL
 }
 
-func SetDataWithManyStructuredArgs(args *types.MethodArgsSetDataWithManyStructuredArgs) bool {
-	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 44})
+func SetDataWithManyStructuredArgs(args *types.ArgsSetDataWithManyStructuredArgs) bool {
+	_, err := storage_module.SetData(&storage_module.ArgsSetData{Value: 44})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -40,7 +40,7 @@ func SetDataWithManyStructuredArgs(args *types.MethodArgsSetDataWithManyStructur
 }
 
 func LocalVarMethod() bool {
-	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 88})
+	_, err := storage_module.SetData(&storage_module.ArgsSetData{Value: 88})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -48,24 +48,24 @@ func LocalVarMethod() bool {
 }
 
 func GlobalVarMethod() bool {
-	_, err := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: 77})
+	_, err := storage_module.SetData(&storage_module.ArgsSetData{Value: 77})
 	if err != nil {
 		panic(err.Error())
 	}
 	return true
 }
 
-func SubsequentInvokes(args *types.MethodArgsSubsequentInvokes) []string {
+func SubsequentInvokes(args *types.ArgsSubsequentInvokes) []string {
 	var result []string
 	var err error
 
 	for i := 0; i < int(args.NumberOfTimes); i++ {
-		_, errSet := storage_module.MethodSetData(&storage_module.ArgsSetData{Value: int32(i)})
+		_, errSet := storage_module.SetData(&storage_module.ArgsSetData{Value: int32(i)})
 		if errSet != nil {
 			err = errSet
 			break
 		}
-		data, errGet := storage_module.MethodGetData(&storage_module.ArgsGetData{})
+		data, errGet := storage_module.GetData(&storage_module.ArgsGetData{})
 		if errGet != nil {
 			err = errGet
 			break

@@ -2,7 +2,7 @@ package module
 
 import "github.com/polywrap/wrap-test-harness/go/module/wrap/types"
 
-func Method1(args *types.MethodArgsMethod1) []types.Output {
+func Method1(args *types.ArgsMethod1) []types.Output {
 	outputs := []types.Output{
 		{
 			Prop: args.Arg1.Prop,
@@ -30,7 +30,7 @@ func Method1(args *types.MethodArgsMethod1) []types.Output {
 	return outputs
 }
 
-func Method2(args *types.MethodArgsMethod2) *types.Output {
+func Method2(args *types.ArgsMethod2) *types.Output {
 	if args.Arg.Prop == "null" {
 		return nil
 	}
@@ -42,7 +42,7 @@ func Method2(args *types.MethodArgsMethod2) *types.Output {
 	}
 }
 
-func Method3(args *types.MethodArgsMethod3) []*types.Output {
+func Method3(args *types.ArgsMethod3) []*types.Output {
 	outputs := []*types.Output{
 		nil,
 	}
@@ -55,7 +55,7 @@ func Method3(args *types.MethodArgsMethod3) []*types.Output {
 	return outputs
 }
 
-func Method4(args *types.MethodArgsMethod4) types.Output {
+func Method4(args *types.ArgsMethod4) types.Output {
 	return types.Output{
 		Prop: string(args.Arg.Prop),
 		Nested: types.Nested{
