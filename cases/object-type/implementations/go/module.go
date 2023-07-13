@@ -19,6 +19,13 @@ func Method1(args *types.MethodArgsMethod1) []types.Output {
 				Prop: arg2.Circular.Prop,
 			},
 		})
+	} else {
+		outputs = append(outputs, types.Output{
+			Prop: "",
+			Nested: types.Nested{
+				Prop: "",
+			},
+		})
 	}
 	return outputs
 }
