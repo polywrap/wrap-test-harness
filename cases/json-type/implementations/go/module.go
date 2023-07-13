@@ -15,12 +15,12 @@ func Stringify(args *types.MethodArgsStringify) (string) {
 }
 
 func Parse(args *types.MethodArgsParse) *fastjson.Value {
-	var value fastjson.Value
-	err := json.Unmarshal([]byte(args.Value), &value)
+	p := fastjson.Parser{}
+	value, err := p.Parse(args.Value)
 	if err != nil {
 		panic(err)
 	}
-	return &value
+	return value
 }
 
 func StringifyObject(args *types.MethodArgsStringifyObject) (string) {
