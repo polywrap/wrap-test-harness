@@ -12,7 +12,7 @@ working:
 - object-type
 - subinvoke
 
-not-working:
-- resolver
+building:
 - env-type
+- resolver
 - interface-invoke

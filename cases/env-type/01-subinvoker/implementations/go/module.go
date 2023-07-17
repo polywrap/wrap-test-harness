@@ -6,7 +6,7 @@ import (
 )
 
 func SubinvokeMethodNoEnv(args *types.ArgsSubinvokeMethodNoEnv) string {
-	value, err := subinvoked.NoEnv(&subinvoked.ArgsMethodNoEnv{Arg: args.Arg})
+	value, err := subinvoked.MethodNoEnv(&subinvoked.ArgsMethodNoEnv{Arg: args.Arg})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -14,7 +14,7 @@ func SubinvokeMethodNoEnv(args *types.ArgsSubinvokeMethodNoEnv) string {
 }
 
 func SubinvokeMethodRequireEnv() subinvoked.Subinvoked_Env {
-	value, err := subinvoked.RequireEnv(&subinvoked.ArgsMethodRequireEnv{})
+	value, err := subinvoked.MethodRequireEnv(&subinvoked.ArgsMethodRequireEnv{})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -22,10 +22,9 @@ func SubinvokeMethodRequireEnv() subinvoked.Subinvoked_Env {
 }
 
 func SubinvokeMethodOptionalEnv() *subinvoked.Subinvoked_Env {
-	value, err := subinvoked.OptionalEnv(&subinvoked.ArgsMethodOptionalEnv{})
+	value, err := subinvoked.MethodOptionalEnv(&subinvoked.ArgsMethodOptionalEnv{})
 	if err != nil {
 		panic(err.Error())
 	}
 	return value
 }
-
