@@ -15,6 +15,6 @@ impl ModuleTrait for Module {
             result = result.mul(args.obj.prop2.unwrap().0);
         }
 
-        Ok(result)
+        Ok(BigIntWrapper(result))
     }
 }
