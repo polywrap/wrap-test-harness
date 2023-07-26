@@ -1,4 +1,4 @@
-#import { Module, InterfaceType } into Interface from "wrap://ens/interface.eth"
+#import { Module, InterfaceType } into Interface from "wrap://authority/interface"
 
 type Module implements Interface_Module {
   moduleMethod(

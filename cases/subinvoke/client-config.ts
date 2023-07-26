@@ -9,5 +9,7 @@ export function configure(builder: IClientConfigBuilder): IClientConfigBuilder {
     const asInvokeImplementationUri = `fs/${path.resolve(asInvokeWrapperPath)}/build`
 
 
-    return builder.addRedirect("ens/imported-subinvoke.eth", asSubinvokeImplementationUri).addRedirect("ens/imported-invoke.eth", asInvokeImplementationUri);
+    return builder
+        .addRedirect("authority/imported-subinvoke", asSubinvokeImplementationUri)
+        .addRedirect("authority/imported-invoke", asInvokeImplementationUri);
 }

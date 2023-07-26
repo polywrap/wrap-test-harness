@@ -2,7 +2,7 @@
   "source": {
     "import_abis": [
       {
-        "uri": "wrap://ens/uri-resolver.core.polywrap.eth",
+        "uri": "wrap://wrapscan.io/polywrap/uri-resolver@1.0",
         "abi": "../../../00-interface/build/wrap.info"
       }
     ]

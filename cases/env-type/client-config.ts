@@ -29,5 +29,5 @@ export function configure(builder: IClientConfigBuilder): IClientConfigBuilder {
 
   return builder
     .addEnvs(envs)
-    .addRedirect("wrap://ens/external-env.polywrap.eth", rsExternalWrapperUri);
+    .addRedirect("wrap://authority/external-env", rsExternalWrapperUri);
 }

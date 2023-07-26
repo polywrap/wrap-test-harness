@@ -1,4 +1,4 @@
-#import { Module } into Storage from "wrap://ens/memory-storage.polywrap.eth"
+#import { Module } into Storage from "wrap://plugin/memory-storage"
 
 type Module {
   getData: UInt32!
