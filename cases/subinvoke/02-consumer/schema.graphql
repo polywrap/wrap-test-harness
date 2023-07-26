@@ -1,4 +1,4 @@
-#import * into ImportedInvoke from "ens/imported-invoke.eth"
+#import * into ImportedInvoke from "authority/imported-invoke"
 
 type Module {
   addAndIncrement(a: Int!, b: Int!): Int!
