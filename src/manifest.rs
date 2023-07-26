@@ -225,7 +225,7 @@ impl Manifest {
             None => (None, Some("./schema.graphql".to_string()), Some("interface".to_string()))
         };
         Manifest {
-            format: Some("0.3.0".to_string()),
+            format: Some("0.5.0".to_string()),
             project: Some(Project {
                 name: Some(feature.to_string()),
                 _type,

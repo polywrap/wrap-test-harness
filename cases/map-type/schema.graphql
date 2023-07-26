@@ -1,4 +1,4 @@
-#import { Module, CustomMap } into Imported from "wrap://ens/imported-map.eth"
+#import { Module, CustomMap } into Imported from "wrap://authority/imported-map"
 
 type Module {
     getKey(

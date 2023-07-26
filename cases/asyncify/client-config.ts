@@ -18,7 +18,7 @@ export function configure(builder: IClientConfigBuilder): IClientConfigBuilder {
     });
   };
   return builder.addPackage(
-    "wrap://ens/memory-storage.polywrap.eth",
+    "wrap://plugin/memory-storage",
     memoryStoragePlugin()
   );
 }

@@ -1,7 +1,7 @@
 {
   "source": {
     "import_abis": [{
-      "uri": "ens/memory-storage.polywrap.eth",
+      "uri": "plugin/memory-storage",
       "abi": "../../memory-storage.graphql"
     }]
   }
