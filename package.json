@@ -5,7 +5,7 @@
     "version:apply": "yarn version --new-version $(cat VERSION) --no-git-tag-version"
   },
   "dependencies": {
-    "@polywrap/plugin-js": "0.10.0",
-    "polywrap": "~0.11.0-pre.0"
+    "@polywrap/plugin-js": "~0.12.0",
+    "polywrap": "~0.11.0"
   }
 }
