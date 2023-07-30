@@ -24,6 +24,12 @@ lazy_static! {
             module: "./Cargo.toml",
             id: "rs"
         });
+        map.insert("go", Implementation {
+            dependency: "go.mod",
+            name: "golang",
+            module: "./go.mod",
+            id: "go"
+        });
         map
     };
 }

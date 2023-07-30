@@ -18,13 +18,13 @@ export function configure(builder: IClientConfigBuilder): IClientConfigBuilder {
     });
   };
   return builder.addPackage(
-    "wrap://ens/memory-storage.polywrap.eth",
+    "wrap://plugin/memory-storage",
     memoryStoragePlugin()
   );
 }
 
 class MemoryStoragePlugin extends PluginModule<Record<string, unknown>> {
-  private _value: number;
+  private _value: number = 0;
 
   async getData(_: {}): Promise<number> {
     await this.sleep(50);

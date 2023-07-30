@@ -1,11 +1,11 @@
 {
   "name": "wrap-test-harness",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "scripts": {
     "version:apply": "yarn version --new-version $(cat VERSION) --no-git-tag-version"
   },
   "dependencies": {
-    "@polywrap/plugin-js": "0.10.0",
-    "polywrap": "0.10.3"
+    "@polywrap/plugin-js": "~0.12.0",
+    "polywrap": "~0.11.0"
   }
 }
