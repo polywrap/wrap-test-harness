@@ -1,21 +1,20 @@
 use std::ops::Mul;
 
-use polywrap_wasm_rs::BigInt;
+use polywrap_msgpack_serde::BigIntWrapper;
 pub mod wrap;
-use wrap::module::{Module, ModuleTrait};
 pub use wrap::*;
 
 impl ModuleTrait for Module {
-    fn method(args: ArgsMethod) -> Result<BigInt, String> {
-        let mut result = args.arg1.mul(args.obj.prop1);
+    fn method(args: ArgsMethod) -> Result<BigIntWrapper, String> {
+        let mut result = args.arg1.0.mul(args.obj.prop1.0);
 
         if args.arg2.is_some() {
-            result = result.mul(args.arg2.unwrap());
+            result = result.mul(args.arg2.unwrap().0);
         }
         if args.obj.prop2.is_some() {
-            result = result.mul(args.obj.prop2.unwrap());
+            result = result.mul(args.obj.prop2.unwrap().0);
         }
 
-        Ok(result)
+        Ok(BigIntWrapper(result))
     }
 }

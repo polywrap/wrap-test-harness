@@ -16,11 +16,11 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: 1.69.0
           override: true
 
       - name: Install Clippy
-        run:  rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
+        run:  rustup component add clippy
 
       - name: Lint
         run: cargo clippy
@@ -34,7 +34,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: 1.69.0
           override: true
 
       - name: Read .nvmrc into env.NVMRC
