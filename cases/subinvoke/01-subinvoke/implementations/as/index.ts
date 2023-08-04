@@ -18,10 +18,10 @@ export class Module extends ModuleBase {
     return ImportedSubinvoke_Module.add(importedArgs).unwrap() + 1
   }
 
-  invokeThrowError(args: Args_invokeThrowError): boolean {
-    let importedArgs_throwError: Args_subinvokeThrowError = {
-      a: args.a
+  subinvokeThrowError(args: Args_subinvokeThrowError): boolean {
+    let importedArgs_throwError: Args_invokeThrowError = {
+      error: args.error
     }
-    return ImportedSubinvoke_Module.subinvokeThrowError(importedArgs_throwError).unwrap();
+    return ImportedSubinvoke_Module.invokeThrowError(importedArgs_throwError).unwrap();
   }
 }

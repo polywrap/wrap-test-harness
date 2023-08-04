@@ -9,7 +9,7 @@ export class Module extends ModuleBase {
     return args.a + args.b
   }
 
-  subinvokeThrowError(args: Args_subinvokeThrowError): bool {
-    throw new Error(args.a)
+  subinvokeThrowError(args: Args_invokeThrowError): bool {
+    throw new Error(args.error)
   }
 }
