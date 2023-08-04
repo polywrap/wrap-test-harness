@@ -1,7 +1,7 @@
 {
   "source": {
     "import_abis": [{
-      "uri": "ens/imported-map.eth",
+      "uri": "authority/imported-map",
       "abi": "../../schema.import.graphql"
     }]
   }

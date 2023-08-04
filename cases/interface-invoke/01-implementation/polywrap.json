@@ -2,7 +2,7 @@
   "source": {
     "import_abis": [
       {
-        "uri": "wrap://ens/interface.eth",
+        "uri": "wrap://authority/interface",
         "abi": "../../../00-interface/build/wrap.info"
       }
     ]
