@@ -1,7 +1,6 @@
 pub mod wrap;
 pub use wrap::*;
 use wrap::env::Env;
-use wrap::module::{ModuleTrait, Module};
 
 impl ModuleTrait for Module {
     fn method_no_env(args: ArgsMethodNoEnv) -> Result<String, String> {
