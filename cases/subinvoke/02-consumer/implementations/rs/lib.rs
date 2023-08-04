@@ -16,15 +16,15 @@ impl ModuleTrait for Module {
     }
 
     fn throw_error(args: ArgsThrowError) -> Result<bool, String> {
-        Ok(ImportedInvokeModule::invoke_throw_error(
-            &imported::imported_invoke_module::ArgsInvokeThrowError { a: args.a },
+        Ok(ImportedInvokeModule::subinvoke_throw_error(
+            &imported::imported_invoke_module::ArgsSubinvokeThrowError { error: args.error },
         )
         .unwrap())
     }
 
     fn rethrow_error(args: ArgsRethrowError) -> Result<bool, String> {
-        let result = ImportedInvokeModule::invoke_throw_error(
-            &imported::imported_invoke_module::ArgsInvokeThrowError { a: args.a },
+        let result = ImportedInvokeModule::subinvoke_throw_error(
+            &imported::imported_invoke_module::ArgsSubinvokeThrowError { error: args.error },
         );
         if let Err(err) = result {
             panic!("{}", err);

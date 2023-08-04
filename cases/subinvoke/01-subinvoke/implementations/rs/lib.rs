@@ -12,7 +12,7 @@ impl ModuleTrait for Module {
             + 1)
     }
 
-    fn subinvoke_throw_error(args: ArgsInvokeThrowError) -> Result<bool, String> {
+    fn subinvoke_throw_error(args: ArgsSubinvokeThrowError) -> Result<bool, String> {
         Ok(ImportedSubinvokeModule::invoke_throw_error(
             &imported::imported_subinvoke_module::ArgsInvokeThrowError { error: args.error },
         )

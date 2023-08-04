@@ -1,6 +1,6 @@
 import {
   Args_add,
-  Args_subinvokeThrowError,
+  Args_invokeThrowError,
   ModuleBase
 } from "./wrap";
 
@@ -9,7 +9,7 @@ export class Module extends ModuleBase {
     return args.a + args.b
   }
 
-  subinvokeThrowError(args: Args_invokeThrowError): bool {
+  invokeThrowError(args: Args_invokeThrowError): bool {
     throw new Error(args.error)
   }
 }

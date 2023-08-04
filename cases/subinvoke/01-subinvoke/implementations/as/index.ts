@@ -1,12 +1,12 @@
 import {
   Args_addAndIncrement,
-  Args_invokeThrowError,
+  Args_subinvokeThrowError,
   ImportedSubinvoke_Module,
   ModuleBase
 } from "./wrap";
 import {
   Args_add as ImportedArgs_add,
-  Args_subinvokeThrowError
+  Args_invokeThrowError
 } from "./wrap/imported/ImportedSubinvoke_Module/serialization";
 
 export class Module extends ModuleBase {
