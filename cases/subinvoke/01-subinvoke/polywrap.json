@@ -3,7 +3,7 @@
     "import_abis": [
       {
         "uri": "wrap://authority/imported-subinvoke",
-        "abi": "../../../00-subinvoke/implementations/${implementation}/build/wrap.info"
+        "abi": "../../../00-invoke/implementations/${implementation}/build/wrap.info"
       }
     ]
   }

@@ -15,7 +15,11 @@ export class Module extends ModuleBase {
         manifest: null,
       };
     }
-    
+
+    if (args.authority == "expected-error") {
+      throw new Error("Expected error thrown");
+    }
+
     return {
       uri: "wrap://" + args.authority + "/" + args.path,
       manifest: null,

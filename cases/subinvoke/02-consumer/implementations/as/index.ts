@@ -19,11 +19,11 @@ export class Module extends ModuleBase {
   }
 
   throwError(args: Args_throwError): bool {
-    return ImportedInvoke_Module.invokeThrowError({ a: args.a }).unwrap();
+    return ImportedInvoke_Module.subinvokeThrowError({ error: args.error }).unwrap();
   }
 
   rethrowError(args: Args_rethrowError): bool {
-    let result = ImportedInvoke_Module.invokeThrowError({ a: args.a });
+    let result = ImportedInvoke_Module.subinvokeThrowError({ error: args.error });
     if (result.isErr) {
       throw Error(result.unwrapErr().toString());
     }
