@@ -1,0 +1,10 @@
+type Module {
+    returnCustomMap(
+        foo: CustomMap!
+    ): CustomMap!
+}
+
+type CustomMap {
+    map: Map! @annotate(type: "Map<String!, Int!>!")
+    nestedMap: Map! @annotate(type: "Map<String!, Map<String!, Int!>!>!")
+}

@@ -1,0 +1,28 @@
+{
+  "name": "map-type",
+  "validation": "./validator.cue",
+  "jobs": {
+    "returnCustomMap": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "returnCustomMap",
+          "args": {
+            "foo": {
+              "map": {
+                "Hello": 1,
+                "Heyo": 50
+              },
+              "nestedMap": {
+                "nested": {
+                  "Hello": 1,
+                  "Heyo": 50
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

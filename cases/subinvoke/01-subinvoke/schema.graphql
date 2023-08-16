@@ -3,4 +3,6 @@
 type Module {
   addAndIncrement(a: Int!, b: Int!): Int!
   subinvokeThrowError(error: String!): Boolean!
+  subinvokeMethodNotFound: Boolean!
+  subinvokeArgsIncorrect: Boolean!
 }
