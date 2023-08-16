@@ -35,6 +35,24 @@
           }
         }
       ]
+    },
+    "subinvokeMethodNotFound": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "subinvokeMethodNotFound",
+          "args": {}
+        }
+      ]
+    },
+    "subinvokeArgsIncorrect": {
+      "steps": [
+        {
+          "uri": "wrap://fs/./build",
+          "method": "subinvokeArgsIncorrect",
+          "args": {}
+        }
+      ]
     }
   }
 }
