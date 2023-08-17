@@ -2,12 +2,12 @@ package module
 
 import (
 	"github.com/polywrap/wrap-test-harness/go/module/wrap/types"
-	storage_module "github.com/polywrap/wrap-test-harness/go/module/wrap/imported/storage"
+	storage "github.com/polywrap/wrap-test-harness/go/module/wrap/imported/storage"
 	"strconv"
 )
 
 func GetData() uint32 {
-	v, err := storage_module.GetData(&storage_module.ArgsGetData{})
+	v, err := storage.Storage_GetData(&storage.Storage_ArgsGetData{})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -16,7 +16,7 @@ func GetData() uint32 {
 
 func SetDataWithLargeArgs(args *types.ArgsSetDataWithLargeArgs) string {
 	largeString := args.Value
-	_, err := storage_module.SetData(&storage_module.ArgsSetData{Value: 66})
+	_, err := storage.Storage_SetData(&storage.Storage_ArgsSetData{Value: 66})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -24,7 +24,7 @@ func SetDataWithLargeArgs(args *types.ArgsSetDataWithLargeArgs) string {
 }
 
 func SetDataWithManyArgs(args *types.ArgsSetDataWithManyArgs) string {
-	_, err := storage_module.SetData(&storage_module.ArgsSetData{Value: 55})
+	_, err := storage.Storage_SetData(&storage.Storage_ArgsSetData{Value: 55})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -32,7 +32,7 @@ func SetDataWithManyArgs(args *types.ArgsSetDataWithManyArgs) string {
 }
 
 func SetDataWithManyStructuredArgs(args *types.ArgsSetDataWithManyStructuredArgs) bool {
-	_, err := storage_module.SetData(&storage_module.ArgsSetData{Value: 44})
+	_, err := storage.Storage_SetData(&storage.Storage_ArgsSetData{Value: 44})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -40,7 +40,7 @@ func SetDataWithManyStructuredArgs(args *types.ArgsSetDataWithManyStructuredArgs
 }
 
 func LocalVarMethod() bool {
-	_, err := storage_module.SetData(&storage_module.ArgsSetData{Value: 88})
+	_, err := storage.Storage_SetData(&storage.Storage_ArgsSetData{Value: 88})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -48,7 +48,7 @@ func LocalVarMethod() bool {
 }
 
 func GlobalVarMethod() bool {
-	_, err := storage_module.SetData(&storage_module.ArgsSetData{Value: 77})
+	_, err := storage.Storage_SetData(&storage.Storage_ArgsSetData{Value: 77})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -60,12 +60,12 @@ func SubsequentInvokes(args *types.ArgsSubsequentInvokes) []string {
 	var err error
 
 	for i := 0; i < int(args.NumberOfTimes); i++ {
-		_, errSet := storage_module.SetData(&storage_module.ArgsSetData{Value: int32(i)})
+		_, errSet := storage.Storage_SetData(&storage.Storage_ArgsSetData{Value: int32(i)})
 		if errSet != nil {
 			err = errSet
 			break
 		}
-		data, errGet := storage_module.GetData(&storage_module.ArgsGetData{})
+		data, errGet := storage.Storage_GetData(&storage.Storage_ArgsGetData{})
 		if errGet != nil {
 			err = errGet
 			break
