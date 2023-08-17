@@ -1,28 +1,28 @@
 package module
 
 import (
-	subinvoked "github.com/polywrap/wrap-test-harness/go/module/wrap/imported/subinvoked"
+	. "github.com/polywrap/wrap-test-harness/go/module/wrap/imported/subinvoked"
 	"github.com/polywrap/wrap-test-harness/go/module/wrap/types"
 )
 
 func SubinvokeMethodNoEnv(args *types.ArgsSubinvokeMethodNoEnv) string {
-	value, err := subinvoked.MethodNoEnv(&subinvoked.ArgsMethodNoEnv{Arg: args.Arg})
+	value, err := Subinvoked_MethodNoEnv(&Subinvoked_ArgsMethodNoEnv{Arg: args.Arg})
 	if err != nil {
 		panic(err.Error())
 	}
 	return value
 }
 
-func SubinvokeMethodRequireEnv() subinvoked.Subinvoked_Env {
-	value, err := subinvoked.MethodRequireEnv(&subinvoked.ArgsMethodRequireEnv{})
+func SubinvokeMethodRequireEnv() Subinvoked_Env {
+	value, err := Subinvoked_MethodRequireEnv(&Subinvoked_ArgsMethodRequireEnv{})
 	if err != nil {
 		panic(err.Error())
 	}
 	return value
 }
 
-func SubinvokeMethodOptionalEnv() *subinvoked.Subinvoked_Env {
-	value, err := subinvoked.MethodOptionalEnv(&subinvoked.ArgsMethodOptionalEnv{})
+func SubinvokeMethodOptionalEnv() *Subinvoked_Env {
+	value, err := Subinvoked_MethodOptionalEnv(&Subinvoked_ArgsMethodOptionalEnv{})
 	if err != nil {
 		panic(err.Error())
 	}
