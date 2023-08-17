@@ -16,8 +16,8 @@ func AddAndIncrement(args *types.ArgsAddAndIncrement) int32 {
 	return value + 1
 }
 
-func InvokeThrowError(args *types.ArgsInvokeThrowError) bool {
-	result, err := imported_subinvoke.SubinvokeThrowError(&imported_subinvoke.ArgsSubinvokeThrowError{
+func SubinvokeThrowError(args *types.ArgsSubinvokeThrowError) bool {
+	result, err := imported_subinvoke.InvokeThrowError(&imported_subinvoke.ArgsInvokeThrowError{
 		A: args.A,
 	})
 	if err != nil {

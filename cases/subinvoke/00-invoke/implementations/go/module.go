@@ -8,6 +8,6 @@ func Add(args *types.ArgsAdd) int32 {
 	return args.A + args.B
 }
 
-func SubinvokeThrowError(args *types.ArgsSubinvokeThrowError) bool {
+func InvokeThrowError(args *types.ArgsnvokeThrowError) bool {
 	panic(args.A)
 }
