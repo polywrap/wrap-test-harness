@@ -1,9 +1,9 @@
-import { IClientConfigBuilder } from "@polywrap/client-config-builder-js";
+import { ClientConfigBuilder } from "@polywrap/client-config-builder-js";
 import { PluginModule, PluginPackage } from "@polywrap/plugin-js";
 import { latestWrapManifestVersion } from "@polywrap/wrap-manifest-types-js";
 import { parseSchema } from "@polywrap/schema-parse";
 
-export function configure(builder: IClientConfigBuilder): IClientConfigBuilder {
+export function configure(builder: ClientConfigBuilder): ClientConfigBuilder {
   const memoryStoragePlugin = () => {
     return PluginPackage.from(new MemoryStoragePlugin({}), {
       name: "memoryStorage",
@@ -17,7 +17,7 @@ export function configure(builder: IClientConfigBuilder): IClientConfigBuilder {
       `),
     });
   };
-  return builder.addPackage(
+  return builder.setPackage(
     "wrap://plugin/memory-storage",
     memoryStoragePlugin()
   );

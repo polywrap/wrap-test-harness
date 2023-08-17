@@ -2,5 +2,5 @@
 
 type Module {
   addAndIncrement(a: Int!, b: Int!): Int!
-  invokeThrowError(a: String!): Boolean!
+  subinvokeThrowError(error: String!): Boolean!
 }

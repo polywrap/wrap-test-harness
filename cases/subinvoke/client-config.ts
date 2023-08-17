@@ -1,7 +1,7 @@
-import { IClientConfigBuilder } from "@polywrap/client-config-builder-js";
+import { ClientConfigBuilder } from "@polywrap/client-config-builder-js";
 import path from "path";
 
-export function configure(builder: IClientConfigBuilder): IClientConfigBuilder {
+export function configure(builder: ClientConfigBuilder): ClientConfigBuilder {
     const asSubinvokeWrapperPath = path.join(__dirname, "00-subinvoke", "implementations", "as");
     const asSubinvokeImplementationUri = `fs/${path.resolve(asSubinvokeWrapperPath)}/build`
 
@@ -10,6 +10,6 @@ export function configure(builder: IClientConfigBuilder): IClientConfigBuilder {
 
 
     return builder
-        .addRedirect("authority/imported-subinvoke", asSubinvokeImplementationUri)
-        .addRedirect("authority/imported-invoke", asInvokeImplementationUri);
+        .setRedirect("authority/imported-subinvoke", asSubinvokeImplementationUri)
+        .setRedirect("authority/imported-invoke", asInvokeImplementationUri);
 }

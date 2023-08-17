@@ -7,7 +7,7 @@ impl ModuleTrait for Module {
         Ok(args.a + args.b)
     }
 
-    fn subinvoke_throw_error(args: ArgsSubinvokeThrowError) -> Result<bool, String> {
-        panic!("{}", args.a);
+    fn invoke_throw_error(args: ArgsInvokeThrowError) -> Result<bool, String> {
+        panic!("{}", args.error);
     }
 }
