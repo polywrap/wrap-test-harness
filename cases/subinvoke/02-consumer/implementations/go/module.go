@@ -2,11 +2,11 @@ package module
 
 import (
 	"github.com/polywrap/wrap-test-harness/go/module/wrap/types"
-	imported_invoke "github.com/polywrap/wrap-test-harness/go/module/wrap/imported/imported_invoke"
+	. "github.com/polywrap/wrap-test-harness/go/module/wrap/imported/imported_invoke"
 )
 
 func AddAndIncrement(args *types.ArgsAddAndIncrement) int32 {
-	value, err := imported_invoke.AddAndIncrement(&imported_invoke.ArgsAddAndIncrement{
+	value, err := ImportedInvoke_AddAndIncrement(&ImportedInvoke_ArgsAddAndIncrement{
 		A: args.A,
 		B: args.B,
 	})
@@ -17,8 +17,8 @@ func AddAndIncrement(args *types.ArgsAddAndIncrement) int32 {
 }
 
 func ThrowError(args *types.ArgsThrowError) bool {
-	result, err := imported_invoke.InvokeThrowError(&imported_invoke.ArgsInvokeThrowError{
-		A: args.A,
+	result, err := ImportedInvoke_SubinvokeThrowError(&ImportedInvoke_ArgsSubinvokeThrowError{
+		Error: args.Error,
 	})
 	if err != nil {
 		panic(err.Error())
@@ -27,8 +27,8 @@ func ThrowError(args *types.ArgsThrowError) bool {
 }
 
 func RethrowError(args *types.ArgsRethrowError) bool {
-	result, err := imported_invoke.InvokeThrowError(&imported_invoke.ArgsInvokeThrowError{
-		A: args.A,
+	result, err := ImportedInvoke_SubinvokeThrowError(&ImportedInvoke_ArgsSubinvokeThrowError{
+		Error: args.Error,
 	})
 	if err != nil {
 		panic(err.Error())
