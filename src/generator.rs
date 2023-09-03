@@ -1,36 +1,36 @@
-use std::fs;
-use std::env;
-use std::io::{BufReader};
-use std::path::{Path, PathBuf};
 use crate::constants::{Implementation, IMPLEMENTATIONS};
-use crate::error::{CreateImplementationError, CreateManifestAndCommonFilesError, GenerateError, GenerateImplementationError, GenerateSchemaError, GenerateTestManifestError};
-use crate::input::{TEST_FOLDER,BUILD_FOLDER};
+use crate::error::{
+    CreateImplementationError, CreateManifestAndCommonFilesError, GenerateError,
+    GenerateImplementationError, GenerateSchemaError, GenerateTestManifestError,
+};
+use crate::input::{BUILD_FOLDER, TEST_FOLDER};
 use crate::manifest::{BuildManifest, Manifest, Workflow};
+use std::env;
+use std::fs;
+use std::io::BufReader;
+use std::path::{Path, PathBuf};
 
 const CUSTOM_MANIFEST: &str = "polywrap.json";
 const TEST_SCRIPT: &str = "workflow.json";
 const SCHEMA: &str = "schema.graphql";
 const IMPLEMENTATIONS_FOLDER: &str = "implementations";
 
-const SIMPLE_CASE_EXPECTED_FILES: [&str; 4] = [TEST_SCRIPT, SCHEMA, IMPLEMENTATIONS_FOLDER, CUSTOM_MANIFEST];
+const SIMPLE_CASE_EXPECTED_FILES: [&str; 4] =
+    [TEST_SCRIPT, SCHEMA, IMPLEMENTATIONS_FOLDER, CUSTOM_MANIFEST];
 
 #[derive(Debug)]
 pub struct Generate {
     pub dest_path: PathBuf,
     pub source_path: PathBuf,
-    pub generate_built_cases: bool
+    pub generate_built_cases: bool,
 }
 
 impl Generate {
-    pub fn new(
-        dest_path: PathBuf,
-        source_path: PathBuf,
-        generate_built_cases: bool
-    ) -> Self {
+    pub fn new(dest_path: PathBuf, source_path: PathBuf, generate_built_cases: bool) -> Self {
         Generate {
             dest_path,
             source_path,
-            generate_built_cases
+            generate_built_cases,
         }
     }
     pub async fn project(
@@ -40,9 +40,7 @@ impl Generate {
         subpath: Option<&str>,
     ) -> Result<(), GenerateError> {
         let feature_path = self.dest_path.join(feature);
-        if !feature_path.exists() && fs::create_dir(
-            feature_path
-        ).is_err() {
+        if !feature_path.exists() && fs::create_dir(feature_path).is_err() {
             return Err(GenerateError::CreateFeatureDirErr);
         }
 
@@ -62,7 +60,7 @@ impl Generate {
         if !workflow_path.exists() {
             return Err(GenerateTestManifestError::MissingExpectedFile(
                 TEST_SCRIPT.to_string(),
-                feature.to_string()
+                feature.to_string(),
             ));
         }
 
@@ -100,7 +98,7 @@ impl Generate {
         if !source_path.exists() {
             return Err(GenerateSchemaError::MissingExpectedFile(
                 SCHEMA.to_string(),
-                feature.to_string()
+                feature.to_string(),
             ));
         }
 
@@ -111,7 +109,12 @@ impl Generate {
         Ok(())
     }
 
-    pub fn implementation_files(&self, feature: &str, implementation: &str, subpath: Option<&str>) -> Result<(), GenerateImplementationError> {
+    pub fn implementation_files(
+        &self,
+        feature: &str,
+        implementation: &str,
+        subpath: Option<&str>,
+    ) -> Result<(), GenerateImplementationError> {
         let mut dest_implementation_folder = self.dest_path.join(feature);
         let mut template_implementation_folder = self.source_path.join(feature);
         if let Some(path) = subpath {
@@ -120,7 +123,8 @@ impl Generate {
         }
 
         dest_implementation_folder = dest_implementation_folder.join(IMPLEMENTATIONS_FOLDER);
-        template_implementation_folder = template_implementation_folder.join(IMPLEMENTATIONS_FOLDER);
+        template_implementation_folder =
+            template_implementation_folder.join(IMPLEMENTATIONS_FOLDER);
 
         if !dest_implementation_folder.exists() {
             fs::create_dir(&dest_implementation_folder)?
@@ -128,13 +132,7 @@ impl Generate {
 
         let source_path = template_implementation_folder.join(implementation);
         let dest_path = dest_implementation_folder.join(implementation);
-        self.create_implementation(
-            source_path,
-            dest_path,
-            feature,
-            implementation,
-            subpath
-        )?;
+        self.create_implementation(source_path, dest_path, feature, implementation, subpath)?;
 
         Ok(())
     }
@@ -145,7 +143,7 @@ impl Generate {
         destination_path: PathBuf,
         feature: &str,
         implementation: &str,
-        subpath: Option<&str>
+        subpath: Option<&str>,
     ) -> Result<(), CreateImplementationError> {
         fs::create_dir(&destination_path)?;
         // Generate implementation files (i.e: index.ts/lib.rs)
@@ -162,10 +160,30 @@ impl Generate {
         // Generate dependency files (i.e: package.json/Cargo.toml)
         let defaults_folder = self.source_path.join("..").join("defaults");
         let implementation_info = IMPLEMENTATIONS.get(implementation).unwrap();
-        let dependencies_source = defaults_folder.join(implementation_info.dependency);
-        let dependencies_dest = destination_path.join(implementation_info.dependency);
-        fs::copy(dependencies_source, dependencies_dest)?;
-        self.manifest_and_common_files(feature, Some(implementation_info), destination_path, subpath)?;
+        let dependencies_source = defaults_folder.join(implementation_info.name);
+
+        let default_files = fs::read_dir(dependencies_source)?;
+        for default_file in default_files {
+            let file = default_file.unwrap();
+            print!("{:?}", file.file_name());
+            let name = file.file_name();
+            println!("{:?}", file.path());
+
+            let z = file.path().canonicalize().unwrap();
+            println!("{:#?}", z);
+            // println!("{:?}", des);
+            fs::copy(
+                file.path().canonicalize().unwrap(),
+                destination_path.join(name),
+            )?;
+        }
+
+        self.manifest_and_common_files(
+            feature,
+            Some(implementation_info),
+            destination_path,
+            subpath,
+        )?;
         Ok(())
     }
 
@@ -174,21 +192,28 @@ impl Generate {
         feature: &str,
         implementation_info: Option<&Implementation>,
         destination_path: PathBuf,
-        subpath: Option<&str>
+        subpath: Option<&str>,
     ) -> Result<(), CreateManifestAndCommonFilesError> {
         let root = self.source_path.join(feature);
 
         // Get the name of the files to copy, excluding the already processed (and expected) files
-        let root_files = fs::read_dir(&root)?.into_iter().filter(
-            |file| !SIMPLE_CASE_EXPECTED_FILES.to_vec().contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
-        ).filter(|f| !f.as_ref().unwrap().metadata().unwrap().is_dir()).map(|entry| entry.unwrap()).collect::<Vec<_>>();
+        let root_files = fs::read_dir(&root)?
+            .into_iter()
+            .filter(|file| {
+                !SIMPLE_CASE_EXPECTED_FILES
+                    .to_vec()
+                    .contains(&file.as_ref().unwrap().file_name().to_str().unwrap())
+            })
+            .filter(|f| !f.as_ref().unwrap().metadata().unwrap().is_dir())
+            .map(|entry| entry.unwrap())
+            .collect::<Vec<_>>();
 
         // Copy common files
         for file in root_files {
             let dest_file = self.dest_path.join(feature).join(file.file_name());
             let source_file = self.source_path.join(feature).join(file.file_name());
             fs::copy(source_file, dest_file)?;
-        };
+        }
 
         if !self.generate_built_cases {
             // Generate test manifest from workflow
@@ -205,7 +230,12 @@ impl Generate {
         let custom_manifest_path = if let Some(path) = subpath {
             let mut complex_path = root.join(path);
             if implementation_info.is_some() {
-                let test_path = manifest_path.clone().into_os_string().to_str().unwrap().replace(BUILD_FOLDER, TEST_FOLDER);
+                let test_path = manifest_path
+                    .clone()
+                    .into_os_string()
+                    .to_str()
+                    .unwrap()
+                    .replace(BUILD_FOLDER, TEST_FOLDER);
                 complex_path = Path::new(test_path.as_str()).to_path_buf().join("../..");
             } else {
                 manifest_path = manifest_path.join(path);
@@ -241,11 +271,13 @@ impl Generate {
             if let Some(i) = implementation_id {
                 let path = Path::new(package_path.as_str()).join(i);
                 if !path.exists() {
-                   let message = format!("Path: {} not found. Make sure to use absolute path. i.e: /home/user/toolchain/packages/wasm", package_path);
-                   return Err(CreateManifestAndCommonFilesError::WasmPackagesLocalPathNotFound(message));
-               }
-               BuildManifest::generate(manifest_path, package_path, i.to_string());
-           }
+                    let message = format!("Path: {} not found. Make sure to use absolute path. i.e: /home/user/toolchain/packages/wasm", package_path);
+                    return Err(
+                        CreateManifestAndCommonFilesError::WasmPackagesLocalPathNotFound(message),
+                    );
+                }
+                BuildManifest::generate(manifest_path, package_path, i.to_string());
+            }
         }
 
         Ok(())
