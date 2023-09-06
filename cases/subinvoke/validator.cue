@@ -13,3 +13,13 @@
 		error: string
 	}
 }
+"subinvokeMethodNotFound": {
+	$0: {
+		error: string
+	}
+}
+"subinvokeArgsIncorrect": {
+	$0: {
+		error: string
+	}
+}
