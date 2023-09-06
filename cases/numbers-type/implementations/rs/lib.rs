@@ -1,6 +1,6 @@
 pub mod wrap;
 use wrap::module::{Module, ModuleTrait};
-pub use wrap::*;
+pub use wrap::prelude::*;
 
 impl ModuleTrait for Module {
     fn i8_method(args: ArgsI8Method) -> Result<i8, String> {

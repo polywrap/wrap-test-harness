@@ -3,7 +3,7 @@ use polywrap_wasm_rs::JSON;
 use wrap::imported::storage_module;
 use wrap::module;
 use wrap::module::{Module, ModuleTrait};
-pub use wrap::*;
+pub use wrap::prelude::*;
 
 impl ModuleTrait for Module {
     fn get_data(args: module::ArgsGetData) -> Result<u32, String> {

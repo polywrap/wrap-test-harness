@@ -1,5 +1,5 @@
 pub mod wrap;
-pub use wrap::*;
+pub use wrap::prelude::*;
 pub use wrap::imported::interface_module;
 pub use wrap::imported::interface_argument;
 

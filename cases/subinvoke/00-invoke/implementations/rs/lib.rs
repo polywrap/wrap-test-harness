@@ -1,6 +1,6 @@
 pub mod wrap;
 use wrap::module::{Module, ModuleTrait};
-pub use wrap::*;
+pub use wrap::prelude::*;
 
 impl ModuleTrait for Module {
     fn add(args: ArgsAdd) -> Result<i32, String> {

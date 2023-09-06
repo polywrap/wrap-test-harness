@@ -1,6 +1,6 @@
 pub mod wrap;
 use wrap::module::{Module, ModuleTrait};
-pub use wrap::*;
+pub use wrap::prelude::*;
 
 impl ModuleTrait for Module {
     fn method1(args: ArgsMethod1) -> Result<Vec<Output>, String> {

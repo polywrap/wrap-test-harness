@@ -3,7 +3,7 @@ use std::ops::Mul;
 use polywrap_wasm_rs::BigNumber;
 pub mod wrap;
 use wrap::module::{Module, ModuleTrait};
-pub use wrap::*;
+pub use wrap::prelude::*;
 
 impl ModuleTrait for Module {
     fn method(args: ArgsMethod) -> Result<BigNumber, String> {

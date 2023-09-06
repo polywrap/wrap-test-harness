@@ -1,6 +1,6 @@
 pub mod wrap;
-use imported::imported_subinvoke_module::{ArgsAdd, ArgsInvokeThrowError};
-pub use wrap::*;
+use wrap::imported::imported_subinvoke_module::{ArgsAdd, ArgsInvokeThrowError};
+pub use wrap::prelude::*;
 use polywrap_msgpack_serde::to_vec;
 use polywrap_wasm_rs::subinvoke::wrap_subinvoke;
 

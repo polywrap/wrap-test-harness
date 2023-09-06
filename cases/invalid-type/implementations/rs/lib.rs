@@ -1,5 +1,5 @@
 pub mod wrap;
-pub use wrap::*;
+pub use wrap::prelude::*;
 
 impl ModuleTrait for Module {
     fn bool_method(args: ArgsBoolMethod) -> Result<bool, String> {

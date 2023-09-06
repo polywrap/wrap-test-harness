@@ -1,6 +1,6 @@
 pub mod wrap;
 use wrap::module::{Module, ModuleTrait};
-pub use wrap::*;
+pub use wrap::prelude::*;
 
 impl ModuleTrait for Module {
     fn bytes_method(args: ArgsBytesMethod) -> Result<Vec<u8>, String> {

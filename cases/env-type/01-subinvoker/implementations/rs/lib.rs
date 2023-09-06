@@ -1,5 +1,6 @@
 pub mod wrap;
-pub use wrap::*;
+pub use wrap::prelude::*;
+pub use wrap::imported;
 
 impl ModuleTrait for Module {
     fn subinvoke_method_no_env(args: ArgsSubinvokeMethodNoEnv) -> Result<String, String> {

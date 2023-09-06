@@ -1,8 +1,8 @@
 pub mod wrap;
-use imported::uri_resolver_module;
-use imported::UriResolverMaybeUriOrManifest;
+use wrap::imported::uri_resolver_module;
+use wrap::imported::UriResolverMaybeUriOrManifest;
 use wrap::module::{Module, ModuleTrait};
-pub use wrap::*;
+pub use wrap::prelude::*;
 
 impl ModuleTrait for Module {
     fn try_resolve_uri(

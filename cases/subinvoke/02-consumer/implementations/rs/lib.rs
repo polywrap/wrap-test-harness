@@ -1,7 +1,8 @@
 pub mod wrap;
-use imported::imported_invoke_module::ImportedInvokeModule;
+use wrap::imported::imported_invoke_module::ImportedInvokeModule;
 use wrap::module::{Module, ModuleTrait};
-pub use wrap::*;
+pub use wrap::imported;
+pub use wrap::prelude::*;
 
 impl ModuleTrait for Module {
     fn add_and_increment(args: ArgsAddAndIncrement) -> Result<i32, String> {
