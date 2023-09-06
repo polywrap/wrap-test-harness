@@ -26,13 +26,14 @@ async fn main() -> Result<(), HarnessError> {
     let sanitized_args = &input::handle_args();
     let feature = sanitized_args.feature.as_deref();
     let implementation = sanitized_args.implementation.as_deref();
+    let passthrough = sanitized_args.passthrough.clone();
 
     Builder::from_env(Env::default().default_filter_or(sanitized_args.verbose.as_str())).init();
 
     Engine::start(
         destination_path,
         source_path
-    ).execute(feature, implementation, sanitized_args.wrappers_path.is_some()).await?;
+    ).execute(feature, implementation, sanitized_args.wrappers_path.is_some(), passthrough).await?;
 
     if let Some(p) = sanitized_args.wrappers_path.as_deref() {
         if !p.eq("./wrappers") {

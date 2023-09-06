@@ -18,6 +18,8 @@ struct Args {
     wrappers_path: Option<String>,
     #[arg(short, long)]
     verbose: Option<u8>,
+    #[arg(short, long)]
+    passthrough: Option<Vec<String>>,
 }
 
 impl Args {
@@ -58,12 +60,21 @@ impl Args {
             .default_value("1")
             .value_parser(value_parser!(i32));
 
+        let passthrough_args = Arg::new("passthrough")
+            .short('p')
+            .long("passthrough")
+            .action(ArgAction::Append)
+            .value_parser(value_parser!(String))
+            .required(false);
+
+
         let app = Command::new("wasm-test-harness")
             .arg(build_arg)
             .arg(implementation_args)
             .arg(feature_args)
             .arg(reset)
             .arg(verbose)
+            .arg(passthrough_args)
             .get_matches();
 
         let wrappers_path =  if let Some(b) = app.get_one::<String>("create_built_wrappers") {
@@ -79,6 +90,7 @@ impl Args {
         let implementation = app.get_one::<String>("implementation").map(|b| b.to_owned());
         let feature = app.get_one::<String>("feature").map(|b| b.to_owned());
         let reset = app.try_contains_id("reset").unwrap();
+        let options = app.get_many::<String>("passthrough").map(|b| b.to_owned().cloned().collect::<Vec<String>>());
 
         let verbose = if let Some(v) = app.get_one("verbose") {
             match v {
@@ -94,7 +106,8 @@ impl Args {
             feature,
             reset,
             wrappers_path,
-            verbose: Some(verbose)
+            verbose: Some(verbose),
+            passthrough: options
         }
     }
 }
@@ -103,7 +116,8 @@ pub struct SanitizedArgs {
     pub implementation: Option<String>,
     pub feature: Option<String>,
     pub wrappers_path: Option<String>,
-    pub verbose: Level
+    pub verbose: Level,
+    pub passthrough: Option<Vec<String>>
 }
 
 pub fn handle_args() -> SanitizedArgs {
@@ -131,7 +145,8 @@ pub fn handle_args() -> SanitizedArgs {
         implementation: args.implementation,
         feature: args.feature,
         wrappers_path: args.wrappers_path,
-        verbose
+        verbose,
+        passthrough: args.passthrough
     }
 
 }

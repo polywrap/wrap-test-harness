@@ -54,7 +54,7 @@ impl Engine {
         }
     }
 
-    pub async fn execute(&self, feature: Option<&str>, implementation: Option<&str>, generate_built_cases: bool) -> Result<(), ExecutionError> {
+    pub async fn execute(&self, feature: Option<&str>, implementation: Option<&str>, generate_built_cases: bool, passthrough: Option<Vec<String>>) -> Result<(), ExecutionError> {
         let generator = Generate::new(
             self.path.destination.to_path_buf(),
             self.path.source.to_path_buf(),
@@ -84,18 +84,20 @@ impl Engine {
         self.handler(
             project_generator_executor,
             feature.map(|f| f.to_string()),
-            implementation.map(|i| i.to_string()),
+            implementation.map(|i| i.to_string())
         ).await?;
 
         let build_executor: Executor = Box::new(
             move |feature, implementation, subpath| {
+                let captured_passthrough = passthrough.clone();
                 let e = engine.clone();
                 Box::pin(async move {
                     e.build(
                         feature.as_str(), 
                         implementation.as_deref(), 
                         subpath.as_deref(),
-                        generate_built_cases
+                        generate_built_cases,
+                        captured_passthrough
                     ).await.map_err(ExecutionError::BuildError)
                 })
             }
@@ -105,7 +107,7 @@ impl Engine {
         self.handler(
             build_executor,
             feature.map(|f| f.to_string()),
-            implementation.map(|i| i.to_string()),
+            implementation.map(|i| i.to_string())
         ).await?;
 
         let engine = Arc::new(self.clone());
@@ -131,7 +133,7 @@ impl Engine {
             self.handler(
                 test_executor,
                 feature.map(|f| f.to_string()),
-                implementation.map(|i| i.to_string()),
+                implementation.map(|i| i.to_string())
             ).await?
         }
         Ok(())
@@ -268,7 +270,7 @@ impl Engine {
         Ok(())
     }
 
-    async fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>, generate_built_cases: bool) -> Result<(), BuildError> {
+    async fn build(&self, feature: &str, implementation: Option<&str>, subpath: Option<&str>, generate_built_cases: bool, passthrough: Option<Vec<String>>) -> Result<(), BuildError> {
         let mut directory = self.path.destination.join(feature);
         let mut copy_dest = self.path.source.join("..").join("wrappers").join(feature);
 
@@ -294,6 +296,10 @@ impl Engine {
             .arg("-l")
             .arg("./log.txt")
             .current_dir(&directory);
+
+        if let Some(passthrough_options) = passthrough {
+            passthrough_options.iter().for_each(|o| { build.arg(o); });
+        }
 
         if let Ok(output) = build.output() {
             let message = if let Some(i) = implementation {
