@@ -24,7 +24,7 @@ export function configure(builder: ClientConfigBuilder): ClientConfigBuilder {
 }
 
 class MemoryStoragePlugin extends PluginModule<Record<string, unknown>> {
-  private _value: number;
+  private _value: number = 0;
 
   async getData(_: {}): Promise<number> {
     await this.sleep(50);

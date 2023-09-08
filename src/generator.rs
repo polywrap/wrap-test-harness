@@ -151,7 +151,14 @@ impl Generate {
         // Generate implementation files (i.e: index.ts/lib.rs)
         let files = fs::read_dir(&source_path)?;
         for file in files {
-            let destination_source_folder = &destination_path.join("src");
+            // HACK: fix this
+            let subpath: &str;
+            if implementation == "go" {
+                subpath = "module";
+            } else {
+                subpath = "src";
+            }
+            let destination_source_folder = &destination_path.join(subpath);
             fs::create_dir(destination_source_folder)?;
             let name = file?.file_name();
             let impl_source = source_path.join(&name);
