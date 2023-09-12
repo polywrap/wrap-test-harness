@@ -1,5 +1,6 @@
 pub mod wrap;
 use wrap::imported::uri_resolver_module;
+use polywrap_wasm_rs::ByteBuf;
 use wrap::imported::UriResolverMaybeUriOrManifest;
 use wrap::module::{Module, ModuleTrait};
 pub use wrap::prelude::*;
@@ -21,7 +22,7 @@ impl ModuleTrait for Module {
         }
     }
 
-    fn get_file(args: ArgsGetFile) -> Result<Option<Vec<u8>>, String> {
+    fn get_file(args: ArgsGetFile) -> Result<Option<ByteBuf>, String> {
         return Ok(None);
     }
 }
