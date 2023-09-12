@@ -1,8 +1,7 @@
 pub mod wrap;
 use wrap::imported::imported_subinvoke_module::{ArgsAdd, ArgsInvokeThrowError};
 pub use wrap::prelude::*;
-use polywrap_msgpack_serde::to_vec;
-use polywrap_wasm_rs::subinvoke::wrap_subinvoke;
+use polywrap_wasm_rs::{subinvoke::wrap_subinvoke, to_vec};
 
 impl ModuleTrait for Module {
     fn add_and_increment(args: ArgsAddAndIncrement) -> Result<i32, String> {
