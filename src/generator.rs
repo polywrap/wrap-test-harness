@@ -248,7 +248,7 @@ impl Generate {
             if let Some(i) = implementation_id {
                 let path = Path::new(package_path.as_str()).join(i);
                 if !path.exists() {
-                   let message = format!("Path: {} not found. Make sure to use absolute path. i.e: /home/user/toolchain/packages/wasm", package_path);
+                   let message = format!("Path: {package_path} not found. Make sure to use absolute path. i.e: /home/user/toolchain/packages/wasm/{i}");
                    return Err(CreateManifestAndCommonFilesError::WasmPackagesLocalPathNotFound(message));
                }
                BuildManifest::generate(manifest_path, package_path, i.to_string());
