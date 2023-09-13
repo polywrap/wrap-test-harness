@@ -246,12 +246,17 @@ impl Generate {
         let local_wasm_package = env::var("POLYWRAP_WASM_PATH");
         if let Ok(package_path) = local_wasm_package {
             if let Some(i) = implementation_id {
-                let path = Path::new(package_path.as_str()).join(i);
-                if !path.exists() {
-                   let message = format!("Path: {package_path} not found. Make sure to use absolute path. i.e: /home/user/toolchain/packages/wasm/{i}");
-                   return Err(CreateManifestAndCommonFilesError::WasmPackagesLocalPathNotFound(message));
-               }
-               BuildManifest::generate(manifest_path, package_path, i.to_string());
+                // TODO(cbrzn): This is a hot fix because go wasm is not in the CLI repository
+                if i == "go" {
+                    return Ok(());
+                } else {
+                    let path = Path::new(package_path.as_str()).join(i);
+                    if !path.exists() {
+                        let message = format!("Path: {} not found. Make sure to use absolute path. i.e: /home/user/cli/packages/wasm", path.to_string_lossy());
+                        return Err(CreateManifestAndCommonFilesError::WasmPackagesLocalPathNotFound(message));
+                    }
+                    BuildManifest::generate(manifest_path, package_path, i.to_string());
+                }
            }
         }
 
