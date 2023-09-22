@@ -6,6 +6,6 @@
   },
   "dependencies": {
     "@polywrap/plugin-js": "~0.12.0",
-    "polywrap": "~0.11.0"
+    "polywrap": "~0.12.0"
   }
 }
