@@ -113,7 +113,7 @@ impl BuildManifest {
         let linked_packages: Vec<HashMap<String, String>> = vec![wasm_package];
 
         let build_manifest = BuildManifest {
-            format: "0.2.0".to_string(),
+            format: "0.3.0".to_string(),
             strategies,
             linked_packages
         };

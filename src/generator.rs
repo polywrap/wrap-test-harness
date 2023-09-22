@@ -167,8 +167,8 @@ impl Generate {
         }
 
         // Generate dependency files (i.e: package.json/Cargo.toml)
-        let defaults_folder = self.source_path.join("..").join("defaults");
         let implementation_info = IMPLEMENTATIONS.get(implementation).unwrap();
+        let defaults_folder = self.source_path.join("..").join("defaults").join(implementation_info.id);
         let dependencies_source = defaults_folder.join(implementation_info.dependency);
         let dependencies_dest = destination_path.join(implementation_info.dependency);
         fs::copy(dependencies_source, dependencies_dest)?;
