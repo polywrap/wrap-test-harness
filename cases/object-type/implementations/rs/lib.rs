@@ -1,6 +1,6 @@
 pub mod wrap;
 use wrap::module::{Module, ModuleTrait};
-pub use wrap::*;
+pub use wrap::prelude::*;
 
 impl ModuleTrait for Module {
     fn method1(args: ArgsMethod1) -> Result<Vec<Output>, String> {
@@ -52,7 +52,7 @@ impl ModuleTrait for Module {
 
     fn method4(args: ArgsMethod4) -> Result<Output, String> {
         Ok(Output {
-            prop: match String::from_utf8(args.arg.prop) {
+            prop: match String::from_utf8(args.arg.prop.to_vec()) {
                 Ok(v) => v,
                 Err(e) => panic!("{}", e),
             },

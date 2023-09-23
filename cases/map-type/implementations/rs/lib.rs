@@ -1,7 +1,7 @@
 pub mod wrap;
 use polywrap_wasm_rs::Map;
 use wrap::module::{Module, ModuleTrait};
-pub use wrap::*;
+pub use wrap::prelude::*;
 
 impl ModuleTrait for Module {
     fn get_key(args: ArgsGetKey) -> Result<i32, String> {

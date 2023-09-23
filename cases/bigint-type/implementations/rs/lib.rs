@@ -1,8 +1,8 @@
 use std::ops::Mul;
 
-use polywrap_msgpack_serde::BigIntWrapper;
+use polywrap_wasm_rs::BigIntWrapper;
 pub mod wrap;
-pub use wrap::*;
+pub use wrap::prelude::*;
 
 impl ModuleTrait for Module {
     fn method(args: ArgsMethod) -> Result<BigIntWrapper, String> {

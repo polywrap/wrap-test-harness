@@ -1,8 +1,7 @@
 pub mod wrap;
-use polywrap_msgpack_serde::JSONString;
-use polywrap_wasm_rs::JSON;
+use polywrap_wasm_rs::{JSONString, JSON};
 use serde_json::json;
-pub use wrap::*;
+pub use wrap::prelude::*;
 
 impl ModuleTrait for Module {
     fn stringify(args: ArgsStringify) -> Result<String, String> {

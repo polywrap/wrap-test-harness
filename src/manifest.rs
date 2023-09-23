@@ -197,9 +197,14 @@ impl Manifest {
 
         let mut extensions = None;
         if env::var("POLYWRAP_WASM_PATH").is_ok() {
-             let mut e = HashMap::new();
-            e.insert("build".to_string(), "./polywrap.build.yaml".to_string());
-            extensions = Some(e)
+            //TODO(@cbrzn): Remove this hotfix
+            if let Some(i) = implementation {
+                if i != "go" {
+                    let mut e = HashMap::new();
+                    e.insert("build".to_string(), "./polywrap.build.yaml".to_string());
+                    extensions = Some(e)
+                }
+            }
         }
 
         Ok(Self {

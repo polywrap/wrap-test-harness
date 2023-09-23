@@ -1,5 +1,5 @@
 pub mod wrap;
-pub use wrap::*;
+pub use wrap::prelude::*;
 
 impl ModuleTrait for Module {
     fn module_method(args: ArgsModuleMethod) -> Result<ImplementationType, String> {
